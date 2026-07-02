@@ -10,6 +10,7 @@ export default function MusicControl() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [playing, setPlaying] = useState(false)
   const [visible, setVisible] = useState(false)
+  const [audioFailed, setAudioFailed] = useState(false)
 
   useEffect(() => {
     if (prefersReduced) return
@@ -18,22 +19,44 @@ export default function MusicControl() {
   }, [])
 
   const toggle = useCallback(() => {
+    if (audioFailed) return
+
     const audio = audioRef.current
     if (!audio) {
-      audioRef.current = new Audio(AUDIO_SRC)
-      audioRef.current.preload = 'none'
-      audioRef.current.loop = true
-      audioRef.current.volume = 0.3
-      audioRef.current.play().catch(() => {})
+      const el = new Audio(AUDIO_SRC)
+      el.preload = 'none'
+      el.loop = true
+      el.volume = 0.3
+
+      el.addEventListener('error', () => {
+        setAudioFailed(true)
+        audioRef.current = null
+      }, { once: true })
+
+      el.play().catch(() => {
+        setAudioFailed(true)
+        audioRef.current = null
+      })
+
+      audioRef.current = el
       setPlaying(true)
       return
     }
     if (audio.paused) {
-      audio.play().catch(() => {})
+      audio.play().catch(() => {
+        setPlaying(false)
+      })
       setPlaying(true)
     } else {
       audio.pause()
       setPlaying(false)
+    }
+  }, [audioFailed])
+
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause()
+      audioRef.current = null
     }
   }, [])
 
@@ -48,13 +71,14 @@ export default function MusicControl() {
       <button
         type="button"
         onClick={toggle}
-        aria-label={playing ? 'Pause music' : 'Play music'}
-        className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-bg/80 text-muted backdrop-blur-sm transition-all duration-200 hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        disabled={audioFailed}
+        aria-label={audioFailed ? 'Audio unavailable' : playing ? 'Pause music' : 'Play music'}
+        className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-bg/80 text-muted backdrop-blur-sm transition-all duration-200 hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-30 disabled:hover:border-border disabled:hover:text-muted"
       >
         {playing ? (
-          <Music className="h-5 w-5" />
-        ) : (
           <VolumeX className="h-5 w-5" />
+        ) : (
+          <Music className="h-5 w-5" />
         )}
       </button>
     </div>

@@ -80,7 +80,7 @@ export default function Countdown() {
                 ease: EASE_ENTRANCE,
                 delay: 0.2 + i * 0.1,
               }}
-              className="flex w-20 flex-col items-center rounded-2xl bg-surface px-3 py-5 shadow-sm ring-1 ring-black/5 sm:w-28 sm:px-4 sm:py-7 md:w-32"
+              className="flex w-20 flex-col items-center rounded-2xl bg-surface px-3 py-5 shadow-sm ring-1 ring-black/5 sm:w-32 sm:px-4 sm:py-7 md:w-36"
             >
               <span className="font-display text-3xl tabular-nums text-text sm:text-4xl">
                 {String(unit.value).padStart(2, '0')}

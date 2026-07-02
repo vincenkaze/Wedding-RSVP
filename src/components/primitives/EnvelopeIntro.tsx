@@ -9,6 +9,9 @@ const prefersReduced =
 
 function hasVisited(): boolean {
   try {
+    if (typeof window !== 'undefined' && window.location.search.includes('intro=1')) {
+      return false
+    }
     return localStorage.getItem(STORAGE_KEY) === 'true'
   } catch {
     return true

@@ -14,7 +14,7 @@ export default function Footer() {
         </p>
         <div className="mx-auto mt-4 h-px w-12 bg-accent/30" aria-hidden />
         <p className="mt-4 font-body text-xs text-muted/60">
-          &copy; {year} {couple.displayName}. Made with love.
+          © {year} {couple.displayName}. Made with love.
         </p>
       </div>
     </footer>
