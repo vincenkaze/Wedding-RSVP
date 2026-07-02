@@ -36,7 +36,7 @@ export default function Gallery() {
               ease: EASE_ENTRANCE,
               delay: 0.08,
             }}
-            className="mt-4 font-display text-3xl tracking-tight text-ink sm:text-4xl md:text-5xl"
+            className="mt-4 font-display text-3xl tracking-tight text-text sm:text-4xl md:text-5xl"
           >
             {sections.gallery.heading}
           </motion.h2>

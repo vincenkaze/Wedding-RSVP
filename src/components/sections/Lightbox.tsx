@@ -27,9 +27,7 @@ export default function Lightbox({
   const item = index !== null ? items[index] : null
   const dialogRef = useRef<HTMLDivElement>(null)
   const previousFocus = useRef<HTMLElement | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
 
-  // Zoom state
   const scale = useMotionValue(1)
   const [isZoomed, setIsZoomed] = useState(false)
   const lastTap = useRef(0)
@@ -37,24 +35,17 @@ export default function Lightbox({
   const initialDistance = useRef(0)
   const initialScale = useRef(1)
 
-  // Pan state
-  const x = useMotionValue(0)
-  const y = useMotionValue(0)
-
-  // Swipe state
   const dragStartX = useRef(0)
-  const [dragOffset, setDragOffset] = useState(0)
-  const isDragging = useRef(false)
+  const [swipeX, setSwipeX] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
 
-  // Exit animation
   const [isExiting, setIsExiting] = useState(false)
 
   const resetZoom = useCallback(() => {
     scale.set(1)
-    x.set(0)
-    y.set(0)
+    setSwipeX(0)
     setIsZoomed(false)
-  }, [scale, x, y])
+  }, [scale])
 
   const handleClose = useCallback(() => {
     setIsExiting(true)
@@ -65,24 +56,20 @@ export default function Lightbox({
     }, 200)
   }, [resetZoom, onClose])
 
-  // Focus management
   useEffect(() => {
     if (isOpen) {
       previousFocus.current = document.activeElement as HTMLElement
-      // Small delay to let DOM mount
       const timer = setTimeout(() => {
         dialogRef.current?.focus()
       }, 50)
       return () => clearTimeout(timer)
     }
-    // Return focus on close
     if (previousFocus.current) {
       previousFocus.current.focus()
       previousFocus.current = null
     }
   }, [isOpen])
 
-  // Keyboard handling
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (!isOpen) return
@@ -119,14 +106,12 @@ export default function Lightbox({
     }
   }, [isOpen, handleKeyDown])
 
-  // Backdrop click
   function handleBackdropClick(e: React.MouseEvent) {
     if (e.target === e.currentTarget) {
       handleClose()
     }
   }
 
-  // Double-tap to zoom
   function handleTap() {
     const now = Date.now()
     if (now - lastTap.current < 300) {
@@ -140,11 +125,10 @@ export default function Lightbox({
     lastTap.current = now
   }
 
-  // Pointer events for pinch-zoom
   function handlePointerDown(e: React.PointerEvent) {
     pointerCount.current++
     if (pointerCount.current === 2) {
-      const target = e.target as HTMLElement
+      const target = e.currentTarget
       const rect = target.getBoundingClientRect()
       const dx = e.clientX - (rect.left + rect.width / 2)
       const dy = e.clientY - (rect.top + rect.height / 2)
@@ -153,13 +137,13 @@ export default function Lightbox({
     }
     if (pointerCount.current === 1 && !isZoomed) {
       dragStartX.current = e.clientX
-      isDragging.current = true
+      setIsDragging(true)
     }
   }
 
   function handlePointerMove(e: React.PointerEvent) {
     if (pointerCount.current === 2 && initialDistance.current > 0) {
-      const target = e.target as HTMLElement
+      const target = e.currentTarget
       const rect = target.getBoundingClientRect()
       const dx = e.clientX - (rect.left + rect.width / 2)
       const dy = e.clientY - (rect.top + rect.height / 2)
@@ -171,9 +155,9 @@ export default function Lightbox({
       scale.set(newScale)
       setIsZoomed(newScale > 1.1)
     }
-    if (isDragging.current && !isZoomed) {
+    if (isDragging && !isZoomed) {
       const delta = e.clientX - dragStartX.current
-      setDragOffset(delta)
+      setSwipeX(delta)
     }
   }
 
@@ -183,17 +167,16 @@ export default function Lightbox({
       initialDistance.current = 0
     }
 
-    // Swipe detection
-    if (isDragging.current && !isZoomed) {
+    if (isDragging && !isZoomed) {
       const threshold = 50
-      if (dragOffset < -threshold && index !== null && index < items.length - 1) {
+      if (swipeX < -threshold && index !== null && index < items.length - 1) {
         onNavigate(index + 1)
-      } else if (dragOffset > threshold && index !== null && index > 0) {
+      } else if (swipeX > threshold && index !== null && index > 0) {
         onNavigate(index - 1)
       }
     }
-    setDragOffset(0)
-    isDragging.current = false
+    setSwipeX(0)
+    setIsDragging(false)
   }
 
   if (!isOpen || !item) return null
@@ -262,7 +245,6 @@ export default function Lightbox({
 
           {/* Image container */}
           <div
-            ref={containerRef}
             className="relative flex h-full w-full items-center justify-center p-12 sm:p-16"
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -291,13 +273,17 @@ export default function Lightbox({
                 }
                 transition={{ duration: 0.3, ease: EASE_ENTRANCE }}
                 className="relative max-h-full max-w-full"
-                style={{ scale, x, y }}
+                style={{ scale }}
               >
                 <img
                   src={item.src}
                   alt={item.alt}
                   draggable={false}
                   className="max-h-[80vh] max-w-full rounded-lg object-contain select-none"
+                  style={{
+                    transform: `translateX(${swipeX}px)`,
+                    transition: isDragging ? 'none' : 'transform 0.2s ease',
+                  }}
                 />
               </motion.div>
             </AnimatePresence>

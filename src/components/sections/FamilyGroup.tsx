@@ -28,7 +28,7 @@ export default function FamilyGroup({ side }: FamilyGroupProps) {
       <ul className="flex flex-col gap-2">
         {side.parents.map((name) => (
           <li key={name}>
-            <span className="family-name font-display text-xl tracking-tight text-ink sm:text-2xl md:text-3xl">
+            <span className="family-name font-display text-xl tracking-tight text-text sm:text-2xl md:text-3xl">
               {name}
             </span>
           </li>

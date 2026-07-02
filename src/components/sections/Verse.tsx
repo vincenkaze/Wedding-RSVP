@@ -21,7 +21,7 @@ export default function Verse() {
           transition={{ duration: 0.6, ease: EASE_ENTRANCE }}
           className="mb-6 flex justify-center"
         >
-          <span className="verse-ornament inline-block h-px w-12 bg-gold sm:w-16" />
+          <span className="verse-ornament inline-block h-px w-12 bg-accent sm:w-16" />
         </motion.div>
 
         {/* Verse text */}
@@ -41,7 +41,7 @@ export default function Verse() {
                 ease: EASE_ENTRANCE,
                 delay: 0.15 + i * 0.08,
               }}
-              className="font-display text-lg leading-relaxed text-ink sm:text-xl md:text-2xl"
+              className="font-display text-lg leading-relaxed text-text sm:text-xl md:text-2xl"
             >
               {line}
             </motion.p>
@@ -58,7 +58,7 @@ export default function Verse() {
             ease: EASE_ENTRANCE,
             delay: 0.35,
           }}
-          className="mx-auto mt-8 h-px w-24 origin-left bg-gold sm:w-32"
+          className="mx-auto mt-8 h-px w-24 origin-left bg-accent sm:w-32"
         />
 
         {/* Reference */}
@@ -86,7 +86,7 @@ export default function Verse() {
           transition={{ duration: 0.6, ease: EASE_ENTRANCE, delay: 0.55 }}
           className="mt-6 flex justify-center"
         >
-          <span className="verse-ornament inline-block h-px w-12 bg-gold sm:w-16" />
+          <span className="verse-ornament inline-block h-px w-12 bg-accent sm:w-16" />
         </motion.div>
       </div>
     </Section>

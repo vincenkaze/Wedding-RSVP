@@ -133,7 +133,7 @@ export default function EnvelopeIntro({ onComplete }: EnvelopeIntroProps) {
               ease: [0.22, 1, 0.36, 1],
               delay: 1.2,
             }}
-            className="mt-6 font-display text-lg tracking-tight text-ink sm:text-xl"
+            className="mt-6 font-display text-lg tracking-tight text-text sm:text-xl"
           >
             {couple.displayName}
           </motion.p>

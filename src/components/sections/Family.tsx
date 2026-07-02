@@ -11,7 +11,7 @@ function Flourish() {
     <svg
       viewBox="0 0 24 80"
       fill="none"
-      className="hidden h-20 w-6 text-gold md:block"
+      className="hidden h-20 w-6 text-accent md:block"
       aria-hidden
     >
       <path
@@ -64,7 +64,7 @@ export default function Family() {
               ease: EASE_ENTRANCE,
               delay: 0.08,
             }}
-            className="mt-4 font-display text-3xl tracking-tight text-ink sm:text-4xl md:text-5xl"
+            className="mt-4 font-display text-3xl tracking-tight text-text sm:text-4xl md:text-5xl"
           >
             {sections.family.heading}
           </motion.h2>
@@ -89,7 +89,7 @@ export default function Family() {
             className="flex items-center justify-center md:mx-4 md:mt-8"
           >
             {/* Mobile divider */}
-            <div className="h-px w-16 bg-gold/40 md:hidden" aria-hidden />
+            <div className="h-px w-16 bg-accent/40 md:hidden" aria-hidden />
             {/* Desktop flourish */}
             <Flourish />
           </motion.div>

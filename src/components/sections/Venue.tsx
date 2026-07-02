@@ -53,14 +53,10 @@ export default function VenueSection() {
               ease: EASE_ENTRANCE,
               delay: 0.08,
             }}
-            className="mt-4 font-display text-3xl tracking-tight text-ink sm:text-4xl md:text-5xl"
+            className="mt-4 font-display text-3xl tracking-tight text-text sm:text-4xl md:text-5xl"
           >
-            {venue.name.split(' ').map((word, i) => (
-              <span key={i}>
-                {word}
-                {i === 0 && <br />}
-              </span>
-            ))}
+            <span className="block">{venue.name.split(' ')[0]}</span>
+            <span className="block">{venue.name.split(' ').slice(1).join(' ')}</span>
           </motion.h2>
           <motion.p
             initial={
@@ -115,7 +111,7 @@ export default function VenueSection() {
               />
             )}
             {!mapLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center bg-cream">
+              <div className="absolute inset-0 flex items-center justify-center bg-surface">
                 <MapPin className="h-8 w-8 text-accent/40" aria-hidden />
               </div>
             )}
@@ -157,7 +153,7 @@ export default function VenueSection() {
                     ease: EASE_ENTRANCE,
                     delay: 0.2 + i * 0.08,
                   }}
-                  className="flex items-center gap-3 font-body text-sm text-ink sm:text-base"
+                  className="flex items-center gap-3 font-body text-sm text-text sm:text-base"
                 >
                   <span
                     className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
@@ -244,7 +240,7 @@ export default function VenueSection() {
               className="flex w-full items-center justify-between rounded-xl border border-border bg-bg px-6 py-4 text-left transition-colors duration-200 hover:border-accent/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               aria-expanded={travelOpen}
             >
-              <span className="font-display text-lg tracking-tight text-ink sm:text-xl">
+              <span className="font-display text-lg tracking-tight text-text sm:text-xl">
                 {venue.travelStay.title}
               </span>
               <ChevronDown

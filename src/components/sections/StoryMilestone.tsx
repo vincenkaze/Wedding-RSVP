@@ -43,7 +43,7 @@ export default function StoryMilestone({ milestone, index, isLast }: StoryMilest
       transition={{ duration: DURATION_CINEMATIC, ease: EASE_ENTRANCE, delay: 0.1 }}
       className="flex flex-col gap-3"
     >
-      <h3 className="font-display text-2xl tracking-tight text-ink sm:text-3xl">
+      <h3 className="font-display text-2xl tracking-tight text-text sm:text-3xl">
         {milestone.title}
       </h3>
       <p className="font-body text-base leading-relaxed text-muted sm:text-lg">
@@ -65,7 +65,7 @@ export default function StoryMilestone({ milestone, index, isLast }: StoryMilest
         transition={{ duration: 0.8, ease: EASE_ENTRANCE, delay: 0.2 }}
         className="mt-4 overflow-hidden rounded-xl ring-1 ring-black/5"
       >
-        <div className="aspect-[4/3] bg-cream">
+        <div className="aspect-[4/3] bg-surface relative">
           <img
             src={milestone.image}
             alt={milestone.imageAlt ?? milestone.title}
@@ -77,6 +77,15 @@ export default function StoryMilestone({ milestone, index, isLast }: StoryMilest
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
           />
+          {!imageLoaded && !imageError && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <svg className="h-10 w-10 text-accent/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+              </svg>
+            </div>
+          )}
         </div>
       </motion.figure>
     ) : null
@@ -116,7 +125,7 @@ export default function StoryMilestone({ milestone, index, isLast }: StoryMilest
           aria-hidden
         />
         {!isLast && (
-          <div className="w-px flex-1 bg-gold/40" aria-hidden />
+          <div className="w-px flex-1 bg-accent/40" aria-hidden />
         )}
       </div>
 

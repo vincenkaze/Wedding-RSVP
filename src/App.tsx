@@ -33,7 +33,7 @@ function App() {
       {loaded && !envelopeDone && (
         <EnvelopeIntro onComplete={handleEnvelopeComplete} />
       )}
-      <main className="min-h-screen bg-bg">
+      <main className="min-h-dvh bg-bg">
         <Hero />
         <Countdown />
         <Verse />

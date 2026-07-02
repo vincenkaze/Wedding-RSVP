@@ -113,6 +113,7 @@ export const sections = {
   venue: { label: 'The Venue', heading: 'Our Venue' },
   gallery: { label: 'Moments', heading: 'Our Gallery' },
   rsvp: { label: 'Join Our Celebration', heading: 'RSVP' },
+  countdown: { label: 'Countdown', heading: 'Countdown to Our Wedding' },
 } as const
 
 export interface FamilySide {

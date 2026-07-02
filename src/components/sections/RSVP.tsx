@@ -17,7 +17,7 @@ export default function RSVPSection() {
   return (
     <section
       id="rsvp"
-      className="relative px-6 py-20 sm:py-28 md:py-32 bg-surface/50"
+      className="relative px-4 py-20 sm:px-6 sm:py-28 md:py-32 bg-surface/50"
     >
       <div className="mx-auto max-w-xl">
         {/* Section header */}
@@ -44,7 +44,7 @@ export default function RSVPSection() {
               ease: EASE_ENTRANCE,
               delay: 0.08,
             }}
-            className="mt-4 font-display text-3xl tracking-tight text-ink sm:text-4xl md:text-5xl"
+            className="mt-4 font-display text-3xl tracking-tight text-text sm:text-4xl md:text-5xl"
           >
             {sections.rsvp.heading}
           </motion.h2>

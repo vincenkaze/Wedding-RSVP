@@ -15,6 +15,7 @@ export default function CustomCursor() {
   const targetY = useRef(0)
   const currentX = useRef(0)
   const currentY = useRef(0)
+  const mountedRef = useRef(false)
 
   useEffect(() => {
     if (prefersReduced || isTouch) return
@@ -22,16 +23,19 @@ export default function CustomCursor() {
     const dot = dotRef.current
     if (!dot) return
 
+    mountedRef.current = true
+
     function onMove(e: MouseEvent) {
       targetX.current = e.clientX
       targetY.current = e.clientY
     }
 
     function animate() {
+      if (!mountedRef.current || !dotRef.current) return
       const lerp = 0.15
       currentX.current += (targetX.current - currentX.current) * lerp
       currentY.current += (targetY.current - currentY.current) * lerp
-      dot!.style.transform = `translate(${currentX.current - 6}px, ${currentY.current - 6}px)`
+      dotRef.current.style.transform = `translate(${currentX.current - 6}px, ${currentY.current - 6}px)`
       rafRef.current = requestAnimationFrame(animate)
     }
 
@@ -42,7 +46,7 @@ export default function CustomCursor() {
           'a, button, [role="button"], input, textarea, select, [role="checkbox"], [role="radio"]',
         )
       ) {
-        dot!.classList.add('cursor-hover')
+        dotRef.current?.classList.add('cursor-hover')
       }
     }
 
@@ -53,7 +57,7 @@ export default function CustomCursor() {
           'a, button, [role="button"], input, textarea, select, [role="checkbox"], [role="radio"]',
         )
       ) {
-        dot!.classList.remove('cursor-hover')
+        dotRef.current?.classList.remove('cursor-hover')
       }
     }
 
@@ -63,6 +67,7 @@ export default function CustomCursor() {
     rafRef.current = requestAnimationFrame(animate)
 
     return () => {
+      mountedRef.current = false
       document.removeEventListener('mousemove', onMove)
       document.removeEventListener('mouseenter', onEnterInteractive, true)
       document.removeEventListener('mouseleave', onLeaveInteractive, true)

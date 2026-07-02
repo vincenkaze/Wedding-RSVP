@@ -48,8 +48,12 @@ export default function GalleryImage({
         aria-describedby={captionId}
       >
         {hasError ? (
-          <span className="flex h-full w-full items-center justify-center font-body text-xs text-muted/40 select-none">
-            Image unavailable
+          <span className="flex h-full w-full items-center justify-center bg-surface">
+            <svg className="h-10 w-10 text-accent/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+            </svg>
           </span>
         ) : (
           <picture>

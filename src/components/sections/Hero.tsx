@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { motion, type Variants } from 'framer-motion'
 import { couple, wedding, hero } from '../../content/content'
 import { ChevronDown } from 'lucide-react'
@@ -38,25 +39,31 @@ const nameReveal: Variants = {
 const STAGGER = 0.08
 
 export default function Hero() {
+  const [imgError, setImgError] = useState(false)
   return (
     <section
       id="hero"
-      className="relative min-h-screen flex flex-col items-center justify-center px-6 py-20 overflow-hidden"
+      className="relative min-h-dvh flex flex-col items-center justify-center px-6 py-20 overflow-hidden"
     >
       {/* Ken Burns background image */}
       <div className="absolute inset-0 overflow-hidden" aria-hidden>
-        <picture>
-          <source srcSet={hero.imageAvif} type="image/avif" />
-          <source srcSet={hero.imageWebp} type="image/webp" />
-          <img
-            src={hero.image}
-            alt=""
-            loading="eager"
-            decoding="async"
-            fetchPriority="high"
-            className={`w-full h-full object-cover ${prefersReducedMotion ? '' : 'ken-burns'}`}
-          />
-        </picture>
+        {imgError ? (
+          <div className="h-full w-full bg-gradient-to-br from-accent/20 via-surface to-bg" />
+        ) : (
+          <picture>
+            <source srcSet={hero.imageAvif} type="image/avif" />
+            <source srcSet={hero.imageWebp} type="image/webp" />
+            <img
+              src={hero.image}
+              alt=""
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+              onError={() => setImgError(true)}
+              className={`w-full h-full object-cover ${prefersReducedMotion ? '' : 'ken-burns'}`}
+            />
+          </picture>
+        )}
       </div>
 
       {/* Dark vignette overlay */}

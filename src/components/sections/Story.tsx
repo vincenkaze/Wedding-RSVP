@@ -51,7 +51,7 @@ export default function Story() {
               ease: EASE_ENTRANCE,
               delay: 0.08,
             }}
-            className="mt-4 font-display text-3xl tracking-tight text-ink sm:text-4xl md:text-5xl"
+            className="mt-4 font-display text-3xl tracking-tight text-text sm:text-4xl md:text-5xl"
           >
             {sections.story.heading}
           </motion.h2>
@@ -79,11 +79,11 @@ export default function Story() {
           {/* Vertical gold line — desktop: center, mobile: left edge */}
           <div
             aria-hidden
-            className="absolute left-0 top-0 bottom-0 hidden w-px bg-gold/30 md:left-1/2 md:-translate-x-1/2 md:block"
+            className="absolute left-0 top-0 bottom-0 hidden w-px bg-accent/30 md:left-1/2 md:-translate-x-1/2 md:block"
           />
           <div
             aria-hidden
-            className="absolute left-0 top-0 bottom-0 w-px bg-gold/30 md:hidden"
+            className="absolute left-0 top-0 bottom-0 w-px bg-accent/30 md:hidden"
           />
 
           <div className="flex flex-col gap-12 sm:gap-16 md:gap-20">

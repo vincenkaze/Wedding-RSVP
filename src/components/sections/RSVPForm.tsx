@@ -104,7 +104,7 @@ export default function RSVPForm() {
     'font-body text-xs font-medium uppercase tracking-wider text-muted'
 
   const inputBase =
-    'w-full border-0 border-b border-border bg-transparent px-0 py-3 font-body text-sm text-ink placeholder:text-muted/40 transition-colors duration-300 focus:border-accent focus:outline-none focus:ring-0 sm:text-base'
+    'w-full border-0 border-b border-border bg-transparent px-0 py-3 font-body text-base text-text placeholder:text-muted/40 transition-colors duration-300 focus:border-accent focus:outline-none focus:ring-0 sm:text-base'
 
   const checkboxBase =
     'h-4 w-4 rounded border-border text-accent accent-accent transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent'
@@ -163,7 +163,7 @@ export default function RSVPForm() {
             initial={prefersReducedMotion() ? { opacity: 1 } : { opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.6 }}
-            className="font-display text-2xl tracking-tight text-ink sm:text-3xl"
+            className="font-display text-2xl tracking-tight text-text sm:text-3xl"
           >
             Thank you
           </motion.p>
@@ -235,7 +235,7 @@ export default function RSVPForm() {
                 onClick={() =>
                   setData({ ...data, guests: Math.max(1, data.guests - 1) })
                 }
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-border font-body text-lg text-ink transition-colors duration-200 hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-border font-body text-lg text-text transition-colors duration-200 hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 aria-label="Decrease guest count"
               >
                 &minus;
@@ -252,14 +252,14 @@ export default function RSVPForm() {
                     guests: Math.max(1, Math.min(10, Number(e.target.value) || 1)),
                   })
                 }
-                className="w-16 border-0 border-b border-border bg-transparent py-3 text-center font-body text-sm text-ink focus:border-accent focus:outline-none focus:ring-0 sm:text-base"
+                className="w-16 border-0 border-b border-border bg-transparent py-3 text-center font-body text-base text-text focus:border-accent focus:outline-none focus:ring-0 sm:text-base"
               />
               <button
                 type="button"
                 onClick={() =>
                   setData({ ...data, guests: Math.min(10, data.guests + 1) })
                 }
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-border font-body text-lg text-ink transition-colors duration-200 hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-border font-body text-lg text-text transition-colors duration-200 hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 aria-label="Increase guest count"
               >
                 +
@@ -281,7 +281,7 @@ export default function RSVPForm() {
                 {rsvp.events.map((event) => (
                   <label
                     key={event}
-                    className="flex cursor-pointer items-center gap-3 font-body text-sm text-ink sm:text-base"
+                    className="flex cursor-pointer items-center gap-3 font-body text-sm text-text sm:text-base"
                   >
                     <input
                       type="checkbox"

@@ -32,8 +32,29 @@ export default function SmoothScrollRoot({ children }: Props) {
     }
     id = requestAnimationFrame(raf)
 
+    // Re-evaluate prefers-reduced-motion on change
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    function onReducedMotionChange() {
+      const isReduced = mq.matches
+      l.options.duration = isReduced ? 0 : 1.2
+    }
+    mq.addEventListener('change', onReducedMotionChange)
+
+    // Re-init on resize/orientation change (debounced)
+    let resizeTimer: ReturnType<typeof setTimeout>
+    function onResize() {
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(() => {
+        l.resize()
+      }, 250)
+    }
+    window.addEventListener('resize', onResize, { passive: true })
+
     return () => {
       cancelAnimationFrame(id)
+      mq.removeEventListener('change', onReducedMotionChange)
+      window.removeEventListener('resize', onResize)
+      clearTimeout(resizeTimer)
       l.destroy()
     }
   }, [])
