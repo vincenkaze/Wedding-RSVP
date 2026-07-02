@@ -1,81 +1,126 @@
-🐛 Real bugs I found in your code
-🔴 Critical (broken / won't render right)
-1. Preloader.tsx line 41 — wrong color class
+Found it. The Countdown section's inner .mx-auto div starts at left=0 and is 768px wide on a 1265px viewport. It should be centered (left should be ~248px). mx-auto is being ignored.
 
-className="mt-6 font-display text-3xl tracking-tight text-ink sm:text-4xl"
-Your tokens define --color-ink? No — you have --color-text. text-ink doesn't exist — so the initials inherit whatever the parent's color is. Fix: text-text (or rename your token to ink, but right now nothing's bound).
+This is a Tailwind v4 issue. Let me check why.
 
-2. Venue.tsx — Venue name heading is broken
+Got it. Look at the first one:
 
-{venue.name.split(' ').map((word, i) => (
-  <span key={i}>
-    {word}
-    {i === 0 && <br />}
-  </span>
-))}
-This wraps each word in a span and inserts <br> after the first one — so "Domaine Carneros" renders as "Domaine\nCarneros" inside a single inline span stack. Should be on separate lines with the heading visually centered but each line is a block. Also i === 0 puts the break after "Domaine" — which is what you want, but the <span>s are inline. Fix: change spans to block class, or use a flex-col with the first word as one line and rest as the second.
+parent: SECTION
+parent_display: "flex"   ← ← ←  ← this is the bug
+The Hero section is display: flex (because of flex flex-col items-center justify-center), and its .mx-auto child has margin-left: 0. mx-auto doesn't work on flex children unless the parent is justify-center. Hero is justify-center so it works. But check the next ones — parent is DIV with display: block, and mx-auto is still 0!
 
-3. App.tsx — Lenis + Preloader + EnvelopeIntro are fighting each other This is the biggest UX bug. Lenis hijacks window.scroll and scroll-behavior: smooth (in your base.css line 7) is also trying to handle scroll. Two scroll systems + a 2-second preloader + a manual envelope = users get stuck on a blank intro with no way to know what's happening. Your EnvelopeIntro auto-completes only after 1.2s flap animation + skip-click. There's no fallback for if Lenis takes over scroll before envelope exits.
+That's because mx-auto on a block element needs width set. The element has max-w-3xl (= 768px) but in Tailwind v4, mx-auto requires explicit width for some cases. Actually wait — the width IS 768px. So why no auto margins?
 
-4. CustomCursor.tsx line 76 — non-null assertion on a possibly-null ref
+OK that hero div is in a flex flex-col items-center parent, so it's actually centered via the flex parent (not mx-auto). The width 468.7px matches the actual content. So that one's fine.
 
-dot!.style.transform = ...
-In strict TS this works, but you're using dot! in a requestAnimationFrame callback after you've checked it once. The cleanup is correct, but if React ever unmounts between the check and the RAF firing, this throws. Low priority, but real.
+The bug is in the OTHER mx-auto divs. Let me find them:
 
-5. Lightbox.tsx line 213 — style={{ scale, x, y }} typo bug
+So mx-auto IS being applied with margin-left: 0 even on a display: block parent. The width is correctly set. So margin-left: 0 means mx-auto is failing. Let me check the generated CSS to see if mx-auto is even in there.
 
-style={{ scale, x, y }}
-You defined x and y as useMotionValue(0). But motion values can't be passed as style like this — they need to be wrapped: style={{ scale, x: motionX, y: motionY }} only works if you ALSO have the motion parent bind. This is just a regular <motion.div>, so x and y are being set as the literal number 0 and never update when the user pans. Pinch-zoom translation will not work.
+Bingo. mx-auto is producing zero CSS rules in your output. That's why margin-left is 0 and the content leans left.
 
-6. Lightbox.tsx — swipe-to-dismiss not implemented dragOffset is tracked but never applied to a transform. You can swipe but the image doesn't move. Same fix as #5.
+This is a real Tailwind v4 issue. Let me check what classes ARE being generated for margin:
 
-7. EventCard.tsx line 32 — cardVariants is declared but never propagated The card is wrapped in a parent <motion.div> that animates in. But the card itself uses variants={cardVariants} — these variants exist but the parent uses a whileInView with transition.delay: i * STAGGER_SIBLING, not staggerChildren. So the inner cardVariants is dead code — the parent controls animation, and the card re-animates with its own variant. Double animation = jitter on every EventCard mount.
+So mx-auto IS defined: .mx-auto { margin-inline: auto; }. But it's not being applied. Let me check the actual element:
 
-8. Family.tsx + FamilyGroup.tsx — same double-animation pattern Same issue. The outer Family.tsx doesn't pass variants to FamilyGroup, so the inner whileInView re-fires the entrance animation. With staggerChildren 200ms apart across 2 groups, this is fine in practice — but if you ever pass staggerChildren to a parent, this breaks.
+The element matches .mx-auto but margin-inline is 0px. Something is overriding it. Let me check the cascade order.
 
-9. Story.tsx line 73 — both desktop AND mobile timeline lines are rendered as the same DOM, conflicting classes
+Found it. The parent is the Section component which is a <section> wrapping a <motion.div>. The motion.div is the actual child. Let me look at the parent structure:
 
-<div className="absolute left-0 top-0 bottom-0 hidden w-px bg-gold/30 md:left-1/2 ..." />  // desktop
-<div className="absolute left-0 top-0 bottom-0 w-px bg-gold/30 md:hidden" />  // mobile
-Tailwind v4 bg-gold/30 — is --color-gold defined? No. Your tokens define --color-accent, --color-accent-light, etc. bg-gold is undefined. Tailwind v4 will just not generate that class. So your timeline line is invisible. The whole Story section has no vertical line.
+Parent is <div style="opacity: 0;"> with no class, 1265px wide. The child is 768px with mx-auto. So mx-auto should center it... but it doesn't.
 
-Also md:hidden on the second div plus hidden md:block on the first means both render at the same time on tablet (md width). The md:left-1/2 only applies at md+; the first div has hidden so it's gone — so tablet shows only the mobile line, not centered. That's actually fine, but it means your "centered desktop timeline" never renders centered. Same bug in Events.tsx.
+Let me check if max-w-3xl is conflicting. Or check the cascade by computing all rules applied:
 
-10. Countdown.tsx line 53 — wrong label binding
+Found the smoking gun. Your base.css has:
 
-{sections.story.label}  // "Our Story"
-This is the Countdown section, but the eyebrow text says "Our Story" — copied from Story.tsx. Same in Hero.tsx's letter-expand class. Visible typo, user-facing.
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+That universal reset is wiping out Tailwind's .mx-auto { margin-inline: auto; } because the * selector has the same specificity but comes later in the cascade (since the reset is in base.css which gets imported into main.tsx, and Tailwind utilities come via the Vite plugin after).
 
-11. Venue.tsx line 60 — name split puts a <br> after the first word even if the name is one word "Château".split(' ').map(...) returns ["Château"] — fine. But "The Grand Château".split(' ') returns 3 words, and your i === 0 check inserts a <br> after the first word only, so it renders as "The\nGrand Château" — which is fine, but you should consider whether you want this for all venue names or only multi-word ones.
+Actually wait — * and .mx-auto have different specificities. .mx-auto (0,1,0) > * (0,0,0). So utilities should win. Let me check the order:
 
-12. useSmoothScroll.tsx — initialized.current prevents re-init, but never resets on resize Lenis needs re-init on orientation change for mobile. Not catastrophic, but prefers-reduced-motion is checked once on mount — if a user toggles the OS setting while the page is open, it doesn't update.
+tokens.css is imported first, and it has @import "tailwindcss"; at line 1. Then base.css is imported. The order in the stylesheet becomes:
 
-🟡 Padding / spacing issues you mentioned
-13. EventCard.tsx — internal padding inconsistent p-6 sm:p-8 is fine, but the <a> "Open in Maps" button has mt-2 (very small) and no consistent rhythm with the description above.
+Tailwind utilities (from tokens.css @import)
+base.css * reset
+So * { margin: 0 } from base.css comes after Tailwind's .mx-auto { margin-inline: auto }. Same specificity battle: but wait, .mx-auto (0,1,0) wins over * (0,0,0). So the utility should win regardless of order.
 
-14. RSVP.tsx form card padding p-6 sm:p-8 md:p-10 is fine on its own, but the section is px-6 py-20 sm:py-28 md:py-32. On a 390px-wide mobile, that means 24px outer + 24px inner = 48px of total padding, plus the form's own gap-7 between fields = cramped on small phones. Try px-4 on mobile.
+Let me actually check what rule order shows in the inspector:
 
-15. Hero.tsx — content max-w-2xl mx-auto with gap-6 sm:gap-8 md:gap-10 On a very short hero (less than 600px tall — landscape phones, split-screen), the CTA + scroll indicator can collide.
+Wait — earlier I saw .mx-auto { margin-inline: auto; } but now it returns 0. Let me search more carefully:
 
-16. Gallery.tsx — 3-column grid with gap-4 sm:gap-6 On a 390px screen, grid-cols-2 is correct, but you have md:grid-cols-3. At 768px, 3 columns means ~240px per image with 24px gaps — fine. But the aspect-[3/4] and aspect-[4/5] and aspect-square mixed together cause uneven row heights because the rows don't align to a consistent height. Looks messy. Use grid-auto-rows or fix one aspect.
+There it is — the rule that wins is:
 
-17. base.css line 7 — scroll-behavior: smooth + Lenis = conflict Pick one. Lenis is better (smoother, customizable) — remove scroll-behavior: smooth from html.
+*, ::after, ::before, ::backdrop, ::file-selector-button {
+  box-sizing: border-box;
+  margin: 0px;  ← ← ←  THIS WINS
+  padding: 0px;
+  border: 0px solid;
+}
+This is Tailwind's preflight reset. It's defined in @layer base. The order is:
 
-18. Venue.tsx — Maps embed loads even if user is on slow connection The iframe has no fetchPriority or loading control beyond the basic loading="lazy". But the useInView triggers it on amount: 0.3, so it should be fine — but on a slow connection the map div will show empty for 1-2 seconds with the placeholder icon. The placeholder is bg-cream — --color-cream isn't defined. Tailwind v4 will just not generate it. The placeholder is transparent.
+Tailwind's preflight: * { margin: 0; padding: 0; ... } (from @layer base)
+Your base.css: * { margin: 0; padding: 0; box-sizing: border-box; } (NOT in a layer)
+Tailwind's utilities: .mx-auto { margin-inline: auto; } (in @layer utilities)
+The problem: Your base.css * rule is outside any @layer, so it has higher specificity by cascade order than Tailwind's layered rules. Tailwind v4's preflight is in @layer base and your custom * reset is in the top-level cascade, so yours wins.
 
-🟢 Minor (works but ugly / could be better)
-19. tokens.css — animation tokens defined but only used via JS CSS variables --ease-entrance, --duration-cinematic etc. exist but never referenced in any CSS file — Framer Motion uses its own copies. Dead code, or intentional parity for future CSS animations? Either way, the CSS files should use them too (e.g. the ken-burns animation hardcodes 20s ease-in-out, ignoring your token).
+The fix: Move your * reset inside an @layer base so it's part of the layer system:
 
-20. Preloader.tsx — 2-second wait is too long for a returning visitor You have an envelope-seen localStorage flag, but the preloader has no such flag. Every page load = 2s preloader, even for users who already RSVPed. Add a preloader-seen flag.
+Now let me fix it. I'll wrap the reset in @layer base and also remove the redundant margin:0 (Tailwind preflight already does it, and the only thing your reset adds is box-sizing: border-box):
 
-21. Hero.tsx — loading="eager" on the hero image, but the image is broken (no /hero/couple.jpg) All your gallery/story images are referenced but don't exist in public/ — that's why I see "Image unavailable" placeholders in the snapshot. The user can fix this by adding real images, but you should also have a clean visual fallback (not just text "Image unavailable"). I'll add a styled placeholder.
+Now let me verify the fix worked:
 
-My plan to fix
-Fix all 18 critical bugs above
-Define missing colors (ink, gold, cream — or replace usages with text, accent, surface)
-Fix the Lenis / scroll-behavior: smooth conflict
-Fix Lightbox pan/swipe (apply motion values correctly)
-Fix the double-animation pattern in EventCard and FamilyGroup
-Add missing Section import to Events.tsx (you use Section pattern elsewhere but Events.tsx rolls its own — inconsistent, not a bug, but worth aligning)
-Add a preloader-seen localStorage flag
-Make the missing-image fallback actually pretty
+Fixed. margin-left is now 248.5px (which is (1265 - 768) / 2). The Countdown section is now properly centered.
+
+What was wrong
+Your base.css had:
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+But this rule was outside any @layer, so it had higher cascade priority than Tailwind's .mx-auto { margin-inline: auto; } rule (which lives inside @layer utilities). The * selector beat the class because of source order, not specificity.
+
+Tailwind v4 already resets margin: 0 and padding: 0 in its preflight (@layer base). So your reset was redundant and harmful — it was wiping out the very utilities you're trying to use.
+
+The fix
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+}
+Keeping it inside @layer base lets Tailwind's layered utility rules (like .mx-auto) win by cascade order, which is the intent. I removed the margin: 0 and padding: 0 lines because Tailwind's preflight already does that for you.
+
+This single fix was causing every section that uses mx-auto to lean left — Countdown, Story header, Family, Footer, etc. That's why it looked like a universal "leaning" problem.
+
+Let me also verify the other sections are now centered:
+
+Every .mx-auto div except index 0 is now properly centered. Index 0 is the Hero — that one is inside a flex flex-col items-center parent, so it's centered by flex, not mx-auto, which is correct.
+
+What you need to do
+I only fixed the file in the cloned copy at /home/.z/workspaces/con_KKTAdC1d0mdsXm1Z/repo-review/Wedding-RSVP/. You need to apply this same fix to your local src/styles/base.css:
+
+- /* ── Reset ── */
+- *,
+- *::before,
+- *::after {
+-   box-sizing: border-box;
+-   margin: 0;
+-   padding: 0;
+- }
++ @layer base {
++   *,
++   *::before,
++   *::after {
++     box-sizing: border-box;
++   }
++ }
+Then commit and push. The lean will be gone.
+
+Why this wasn't caught earlier
+bun run build passed because TypeScript doesn't validate CSS cascade. ESLint didn't catch it because it's CSS layer logic, not a lint rule. The only way to find it is to inspect computed styles in a real browser — which is exactly what we just did.
