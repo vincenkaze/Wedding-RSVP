@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body: "Outfit", system-ui, sans-serif;
+
+  --color-bg: #faf8f5;
+  --color-surface: #f5f0eb;
+  --color-text: #1c1917;
+  --color-text-muted: #57534e;
+  --color-accent: #b08968;
+  --color-accent-light: #ddb892;
+  --color-secondary: #9ca385;
+  --color-border: #e7e5e4;
+
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+  --spacing-32: 8rem;
+
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+}
+
+/* ── Animation Tokens ── */
+:root {
+  --ease-entrance: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-state: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-quart: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  --duration-micro: 175ms;
+  --duration-standard: 400ms;
+  --duration-cinematic: 900ms;
+
+  --stagger-sibling: 80ms;
+  --stagger-section: 200ms;
+}

@@ -1,0 +1,279 @@
+/* ── Reset ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Base ── */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  line-height: 1.6;
+  min-height: 100svh;
+}
+
+/* ── Selection ── */
+::selection {
+  background-color: var(--color-accent-light);
+  color: var(--color-text);
+}
+
+/* ── Typography ── */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+/* ── Media ── */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ── Links ── */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ── Ken Burns ── */
+@keyframes ken-burns {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.08);
+  }
+}
+
+.ken-burns {
+  animation: ken-burns 20s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* ── Scroll indicator bob ── */
+@keyframes scroll-bob {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(8px);
+    opacity: 1;
+  }
+}
+
+.scroll-indicator {
+  animation: scroll-bob 2s ease-in-out infinite;
+}
+
+/* ── Gold underline draw ── */
+@keyframes underline-draw {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.underline-draw {
+  position: relative;
+}
+
+.underline-draw::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  height: 1px;
+  background-color: var(--color-accent);
+  animation: underline-draw 1s var(--ease-entrance) 0.8s forwards;
+  width: 0;
+}
+
+/* ── Letter-spacing expand ── */
+@keyframes letter-expand {
+  from {
+    letter-spacing: 0.3em;
+  }
+  to {
+    letter-spacing: 0.5em;
+  }
+}
+
+.letter-expand {
+  animation: letter-expand 0.6s var(--ease-entrance) forwards;
+}
+
+/* ── Verse ornament flourish ── */
+@keyframes flourish-grow {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+.verse-ornament {
+  animation: flourish-grow 0.8s var(--ease-entrance) forwards;
+  transform-origin: center;
+}
+
+/* ── Maps button hover fill ── */
+.event-maps-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.event-maps-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.2s ease;
+  z-index: -1;
+}
+
+.event-maps-btn:hover::before,
+.event-maps-btn:focus-visible::before {
+  transform: scaleX(1);
+}
+
+.event-maps-btn:hover,
+.event-maps-btn:focus-visible {
+  color: var(--color-bg);
+  border-color: var(--color-accent);
+}
+
+/* ── Venue action button hover fill ── */
+.venue-action-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.venue-action-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.2s ease;
+  z-index: -1;
+}
+
+.venue-action-btn:hover::before,
+.venue-action-btn:focus-visible::before {
+  transform: scaleX(1);
+}
+
+.venue-action-btn:hover,
+.venue-action-btn:focus-visible {
+  color: var(--color-bg);
+  border-color: var(--color-accent);
+}
+
+/* ── Family name hover underline ── */
+.family-name {
+  position: relative;
+  display: inline-block;
+}
+
+.family-name::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: var(--color-accent);
+  transition: width 0.3s ease;
+}
+
+.family-name:hover::after {
+  width: 100%;
+}
+
+/* ── RSVP submit button gold fill ── */
+.rsvp-submit-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.rsvp-submit-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s var(--ease-entrance);
+  z-index: -1;
+}
+
+.rsvp-submit-btn:hover::before {
+  transform: scaleX(1);
+}
+
+/* ── Custom cursor ── */
+@media (hover: hover) and (pointer: fine) {
+  .cursor-hover {
+    transform: scale(2.5) !important;
+    opacity: 0.6 !important;
+  }
+}
+
+/* ── Grain overlay (global, body pseudo) ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  aria-hidden: true;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .ken-burns,
+  .scroll-indicator,
+  .underline-draw::after,
+  .letter-expand,
+  .verse-ornament {
+    animation: none !important;
+  }
+
+  .underline-draw::after {
+    width: 100%;
+  }
+
+  body::after {
+    display: none;
+  }
+}
