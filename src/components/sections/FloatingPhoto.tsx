@@ -206,7 +206,7 @@ export default function FloatingPhoto({
       ref={containerRef}
       {...bindDrag()}
       {...bindPinch()}
-      className={`absolute ${aspect} w-[45%] max-w-[280px] cursor-grab select-none sm:w-[35%] md:w-[28%] ${
+      className={`absolute ${aspect} w-[45%] max-w-[200px] cursor-grab select-none sm:w-[35%] sm:max-w-[260px] md:w-[28%] md:max-w-[320px] ${
         isDragging ? 'cursor-grabbing' : ''
       }`}
       style={{ touchAction: 'none' }}
