@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import RSVPForm from './RSVPForm'
-import { rsvp, sections } from '../../content/content'
+import { sections } from '../../content/content'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
 
 export default function RSVPSection() {

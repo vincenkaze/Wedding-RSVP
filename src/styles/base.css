@@ -253,13 +253,30 @@ body::after {
   aria-hidden: true;
 }
 
+/* ── Story bridge heartbeat pulse ── */
+@keyframes bridge-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+.story-bridge-pulse {
+  animation: bridge-pulse 2.4s ease-in-out infinite;
+}
+
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   .ken-burns,
   .scroll-indicator,
   .underline-draw::after,
   .letter-expand,
-  .verse-ornament {
+  .verse-ornament,
+  .story-bridge-pulse {
     animation: none !important;
   }
 

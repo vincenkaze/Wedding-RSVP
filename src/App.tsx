@@ -7,10 +7,11 @@ import Hero from './components/sections/Hero'
 import Countdown from './components/sections/Countdown'
 import Verse from './components/sections/Verse'
 import Story from './components/sections/Story'
+import StoryBridge from './components/sections/StoryBridge'
 import Events from './components/sections/Events'
 import Family from './components/sections/Family'
 import Venue from './components/sections/Venue'
-import Gallery from './components/sections/Gallery'
+import FloatingGallery from './components/sections/FloatingGallery'
 import RSVP from './components/sections/RSVP'
 import Footer from './components/sections/Footer'
 
@@ -38,10 +39,11 @@ function App() {
         <Countdown />
         <Verse />
         <Story />
+        <StoryBridge />
         <Events />
         <Family />
         <Venue />
-        <Gallery />
+        <FloatingGallery />
         <RSVP />
         <Footer />
       </main>

@@ -120,8 +120,8 @@ export const hero = {
 }
 
 export const verse: Verse = {
-  text: 'And now these three remain: faith, hope, and love. But the greatest of these is love.',
-  reference: '1 Corinthians 13:13',
+  text: 'The best thing to hold onto in life is each other.',
+  reference: 'Audrey Hepburn',
 }
 
 export const sections = {
@@ -256,7 +256,7 @@ export const gallery: GalleryItem[] = [
 ]
 
 export const rsvp: RSVP = {
-  contactNumber: '+919876543210',
+  contactNumber: '+918848038744',
   contactEmail: '',
   web3FormsEndpoint: undefined,
   successMessage:
