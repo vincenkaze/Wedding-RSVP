@@ -1,3 +1,5 @@
+import { couple } from '../content/content'
+
 interface ICSData {
   title: string
   start: string
@@ -37,14 +39,14 @@ export function generateICS(data: ICSData): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Olivia & James Wedding//EN',
+    `PRODID:-//${couple.displayName} Wedding//EN`,
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
     `DTSTART:${data.start}`,
     `DTEND:${data.end}`,
     `DTSTAMP:${dtstamp}`,
-    `UID:${data.start}-olivia-james-wedding@wedding`,
+    `UID:${data.start}-${couple.displayName.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}@wedding`,
     `SUMMARY:${escapeText(data.title)}`,
     `LOCATION:${escapeText(data.location)}`,
     `DESCRIPTION:${escapeText(data.description)}`,
@@ -64,7 +66,7 @@ export function downloadICS(data: ICSData): void {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = 'olivia-james-wedding.ics'
+  link.download = `${couple.displayName.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}.ics`
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)

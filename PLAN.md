@@ -1,605 +1,513 @@
-Wedding Invitation Project
+Wedding Invitation Project — Plan
 
 Mission
 
-Build a premium one-page wedding invitation website that feels luxurious, emotional, and memorable.
-
-The website should tell a story rather than simply present information.
-
-The final experience should work beautifully on phones because most guests will open it from WhatsApp.
-
-
+Build a premium one-page wedding invitation website that feels emotional, elegant, and cinematic. Optimized for sharing via WhatsApp, Instagram, and direct link. Single-page React app, deployed as a static site, loads fast on mid-range Android over 4G.
 
 Working Rules
 
-Complete only one milestone at a time.
+These are the rules for this project. Follow them every milestone. If a rule needs to change, update this file — don't silently ignore it.
 
-Do not begin the next milestone until the current one has been reviewed.
 
-After every milestone:
 
 
 
+All copy lives in . No copy in JSX, components, or anywhere else. This is the only file non-developers should edit.
 
 
-review the code
 
+Tokenize before styling. Use the design tokens in  (--color-accent, --font-display, --ease-entrance, etc.). No hardcoded colors, fonts, or magic numbers in components.
 
 
-improve the design
 
+No new dependencies without an explicit reason written in the milestone. If unsure, ask.
 
 
-improve performance
 
+No speculative code. Don't add props, state, or abstractions "just in case." Build what's needed now.
 
 
-identify possible problems
 
-Do not use placeholder Lorem Ipsum. Every section must show the real structure, even when content is still pending. Use clearly-marked empty states ("Names will appear here") rather than fake text.
+Animations must respect prefers-reduced-motion. Every Framer Motion entrance and every CSS animation needs a reduced-motion fallback.
 
-Animations are not decoration. Every animation must serve the story:
 
 
+Mobile-first. Test at 360px, 768px, 1440px before claiming a milestone is done.
 
 
 
-entrance: reveal what matters
+All images need alt text. Hero image needs fetchpriority="high" and AVIF/WebP sources.
 
 
 
-scroll: pace the reader
+WhatsApp in-app browser is the real test environment. If it doesn't work there, the milestone isn't done.
 
 
 
-interaction: reward a tap
+Definition of Done: every success criterion in the milestone is met, no console errors, no any, no commented-out code, lighthouse mobile ≥ 90, reviewed with the user.
 
-Performance budget per milestone:
 
 
+One milestone at a time. Don't start M2 until M1 is signed off.
 
+Working Notes (per session)
 
+Use a ## Working Notes section at the bottom of this file to capture decisions, blockers, and lessons learned during the current milestone. Once a milestone is done, move its notes into a "Lessons Learned" appendix at the bottom. Do not delete decisions — future milestones benefit from knowing why we did things.
 
-60fps on a mid-range Android (Moto G Power class)
 
 
 
-LCP < 2.5s on 4G
 
+Tech Stack
 
 
-No animation over 400ms without prefers-reduced-motion respect
 
-Stack:
 
 
 
 
+Layer
 
-Zo Site (Vite + Bun + TypeScript + React + Tailwind + shadcn)
 
 
+Technology
 
-Framer Motion for choreography
 
 
+Notes
 
-Lenis for smooth scroll
 
 
 
-Deployed as published Zo Site, custom domain optional
 
+Runtime + Package Manager
 
 
-Milestone 0 — Foundation
 
-Goals
+Bun
 
 
 
+faster than npm, drop-in
 
 
-Create Zo Site project
 
 
 
-Install dependencies (framer-motion, lenis, lucide-react)
+Build
 
 
 
-Establish design tokens: typography, color, spacing, radii, shadows
+Vite 8
 
 
 
-Establish animation tokens: easings, durations, stagger rules
+zero-config React + TS
 
 
 
-Set up base layout: full-height sections, smooth scroll provider, noise/grain texture
 
 
+UI Framework
 
-Wire up a <Section> primitive that handles reveal-on-scroll consistently
 
-Success Criteria
 
+React 19 + TypeScript 6
 
 
 
+strict mode, no any
 
-Site builds and runs
 
 
 
-Empty home page with the design system applied (cream + ink + gold + serif)
 
+Styling
 
 
-Smooth scroll active
 
+Tailwind CSS 4
 
 
-Reduced-motion preference respected
 
+@tailwindcss/vite plugin, design tokens in @theme
 
 
-No layout shift on load
 
 
 
-Milestone 1 — Hero
+Animation
 
-Goals
 
 
+Framer Motion 12
 
 
 
-Full-bleed hero with the couple's photo
+entrance, stagger, scroll-reveal only
 
 
 
-Soft Ken Burns zoom on the image (very slow, ~20s loop)
 
 
+Smooth Scroll
 
-Staggered entrance: "Save the Date" → names → date → location → RSVP button
 
 
+Lenis
 
-Each line fades up with 80ms stagger, 600ms ease-out
 
 
+tuned touchMultiplier for WhatsApp in-app
 
-"Save the Date" uses a 0.4s letter-spacing expand
 
 
 
-Names use a serif display with a subtle mask reveal (clip-path wipe left → right, 1.2s)
 
+Icons
 
 
-Date appears with a thin gold underline that draws itself (1s)
 
+lucide-react
 
 
-Floating "scroll" indicator with a 2s bobbing loop
 
+tree-shaken
 
 
-Subtle film grain overlay (2% opacity SVG noise)
 
-Success Criteria
 
 
+Calendar
 
 
 
-Looks excellent on desktop and mobile
+Custom 
 
 
 
-Entrance plays once on first scroll into view, never again (no jank on revisit)
+generates valid RFC 5545 VCALENDAR
 
 
 
-Lighthouse performance score ≥ 90 on mobile
 
 
+Form Delivery
 
-All animation respects prefers-reduced-motion
 
 
+WhatsApp deep link + Web3Forms
 
-Milestone 2 — Countdown & Verse
 
-Goals
 
+WhatsApp is the primary path, email is fallback
 
+No new dependencies without a written reason. If a new package is needed, add it in the relevant milestone with explicit justification.
 
+Design Direction
 
 
-Live countdown to wedding date, updates every second
 
 
 
-Numbers animate on digit change (flip-up, 200ms, spring)
+Theme: Black-and-white with single accent color. Monochrome for timelessness, accent for emotional highlights.
 
 
 
-Background: very subtle paper texture, cream
+Hero: Couple photo with b&w treatment. Couples names in elegant display serif. Date and venue in tracked-out caps.
 
 
 
-Verse section: italic serif, centered, with a thin gold rule that draws in on scroll
+Aesthetic: Kerala traditional invitation influence — Ganesha icon ornament, ornate dividers, serif typography. Modern, not nostalgic.
 
 
 
-Verse fades in line-by-line (3 lines, 150ms stagger)
+Photography: All photos in monochrome (CSS filter: grayscale(100%)) to match the black-and-white invitation print.
 
 
 
-A small ornamental flourish above and below the verse (CSS / SVG, fades in)
+Mood: Sacred, elegant, intimate. Not festive. Not a SaaS landing page.
 
-Success Criteria
 
 
 
 
+Content
 
-Countdown is accurate to the second
 
 
+All copy is locked in . Update there, not in components. The values below are the final copy for this wedding.
 
-No layout jump as numbers change
+Couple
 
+export const couple = {
+  bride: {
+    firstName: 'Anjana',
+    displayName: 'Anjana',
+    fullName: 'Anjana Sivanandan',
+  },
+  groom: {
+    firstName: 'Krishnaprasad',
+    displayName: 'Krishnaprasad',
+    fullName: 'Krishnaprasad Thulasidas',
+  },
+  displayName: 'Anjana & Krishnaprasad',
+  monogram: 'A & K', // for envelope intro
+}
 
+Wedding
 
-Verse feels like a held breath, not a heading
+export const wedding = {
+  date: 'Sunday, September 13, 2026',
+  dateShort: 'September 13, 2026',
+  time: '10:00 AM – 10:30 AM (Muhurtham)',
+  timeShort: '10:00 AM',
+  timezone: 'IST (UTC+5:30)',
+  iso: '2026-09-13T10:00:00+05:30', // used by Countdown
+  malayalamDate: '1202 Chingam 28',
+  weekday: 'Sunday',
+  day: 13,
+  month: 'September',
+  year: 2026,
+  location: 'Cherthala, Alappuzha, Kerala',
+}
 
+Venue
 
+export const venue = {
+  name: 'Akhilanjali Convention Centre',
+  region: 'Cherthala, Alappuzha, Kerala',
+  address: 'Akhilanjali Convention Centre, Cherthala, Alappuzha, Kerala',
+  mapsQuery: 'Akhilanjali Convention Centre, Cherthala',
+  mapsEmbedUrl: '<Google Maps embed>',
+  website: '',
+}
 
-Milestone 3 — Our Story
+Family
 
-Goals
+export const family = {
+  bride: {
+    label: "The Bride's Family",
+    parents: ['Mr. Sivannandan K.K', 'Mrs. Usha Sivanandan'],
+    address: 'Kaniyamparambil House, Pallippuram P.O, Cherthala, Alappuzha',
+    phone: ['+91 96567 48405', '+91 88480 38744'],
+  },
+  groom: {
+    label: "The Groom's Family",
+    parents: ['Late Mr. Thulasidas', 'Mrs. Ushakumari'],
+    address: 'Villadath House, Chelakkara (PO), Kolathur, Thrissur',
+  },
+}
 
+RSVP
 
+export const rsvp = {
+  deadline: 'August 30, 2026',
+  contactNumber: '+919876543210', // TBD — confirm with user
+  contactEmail: '',               // TBD
+  successMessage: 'Thank you, {name}! We look forward to celebrating with you.',
+  events: ['Wedding Ceremony — Sept 13'],
+  dietaryOptions: [
+    'No dietary restrictions',
+    'Vegetarian',
+    'Vegan',
+    'Other (please specify in message)',
+  ],
+}
 
+Verse (optional)
 
 
-Section opens with a small caption ("How it began") that fades in
 
+TBD with user. Common options: Sanskrit shloka, Bhagavad Gita verse, Bible verse, or a family quote. If user provides, use it. Otherwise omit the section.
 
 
-Story body: 2–3 short paragraphs, max-width prose, fade in as a single block
 
 
 
-Timeline: 4 milestone dots down a vertical gold line
+Information Architecture (Final)
 
+Single-page vertical scroll, in order. The "Our Story" section has been removed at user's request — wedding site jumps from Countdown to Events.
 
 
-Each milestone: dot pulses once on scroll into view, year slides in from left, title fades in, paragraph fades in from right
 
 
 
-Stagger: 200ms between milestones
+Hero — full-bleed b&w photo, Ganesha ornament, couple names, date, RSVP CTA, scroll indicator
 
 
 
-Milestone photo (when present) reveals with a soft scale (0.95 → 1) and a 3° rotate reset, 800ms
+Countdown — days/hours/minutes/seconds
 
-Success Criteria
 
 
+Family — bride's family + groom's family, side-by-side with ornate divider (no Our Story)
 
 
 
-Timeline reads like a journey, not a list
+Events — single Wedding Ceremony card (Muhurtham 10:00–10:30 AM, Sept 13)
 
 
 
-Works with 2 milestones, 4 milestones, or 6 milestones (no hardcoded count)
+Venue — Akhilanjali Convention Centre, embedded Google Map, address, directions, add to calendar
 
 
 
-Mobile timeline switches to a slightly tighter rhythm
+Gallery — b&w photos with lightbox
 
 
 
-Milestone 4 — Events
+RSVP — name, guest count, dietary, message → WhatsApp + Web3Forms
 
-Goals
 
 
+Footer — couple names, date, location, small credit
 
+Removed (per user): Our Story section. The timeline and prose about how they met is dropped.
 
 
-Section title fades up
 
 
 
-4 event cards (Haldi, Mehendi, Wedding, Reception) enter with a stagger
+Animation System
 
+Motion split (non-negotiable)
 
 
-Each card: slides up 24px, fades in, 500ms ease-out, 120ms stagger
 
 
 
-Card has a soft inner glow on hover (desktop) / on tap highlight (mobile)
+Framer Motion for: entrance, scroll-reveal, stagger, layout transitions
 
 
 
-Card content: date, time, event name, venue, "Open in Maps" button
+CSS for: hover, focus, micro-interactions, loading shimmer, photo grayscale, button fills
 
+Animating hovers in JS causes re-render thrash. Keep motion in CSS unless it needs orchestration.
 
+Photo treatment
 
-"Open in Maps" button: subtle gold border that fills from left on hover (200ms)
+All gallery and hero photos apply filter: grayscale(100%) contrast(1.05) brightness(0.98) in CSS. On hover/focus, the grayscale reduces slightly (grayscale(80%)) for a subtle color reveal — optional, can be omitted.
 
+.photo-bw {
+  filter: grayscale(100%) contrast(1.05);
+  transition: filter 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.photo-bw:hover {
+  filter: grayscale(85%) contrast(1.05);
+}
 
+Preferred motion types
 
-A connecting line runs down the left of the cards (desktop), visible on mobile as a top border between cards
 
-Success Criteria
 
 
 
+fade-in
 
 
-All 4 events fit on a phone screen without scrolling between them feeling cramped
 
+blur-to-clear
 
 
-Card layout reads cleanly at 360px width
 
+scale (0.96 → 1)
 
 
-Maps links open in the user's maps app, not in a browser tab (where possible)
 
+clip-path reveal
 
 
-Milestone 5 — Family
 
-Goals
+underline draw
 
 
 
+stagger (60–100ms siblings, 150–250ms sections)
 
+Avoid
 
-Two-column layout on desktop, stacked on mobile
 
 
 
-Each family section: a small caption ("The Bride's Family"), names with a serif treatment, parents' names
 
+bouncing
 
 
-Section enters with a centered fade-up
 
+spinning
 
 
-A delicate SVG flourish sits between the two columns on desktop (fades in last)
 
+particle effects
 
 
-Hovering a name shows a soft gold underline (desktop only, 150ms)
 
-Success Criteria
+anything that competes with the photo
 
+Easing
 
 
 
 
-Feels reverent, not data-heavy
 
+Default entrance: [0.22, 1, 0.36, 1] (ease-out-quart)
 
 
-Mobile stacks gracefully with a thin gold divider between
 
+State changes: [0.4, 0, 0.2, 1] (ease-in-out)
 
 
-Milestone 6 — Venue
 
-Goals
+Never linear for UI motion
 
+Duration
 
 
 
 
-Venue name fades up, address fades in 200ms later
 
+Micro: 150–200ms
 
 
-Embedded Google Map: a mask reveal (clip-path inset) that opens from center outward over 1.2s when scrolled into view
 
+Standard: 300–500ms
 
 
-"Open in Google Maps" button: outlined → filled on hover/tap
 
+Cinematic: 600–1200ms
 
 
-"Add to Calendar" button below the map: generates an .ics file client-side, no backend
 
+Anything over 400ms must respect prefers-reduced-motion
 
 
-Optional: a small "Travel & Stay" mini-section below (collapsible)
 
-Success Criteria
 
 
+Performance Budget
 
 
 
-Map loads lazily (only when in viewport)
 
 
+Lighthouse mobile: ≥ 90 (all four categories)
 
-No CLS when map loads
 
 
+LCP: < 2.5s on 4G throttled
 
-.ics file opens in Apple Calendar / Google Calendar correctly
 
 
+CLS: < 0.1
 
-Milestone 7 — Gallery
 
-Goals
 
+INP: < 200ms
 
 
 
-
-Responsive 2-col mobile, 3-col desktop grid
-
-
-
-Images reveal with a stagger as the section enters view
-
-
-
-Each image has a soft Ken Burns on hover (desktop) / gentle scale on tap (mobile)
-
-
-
-Tap an image → full-screen lightbox with swipe between photos, ESC to close, pinch-zoom
-
-
-
-Lightbox: dark backdrop with a 200ms fade, image fades + scales from 0.96
-
-
-
-Captions appear under the lightbox image with a 300ms delay
-
-Success Criteria
-
-
-
-
-
-20 images load without jank
-
-
-
-Uses loading="lazy" and decoding="async"
-
-
-
-WebP / AVIF served where supported
-
-
-
-Total gallery payload < 2MB
-
-
-
-Milestone 8 — RSVP
-
-Goals
-
-
-
-
-
-"Will You Join Us?" heading fades up
-
-
-
-Form fields stagger in (name → guests → event checkboxes → dietary → submit), 100ms each
-
-
-
-Inputs: thin underline style, label floats up on focus (300ms ease)
-
-
-
-Submit button: gold fill on hover, ink color swap
-
-
-
-On submit: form fades out (200ms), a checkmark draws in (SVG path animation, 600ms), "Thank you" text fades in
-
-
-
-Two RSVP paths:
-
-
-
-
-
-
-WhatsApp deep link (primary — pre-fills a message to a chosen number)
-
-
-
-Form submit to a Web3Forms endpoint (fallback for guests who don't use WhatsApp)
-
-
-
-Optional: deadline countdown ("RSVP by 31 January")
-
-Success Criteria
-
-
-
-
-
-Form never blocks the UI
-
-
-
-Submit is optimistic — success state shows immediately
-
-
-
-If WhatsApp is the chosen path, the link is pre-filled with the guest's name + event selection
-
-
-
-Milestone 9 — Polish
-
-Goals
-
-
-
-
-
-Smooth scroll tuning (Lenis easing curve)
-
-
-
-Preloader: thin gold line draws across the top, couple's initials fade in over 1.2s, then page enters
-
-
-
-Envelope-open animation on first visit (svg of an envelope, flap rotates open, page enters) — only on first load, stored in localStorage
-
-
-
-Background music: floating bottom-right button, fades in after 3s, mute toggle
-
-
-
-Noise/grain overlay across the whole page at 2% opacity
-
-
-
-Custom cursor on desktop: small gold dot that grows on hover over interactive elements
-
-
-
-Footer: names + date in a serif, tiny "Made with love" line
-
-Success Criteria
-
-
-
-
-
-All animation timings are consistent with the design tokens
+60fps on mid-range Android (Moto G Power class)
 
 
 
@@ -607,50 +515,614 @@ No animation longer than 1.2s
 
 
 
-No content shift anywhere
+All animations gated by prefers-reduced-motion
 
 
 
-Lighthouse score ≥ 95 on mobile
+<picture> with AVIF → WebP → JPEG fallback for all photos
 
 
 
-All animations respect prefers-reduced-motion
+Hero image: AVIF, preloaded, 1600px max
 
 
 
-Final Review
-
-Before deployment:
+Gallery: AVIF, lazy-loaded, 1200px max
 
 
 
+Total JS bundle target: < 200KB gzipped
 
-
-mobile testing (iPhone Safari, Android Chrome, WhatsApp in-app browser)
-
-
-
-tablet testing
+Image specs
 
 
 
-desktop testing (1440, 1920)
 
 
 
-accessibility review (contrast, focus states, ARIA on interactive elements, alt text on all images)
+
+Slot
 
 
 
-performance review (Lighthouse, bundle size, image weight)
+Size
 
 
 
-animation review (no jank, no overlap, no premature triggers)
+Format
 
 
 
-WhatsApp share preview check (OG image, title, description)
+Notes
 
-Only deploy when all checks pass.
+
+
+
+
+Hero
+
+
+
+1600×1067
+
+
+
+AVIF + WebP + JPEG
+
+
+
+preloaded, ken-burns subtle
+
+
+
+
+
+Gallery
+
+
+
+1200×1500
+
+
+
+AVIF + WebP + JPEG
+
+
+
+grayscale, lazy
+
+
+
+
+
+Favicon
+
+
+
+32×32
+
+
+
+SVG
+
+
+
+Ganesha glyph
+
+
+
+
+
+OG image
+
+
+
+1200×630
+
+
+
+AVIF + JPEG
+
+
+
+social sharing
+
+
+
+
+
+File Structure
+
+src/
+  components/
+    primitives/
+      Section.tsx          # generic section wrapper, scroll-reveal
+      FadeUp.tsx           # child reveal variant
+      Preloader.tsx        # 2-second initial loader
+      EnvelopeIntro.tsx    # 1-time envelope animation
+      MusicControl.tsx     # bottom-right audio toggle
+      CustomCursor.tsx     # desktop-only, disabled on touch
+    sections/
+      Hero.tsx
+      Countdown.tsx
+      Family.tsx
+      Events.tsx
+      Venue.tsx
+      Gallery.tsx
+      RSVP.tsx
+      Footer.tsx
+  hooks/
+    useSmoothScroll.tsx    # Lenis context + provider
+  lib/
+    ics.ts                 # calendar file generation
+    wa.ts                  # WhatsApp deep link helpers
+  content/
+    content.ts             # ALL copy — single source of truth
+  styles/
+    tokens.css             # @theme + animation tokens
+    base.css               # reset + body + photo-bw
+  App.tsx                  # composition
+  main.tsx                 # root + providers
+
+
+
+
+
+Milestones
+
+Each milestone ships when all success criteria are met AND you've reviewed the demo. Don't move on until you have.
+
+M0 — Project setup
+
+Goal: A Vite app that builds, lints, and runs.
+
+Success criteria:
+
+
+
+
+
+bun install && bun run dev boots in < 1s
+
+
+
+bun run build passes
+
+
+
+TypeScript strict, no any
+
+
+
+Tailwind tokens + base CSS work
+
+
+
+Lenis smooth scroll active
+
+
+
+Dev server reachable from mobile on same network
+
+M1 — Content layer + tokens
+
+Goal: All copy and design tokens locked in code.
+
+Success criteria:
+
+
+
+
+
+ exports typed content matching the Content section above
+
+
+
+ has full theme palette + animation tokens
+
+
+
+ has reset, body, .photo-bw utility
+
+
+
+App renders all sections as empty placeholders with correct vertical order
+
+
+
+Hero shows "Anjana weds Krishnaprasad" with Sept 13, 2026 + Cherthala
+
+
+
+Countdown shows live ticker to Sept 13, 2026 10:00 IST
+
+M2 — Hero, Countdown, Footer
+
+Goal: Top of page feels complete and cinematic.
+
+Success criteria:
+
+
+
+
+
+Hero: pre-title, names (clip-path reveal), date, RSVP CTA, ken-burns background, scroll indicator
+
+
+
+Countdown: four cards (days/hours/minutes/seconds), tabular-nums, updates every 1s
+
+
+
+Footer: names, date, copyright
+
+
+
+All entrance animations respect prefers-reduced-motion
+
+
+
+Mobile (360px), tablet (768px), desktop (1440px) all look correct
+
+
+
+Lighthouse: Performance ≥ 90, Accessibility ≥ 90
+
+M3 — Family + Events
+
+Goal: Family and event timeline are visually balanced with the rest.
+
+Success criteria:
+
+
+
+
+
+Family: bride side and groom side, gold flourish divider between
+
+
+
+Events: vertical timeline with dots, four event cards (or just two for the engagement+reception)
+
+
+
+All cards have map links and event descriptions
+
+
+
+Stagger animations between cards
+
+
+
+Tested at 360 / 768 / 1440px
+
+M4 — Venue + Maps
+
+Goal: Venue section is functional and informative.
+
+Success criteria:
+
+
+
+
+
+Map embed loads only when in view (lazy iframe)
+
+
+
+"Open in Maps" + "Directions" + "Add to Calendar" + "Visit Website" buttons work
+
+
+
+.ics file generates and downloads on "Add to Calendar" click
+
+
+
+Travel & Stay section collapsible
+
+
+
+No layout shift when map loads
+
+M5 — Gallery
+
+Goal: Photo grid with lightbox.
+
+Success criteria:
+
+
+
+
+
+Masonry-ish or simple 2/3 column grid (responsive)
+
+
+
+All photos grayscale by default
+
+
+
+Lightbox: open on click, keyboard nav (arrow keys, Escape), focus trap, swipe on mobile
+
+
+
+Each image: <picture> with AVIF + WebP + JPEG, lazy-loaded
+
+
+
+Hero + gallery all in .photo-bw class
+
+M6 — RSVP
+
+Goal: RSVP form works end-to-end.
+
+Success criteria:
+
+
+
+
+
+Form fields: name, guests (number), events (checkboxes), dietary, message
+
+
+
+Validation: name required, guests 1–10
+
+
+
+Submit opens WhatsApp deep link (pre-filled) AND posts to webhook (if configured)
+
+
+
+Success state with checkmark animation
+
+
+
+Webhook URL in  for future backend (currently optional)
+
+
+
+Works with keyboard only
+
+M7 — Interactions & polish
+
+Goal: Every interaction feels premium.
+
+Success criteria:
+
+
+
+
+
+All buttons have hover fill, focus ring, active state
+
+
+
+All links have underline-on-hover (gold, draw animation)
+
+
+
+Smooth scroll from RSVP CTA → RSVP section works
+
+
+
+Music control persists, volume is 30%, has play/pause with correct icon
+
+
+
+Custom cursor on desktop, disabled on touch ((hover: none))
+
+
+
+Reduced-motion users get static layout, no auto-playing audio, no parallax
+
+M8 — Pre-flight & deploy
+
+Goal: Production-ready.
+
+Success criteria:
+
+
+
+
+
+Test on iPhone Safari, Android Chrome, WhatsApp in-app browser, Instagram in-app browser
+
+
+
+Lighthouse mobile ≥ 90 on all four categories
+
+
+
+No console errors or warnings
+
+
+
+Bundle size < 200KB gzipped
+
+
+
+All images optimized to AVIF (with WebP + JPEG fallbacks)
+
+
+
+.env keys for RSVP webhook set
+
+
+
+Deployed to Vercel/Netlify, custom domain pointed
+
+
+
+Open Graph image renders correctly when shared to WhatsApp/Instagram
+
+
+
+
+
+Definition of Done (every milestone)
+
+A milestone is not done when the code is written. It's done when:
+
+
+
+
+
+All success criteria in the milestone are met
+
+
+
+Tested on iPhone Safari, Android Chrome, WhatsApp in-app browser
+
+
+
+Lighthouse mobile score ≥ 90
+
+
+
+No console errors or warnings
+
+
+
+No any, no console.log, no commented-out code
+
+
+
+Animations respect prefers-reduced-motion
+
+
+
+Review pass: responsiveness (360 / 768 / 1440), accessibility, animation smoothness, code readability, performance
+
+
+
+User has reviewed the demo before moving on
+
+
+
+The WhatsApp Test
+
+Most guests will open this site from inside WhatsApp's in-app browser. This is the real test environment.
+
+Before considering any milestone done:
+
+
+
+
+
+Test in WhatsApp in-app browser on iOS
+
+
+
+Test in WhatsApp in-app browser on Android
+
+
+
+Test in Instagram in-app browser
+
+
+
+Test in Safari iOS
+
+
+
+Test in Chrome Android
+
+Common things that break in these browsers:
+
+
+
+
+
+100vh (use 100svh or 100dvh)
+
+
+
+Custom cursors (disable on (hover: none))
+
+
+
+CSS gradients and some filters
+
+
+
+Audio autoplay (always require user interaction)
+
+
+
+Smooth scroll libraries (Lenis needs touchMultiplier tuned)
+
+
+
+Fixed positioning with dynamic keyboards
+
+If it doesn't work in WhatsApp, it doesn't work.
+
+
+
+Risks & Open Questions
+
+
+
+
+
+
+
+Risk
+
+
+
+Mitigation
+
+
+
+
+
+The actual photos aren't in black & white in source
+
+
+
+The .photo-bw CSS filter applies regardless of source. Originals should still be color (easier to repurpose), the filter creates the look on-site.
+
+
+
+
+
+WhatsApp blocks autoplay audio
+
+
+
+Music control requires user tap to start, no autoplay.
+
+
+
+
+
+Custom fonts fail to load in low-bandwidth
+
+
+
+font-display: swap on all Google Fonts. Body and display fonts have system fallbacks.
+
+
+
+
+
+RSVP webhook not ready at launch
+
+
+
+WhatsApp deep link is the primary submission path. Webhook is optional.
+
+
+
+
+
+Date math errors in countdown
+
+
+
+Use ISO string in , new Date(wedding.iso).getTime() for target. Test with mocked clock.
+
+
+

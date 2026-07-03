@@ -1,6 +1,6 @@
 import { useState, useCallback, type FormEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { rsvp } from '../../content/content'
+import { couple, rsvp } from '../../content/content'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
 
 interface FormData {
@@ -13,7 +13,7 @@ interface FormData {
 
 function buildWhatsAppUrl(data: FormData): string {
   const lines = [
-    `Hi! I'm ${data.name} and I'm RSVPing for Olivia & James's wedding.`,
+    `Hi! I'm ${data.name} and I'm RSVPing for ${couple.displayName}'s wedding.`,
     '',
     `Guests: ${data.guests}`,
   ]

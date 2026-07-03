@@ -3,16 +3,8 @@ import RSVPForm from './RSVPForm'
 import { rsvp, sections } from '../../content/content'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
 
-function getDaysRemaining(deadline: string): number {
-  const now = new Date()
-  const target = new Date(deadline)
-  const diff = target.getTime() - now.getTime()
-  return Math.max(0, Math.ceil(diff / 86400000))
-}
-
 export default function RSVPSection() {
   const prefersReducedMotion = useReducedMotion()
-  const daysLeft = getDaysRemaining(rsvp.deadline)
 
   return (
     <section
@@ -48,26 +40,6 @@ export default function RSVPSection() {
           >
             {sections.rsvp.heading}
           </motion.h2>
-
-          {daysLeft > 0 && (
-            <motion.p
-              initial={
-                prefersReducedMotion
-                  ? undefined
-                  : { opacity: 0, y: 8, filter: 'blur(2px)' }
-              }
-              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              viewport={{ once: true }}
-              transition={{
-                duration: DURATION_CINEMATIC,
-                ease: EASE_ENTRANCE,
-                delay: 0.16,
-              }}
-              className="mt-4 font-body text-sm text-muted"
-            >
-              RSVP by {rsvp.deadline} — {daysLeft} day{daysLeft !== 1 ? 's' : ''} remaining
-            </motion.p>
-          )}
         </div>
 
         {/* Form card */}
