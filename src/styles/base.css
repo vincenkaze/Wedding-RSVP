@@ -269,6 +269,25 @@ body::after {
   animation: bridge-pulse 2.4s ease-in-out infinite;
 }
 
+/* ── Floating gallery cursor states ── */
+.cursor-grab {
+  cursor: grab;
+}
+
+.cursor-grab:active {
+  cursor: grabbing;
+}
+
+/* Rotate handle affordance */
+.float-handle {
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.float-handle:hover {
+  transform: scale(1.1);
+}
+
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   .ken-burns,

@@ -1,66 +1,47 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { gallery, sections } from '../../content/content'
-import FloatingImage from './FloatingImage'
+import FloatingPhoto from './FloatingPhoto'
 import Lightbox from './Lightbox'
+import {
+  getResponsiveScatterPositions,
+  type ScatterPosition,
+} from './scatter-positions'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
-
-const REPULSION_RADIUS = 200
-const REPULSION_STRENGTH = 24
-
-function useRepulsion() {
-  const [offsets, setOffsets] = useState(() =>
-    Array.from({ length: gallery.length }, () => ({ x: 0, y: 0 })),
-  )
-  const rafRef = useRef(0)
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = requestAnimationFrame(() => {
-        const rect = e.currentTarget.getBoundingClientRect()
-        const mx = e.clientX - rect.left
-        const my = e.clientY - rect.top
-
-        setOffsets((prev) =>
-          prev.map((_, i) => {
-            const img = e.currentTarget.children[i] as HTMLElement | undefined
-            if (!img) return { x: 0, y: 0 }
-
-            const imgRect = img.getBoundingClientRect()
-            const cx = imgRect.left - rect.left + imgRect.width / 2
-            const cy = imgRect.top - rect.top + imgRect.height / 2
-
-            const dx = cx - mx
-            const dy = cy - my
-            const dist = Math.sqrt(dx * dx + dy * dy)
-
-            if (dist > REPULSION_RADIUS || dist === 0) return { x: 0, y: 0 }
-
-            const force = (1 - dist / REPULSION_RADIUS) * REPULSION_STRENGTH
-            return {
-              x: (dx / dist) * force,
-              y: (dy / dist) * force,
-            }
-          }),
-        )
-      })
-    },
-    [],
-  )
-
-  const handleMouseLeave = useCallback(() => {
-    cancelAnimationFrame(rafRef.current)
-    setOffsets((prev) => prev.map(() => ({ x: 0, y: 0 })))
-  }, [])
-
-  return { offsets, handleMouseMove, handleMouseLeave }
-}
 
 export default function FloatingGallery() {
   const prefersReducedMotion = useReducedMotion()
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
-  const { offsets, handleMouseMove, handleMouseLeave } = useRepulsion()
+  const [topmostIndex, setTopmostIndex] = useState<number | null>(null)
+  const [scatterPositions, setScatterPositions] = useState<ScatterPosition[]>(
+    () => getResponsiveScatterPositions(gallery.length, 1024),
+  )
+  const canvasRef = useRef<HTMLDivElement>(null)
+
+  // Recalculate positions on resize
+  useEffect(() => {
+    const updatePositions = () => {
+      const width = canvasRef.current?.clientWidth ?? 1024
+      setScatterPositions(getResponsiveScatterPositions(gallery.length, width))
+    }
+
+    updatePositions()
+
+    const observer = new ResizeObserver(updatePositions)
+    if (canvasRef.current) {
+      observer.observe(canvasRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
+
+  const handleBringToFront = useCallback((index: number) => {
+    setTopmostIndex(index)
+  }, [])
+
+  const handleActivate = useCallback((index: number) => {
+    setLightboxIndex(index)
+  }, [])
 
   return (
     <section id="gallery" className="relative px-6 py-20 sm:py-28 md:py-32">
@@ -97,17 +78,20 @@ export default function FloatingGallery() {
 
         {/* Floating canvas */}
         <div
-          className="relative grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3"
-          onMouseMove={prefersReducedMotion ? undefined : handleMouseMove}
-          onMouseLeave={prefersReducedMotion ? undefined : handleMouseLeave}
+          ref={canvasRef}
+          className="relative mx-auto h-[400px] w-full sm:h-[450px] md:h-[550px]"
+          style={{ overflow: 'visible' }}
         >
           {gallery.map((item, i) => (
-            <FloatingImage
+            <FloatingPhoto
               key={item.src}
               {...item}
               index={i}
-              onOpen={setLightboxIndex}
-              repulsion={offsets[i]}
+              total={gallery.length}
+              initialPosition={scatterPositions[i]}
+              onActivate={handleActivate}
+              onBringToFront={handleBringToFront}
+              isTopmost={topmostIndex === i}
             />
           ))}
         </div>
