@@ -54,14 +54,6 @@ export interface Venue {
   }
 }
 
-export interface StoryMilestone {
-  year: string
-  title: string
-  body: string
-  image?: string
-  imageAlt?: string
-}
-
 export interface GalleryItem {
   src: string
   srcWebp?: string
@@ -83,6 +75,13 @@ export interface RSVP {
 export interface Verse {
   text: string
   reference?: string
+}
+
+export interface LiveStream {
+  youtubeVideoId: string
+  channelName: string
+  channelUrl: string
+  liveStartIso: string
 }
 
 export const couple: Couple = {
@@ -125,7 +124,7 @@ export const verse: Verse = {
 }
 
 export const sections = {
-  story: { label: 'Our Story', heading: 'How It Began' },
+  story: { label: 'Watch Live', heading: 'Ceremony Live Stream' },
   events: { label: 'Join Us', heading: 'The Celebration' },
   family: { label: 'Our Families', heading: 'Honored Parents' },
   venue: { label: 'The Venue', heading: 'Our Venue' },
@@ -199,10 +198,12 @@ export const venue: Venue = {
   },
 }
 
-export const storyPrologue =
-  'Every love story has a beginning \u2014 a single moment when two lives converge and something beautiful begins to unfold. This is ours.'
-
-export const storyTimeline: StoryMilestone[] = []
+export const liveStream: LiveStream = {
+  youtubeVideoId: '',
+  channelName: '',
+  channelUrl: '',
+  liveStartIso: '2026-09-13T10:00:00+05:30',
+}
 
 export const gallery: GalleryItem[] = [
   {

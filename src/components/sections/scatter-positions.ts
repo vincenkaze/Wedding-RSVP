@@ -1,6 +1,6 @@
 export interface ScatterPosition {
-  x: number
-  y: number
+  leftPct: number
+  topPct: number
   rotation: number
   scale: number
 }
@@ -16,107 +16,74 @@ function mulberry32(seed: number): () => number {
   }
 }
 
-interface ViewportBounds {
-  minX: number
-  maxX: number
-  minY: number
-  maxY: number
+interface ScatterBounds {
+  leftMin: number
+  leftMax: number
+  topMin: number
+  topMax: number
   minRotation: number
   maxRotation: number
   minScale: number
   maxScale: number
 }
 
-const MOBILE: ViewportBounds = {
-  minX: -20,
-  maxX: 20,
-  minY: -10,
-  maxY: 30,
-  minRotation: -4,
-  maxRotation: 4,
-  minScale: 0.85,
+// Percentage-based bounds: photos spread across canvas area
+const MOBILE: ScatterBounds = {
+  leftMin: 5,
+  leftMax: 55,
+  topMin: 5,
+  topMax: 65,
+  minRotation: -5,
+  maxRotation: 5,
+  minScale: 0.88,
   maxScale: 1.05,
 }
 
-const TABLET: ViewportBounds = {
-  minX: -30,
-  maxX: 30,
-  minY: -20,
-  maxY: 40,
+const TABLET: ScatterBounds = {
+  leftMin: 5,
+  leftMax: 60,
+  topMin: 5,
+  topMax: 60,
   minRotation: -6,
   maxRotation: 6,
-  minScale: 0.85,
+  minScale: 0.88,
   maxScale: 1.1,
 }
 
-const DESKTOP: ViewportBounds = {
-  minX: -60,
-  maxX: 60,
-  minY: -30,
-  maxY: 50,
-  minRotation: -8,
-  maxRotation: 8,
-  minScale: 0.9,
-  maxScale: 1.15,
+const DESKTOP: ScatterBounds = {
+  leftMin: 3,
+  leftMax: 62,
+  topMin: 3,
+  topMax: 58,
+  minRotation: -7,
+  maxRotation: 7,
+  minScale: 0.92,
+  maxScale: 1.12,
 }
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t
 }
 
-function getBoundsForItem(
-  index: number,
-  total: number,
-): ViewportBounds {
-  // Interpolate based on index spread across items
-  const t = total <= 1 ? 0.5 : index / (total - 1)
-
-  if (t < 0.33) return MOBILE
-  if (t < 0.66) return TABLET
+function pickBounds(width: number): ScatterBounds {
+  if (width < 640) return MOBILE
+  if (width < 1025) return TABLET
   return DESKTOP
 }
 
-export function getScatterPositions(count: number): ScatterPosition[] {
-  const positions: ScatterPosition[] = []
-
-  for (let i = 0; i < count; i++) {
-    const rand = mulberry32(i * 1337 + 42)
-    const bounds = getBoundsForItem(i, count)
-
-    positions.push({
-      x: lerp(bounds.minX, bounds.maxX, rand()),
-      y: lerp(bounds.minY, bounds.maxY, rand()),
-      rotation: lerp(bounds.minRotation, bounds.maxRotation, rand()),
-      scale: lerp(bounds.minScale, bounds.maxScale, rand()),
-    })
-  }
-
-  return positions
-}
-
-// Get responsive scatter positions based on container width
-export function getResponsiveScatterPositions(
+export function getScatterPositions(
   count: number,
   containerWidth: number,
 ): ScatterPosition[] {
+  const bounds = pickBounds(containerWidth)
   const positions: ScatterPosition[] = []
 
   for (let i = 0; i < count; i++) {
     const rand = mulberry32(i * 1337 + 42)
 
-    let bounds: ViewportBounds
-
-    if (containerWidth < 640) {
-      bounds = MOBILE
-    } else if (containerWidth < 1025) {
-      bounds = TABLET
-    } else {
-      bounds = DESKTOP
-    }
-
     positions.push({
-      x: lerp(bounds.minX, bounds.maxX, rand()),
-      y: lerp(bounds.minY, bounds.maxY, rand()),
+      leftPct: lerp(bounds.leftMin, bounds.leftMax, rand()),
+      topPct: lerp(bounds.topMin, bounds.topMax, rand()),
       rotation: lerp(bounds.minRotation, bounds.maxRotation, rand()),
       scale: lerp(bounds.minScale, bounds.maxScale, rand()),
     })
@@ -124,3 +91,6 @@ export function getResponsiveScatterPositions(
 
   return positions
 }
+
+// Alias for backward compat with FloatingGallery
+export const getResponsiveScatterPositions = getScatterPositions

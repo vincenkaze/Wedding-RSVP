@@ -4,7 +4,7 @@ import { gallery, sections } from '../../content/content'
 import FloatingPhoto from './FloatingPhoto'
 import Lightbox from './Lightbox'
 import {
-  getResponsiveScatterPositions,
+  getScatterPositions,
   type ScatterPosition,
 } from './scatter-positions'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
@@ -14,7 +14,7 @@ export default function FloatingGallery() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [topmostIndex, setTopmostIndex] = useState<number | null>(null)
   const [scatterPositions, setScatterPositions] = useState<ScatterPosition[]>(
-    () => getResponsiveScatterPositions(gallery.length, 1024),
+    () => getScatterPositions(gallery.length, 1024),
   )
   const canvasRef = useRef<HTMLDivElement>(null)
 
@@ -22,7 +22,7 @@ export default function FloatingGallery() {
   useEffect(() => {
     const updatePositions = () => {
       const width = canvasRef.current?.clientWidth ?? 1024
-      setScatterPositions(getResponsiveScatterPositions(gallery.length, width))
+      setScatterPositions(getScatterPositions(gallery.length, width))
     }
 
     updatePositions()
@@ -79,8 +79,7 @@ export default function FloatingGallery() {
         {/* Floating canvas */}
         <div
           ref={canvasRef}
-          className="relative mx-auto h-[400px] w-full sm:h-[450px] md:h-[550px]"
-          style={{ overflow: 'visible' }}
+          className="gallery-canvas relative mx-auto h-[480px] w-full sm:h-[520px] md:h-[600px]"
         >
           {gallery.map((item, i) => (
             <FloatingPhoto
@@ -88,7 +87,7 @@ export default function FloatingGallery() {
               {...item}
               index={i}
               total={gallery.length}
-              initialPosition={scatterPositions[i]}
+              scatter={scatterPositions[i]}
               onActivate={handleActivate}
               onBringToFront={handleBringToFront}
               isTopmost={topmostIndex === i}

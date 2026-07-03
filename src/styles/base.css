@@ -253,20 +253,10 @@ body::after {
   aria-hidden: true;
 }
 
-/* ── Story bridge heartbeat pulse ── */
-@keyframes bridge-pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.4;
-  }
-  50% {
-    transform: scale(3);
-    opacity: 0;
-  }
-}
-
-.story-bridge-pulse {
-  animation: bridge-pulse 2.4s ease-in-out infinite;
+/* ── Floating gallery canvas ── */
+.gallery-canvas {
+  contain: layout style paint;
+  overflow: visible;
 }
 
 /* ── Floating gallery cursor states ── */
@@ -294,8 +284,7 @@ body::after {
   .scroll-indicator,
   .underline-draw::after,
   .letter-expand,
-  .verse-ornament,
-  .story-bridge-pulse {
+  .verse-ornament {
     animation: none !important;
   }
 

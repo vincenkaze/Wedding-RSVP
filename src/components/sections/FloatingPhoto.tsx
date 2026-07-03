@@ -13,7 +13,7 @@ import type { ScatterPosition } from './scatter-positions'
 interface FloatingPhotoProps extends GalleryItem {
   index: number
   total: number
-  initialPosition: ScatterPosition
+  scatter: ScatterPosition
   onActivate: (index: number) => void
   onBringToFront: (index: number) => void
   isTopmost: boolean
@@ -28,7 +28,7 @@ export default function FloatingPhoto({
   aspect = 'aspect-[4/5]',
   index,
   total,
-  initialPosition,
+  scatter,
   onActivate,
   onBringToFront,
   isTopmost,
@@ -42,13 +42,13 @@ export default function FloatingPhoto({
   const dragDistance = useRef(0)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Motion values for transforms
-  const x = useMotionValue(initialPosition.x)
-  const y = useMotionValue(initialPosition.y)
-  const rotation = useMotionValue(initialPosition.rotation)
-  const scale = useMotionValue(initialPosition.scale)
+  // Motion values for animated offsets (drift/drag only — base position is via top/left)
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
+  const rotation = useMotionValue(scatter.rotation)
+  const scale = useMotionValue(scatter.scale)
 
-  // Springs for smooth return-home
+  // Springs for smooth transitions
   const springX = useSpring(x, {
     stiffness: 120,
     damping: 20,
@@ -70,24 +70,21 @@ export default function FloatingPhoto({
     mass: 0.5,
   })
 
-  // Idle animation
+  // Idle animation — subtle drift around zero
   const idleAnimRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     if (prefersReducedMotion || isDragging || isHovered) return
 
-    // Subtle idle drift: small x oscillation + rotation
     const period = 6000 + (index % 3) * 1200
     let frame = 0
 
     const tick = () => {
       frame++
       const t = (frame * 50) / period
-      const driftX = Math.sin(t * Math.PI * 2) * 3
-      const driftRot = Math.cos(t * Math.PI * 2 + 1) * 1.2
-
-      x.set(initialPosition.x + driftX)
-      rotation.set(initialPosition.rotation + driftRot)
+      x.set(Math.sin(t * Math.PI * 2) * 4)
+      y.set(Math.cos(t * Math.PI * 2 + 0.5) * 3)
+      rotation.set(scatter.rotation + Math.cos(t * Math.PI * 2 + 1) * 1.2)
     }
 
     idleAnimRef.current = setInterval(tick, 50)
@@ -98,24 +95,17 @@ export default function FloatingPhoto({
         idleAnimRef.current = null
       }
     }
-  }, [prefersReducedMotion, isDragging, isHovered, index, initialPosition.x, initialPosition.rotation, x, rotation])
+  }, [prefersReducedMotion, isDragging, isHovered, index, scatter.rotation, x, y, rotation])
 
-  // Return home helper
+  // Return home — reset animated offsets to zero
   const returnToHome = useCallback(() => {
-    if (prefersReducedMotion) {
-      x.set(initialPosition.x)
-      y.set(initialPosition.y)
-      rotation.set(initialPosition.rotation)
-      scale.set(initialPosition.scale)
-    } else {
-      x.set(initialPosition.x)
-      y.set(initialPosition.y)
-      rotation.set(initialPosition.rotation)
-      scale.set(isScaledUp ? 1.5 : initialPosition.scale)
-    }
-  }, [prefersReducedMotion, initialPosition, x, y, rotation, scale, isScaledUp])
+    x.set(0)
+    y.set(0)
+    rotation.set(scatter.rotation)
+    scale.set(isScaledUp ? 1.5 : scatter.scale)
+  }, [x, y, rotation, scale, scatter.rotation, scatter.scale, isScaledUp])
 
-  // Drag handling with @use-gesture
+  // Drag handling
   const bindDrag = useDrag(
     ({ active, movement: [mx, my], first, last }) => {
       if (prefersReducedMotion) return
@@ -124,7 +114,6 @@ export default function FloatingPhoto({
         setIsDragging(true)
         onBringToFront(index)
         dragDistance.current = 0
-        // Pause idle animation
         if (idleAnimRef.current) {
           clearInterval(idleAnimRef.current)
           idleAnimRef.current = null
@@ -134,20 +123,17 @@ export default function FloatingPhoto({
       dragDistance.current = Math.sqrt(mx * mx + my * my)
 
       if (active) {
-        x.set(initialPosition.x + mx)
-        y.set(initialPosition.y + my)
-        // Subtle tilt during drag
-        rotation.set(initialPosition.rotation + mx * 0.05)
+        x.set(mx)
+        y.set(my)
+        rotation.set(scatter.rotation + mx * 0.04)
       }
 
       if (last) {
         setIsDragging(false)
 
-        // If drag distance is small enough, treat as tap/click
         if (dragDistance.current < 8) {
           onActivate(index)
         } else {
-          // Return home with spring
           returnToHome()
         }
       }
@@ -168,12 +154,12 @@ export default function FloatingPhoto({
       }
 
       const clampedScale = Math.min(Math.max(s, 0.8), 4)
-      scale.set(initialPosition.scale * clampedScale)
+      scale.set(scatter.scale * clampedScale)
 
       if (last) {
         setIsScaledUp(clampedScale > 1.2)
         if (clampedScale < 1.2) {
-          scale.set(initialPosition.scale)
+          scale.set(scatter.scale)
         }
       }
     },
@@ -196,9 +182,7 @@ export default function FloatingPhoto({
     [index, onActivate, returnToHome],
   )
 
-  // Shadow intensity based on distance from home
   const shadowIntensity = isDragging ? 0.3 : isHovered ? 0.2 : 0.1
-
   const captionId = caption ? `gallery-caption-${index}` : undefined
 
   return (
@@ -206,14 +190,19 @@ export default function FloatingPhoto({
       ref={containerRef}
       {...bindDrag()}
       {...bindPinch()}
-      className={`absolute ${aspect} w-[45%] max-w-[200px] cursor-grab select-none sm:w-[35%] sm:max-w-[260px] md:w-[28%] md:max-w-[320px] ${
+      className={`absolute ${aspect} w-[45%] max-w-50 cursor-grab select-none sm:w-[35%] sm:max-w-65 md:w-[28%] md:max-w-80 ${
         isDragging ? 'cursor-grabbing' : ''
       }`}
-      style={{ touchAction: 'none' }}
+      style={{
+        top: `${scatter.topPct}%`,
+        left: `${scatter.leftPct}%`,
+        touchAction: 'none',
+        zIndex: isTopmost ? 50 : index + 1,
+      }}
     >
       <motion.div
-        initial={{ opacity: 0, y: 40, filter: 'blur(8px)' }}
-        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        initial={{ opacity: 0, filter: 'blur(8px)' }}
+        animate={{ opacity: 1, filter: 'blur(0px)' }}
         transition={{
           duration: DURATION_CINEMATIC,
           ease: EASE_ENTRANCE,
@@ -224,7 +213,6 @@ export default function FloatingPhoto({
           y: springY,
           rotate: springRotation,
           scale: springScale,
-          zIndex: isTopmost ? 50 : index,
         }}
         onHoverStart={() => {
           setIsHovered(true)
@@ -249,7 +237,6 @@ export default function FloatingPhoto({
             transition: 'transform 0.2s ease',
           }}
         >
-          {/* Image */}
           {hasError ? (
             <span className="flex h-full w-full items-center justify-center bg-surface">
               <svg
@@ -281,7 +268,6 @@ export default function FloatingPhoto({
             </picture>
           )}
 
-          {/* Rotate handle - desktop only, visible on hover */}
           {!prefersReducedMotion && (
             <div
               className="float-handle absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white/80 opacity-0 transition-opacity duration-200 hover:bg-white sm:bottom-2 sm:right-2"
@@ -323,7 +309,6 @@ export default function FloatingPhoto({
           )}
         </div>
 
-        {/* Caption */}
         {caption && (
           <figcaption
             id={captionId}
