@@ -45,7 +45,7 @@ function App() {
         <RSVP />
         <Footer />
       </main>
-      <MusicControl />
+      <MusicControl autoPlay={envelopeDone} />
     </>
   )
 }

@@ -6,11 +6,16 @@ const prefersReduced =
   typeof window !== 'undefined' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-export default function MusicControl() {
+interface MusicControlProps {
+  autoPlay?: boolean
+}
+
+export default function MusicControl({ autoPlay = false }: MusicControlProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [playing, setPlaying] = useState(false)
   const [visible, setVisible] = useState(false)
   const [audioFailed, setAudioFailed] = useState(false)
+  const autoPlayAttempted = useRef(false)
 
   useEffect(() => {
     if (prefersReduced) return
@@ -18,28 +23,35 @@ export default function MusicControl() {
     return () => clearTimeout(timer)
   }, [])
 
+  const createAndPlay = useCallback(() => {
+    if (audioFailed || audioRef.current) return
+
+    const el = new Audio(AUDIO_SRC)
+    el.preload = 'auto'
+    el.loop = true
+    el.volume = 0.3
+
+    el.addEventListener('error', () => {
+      setAudioFailed(true)
+      audioRef.current = null
+    }, { once: true })
+
+    el.play().then(() => {
+      setPlaying(true)
+    }).catch(() => {
+      setAudioFailed(true)
+      audioRef.current = null
+    })
+
+    audioRef.current = el
+  }, [audioFailed])
+
   const toggle = useCallback(() => {
     if (audioFailed) return
 
     const audio = audioRef.current
     if (!audio) {
-      const el = new Audio(AUDIO_SRC)
-      el.preload = 'none'
-      el.loop = true
-      el.volume = 0.3
-
-      el.addEventListener('error', () => {
-        setAudioFailed(true)
-        audioRef.current = null
-      }, { once: true })
-
-      el.play().catch(() => {
-        setAudioFailed(true)
-        audioRef.current = null
-      })
-
-      audioRef.current = el
-      setPlaying(true)
+      createAndPlay()
       return
     }
     if (audio.paused) {
@@ -51,7 +63,31 @@ export default function MusicControl() {
       audio.pause()
       setPlaying(false)
     }
-  }, [audioFailed])
+  }, [audioFailed, createAndPlay])
+
+  useEffect(() => {
+    if (!autoPlay || autoPlayAttempted.current) return
+    autoPlayAttempted.current = true
+    createAndPlay()
+  }, [autoPlay, createAndPlay])
+
+  useEffect(() => {
+    if (autoPlay || audioFailed) return
+
+    const handleInteraction = () => {
+      createAndPlay()
+      window.removeEventListener('click', handleInteraction)
+      window.removeEventListener('touchstart', handleInteraction)
+    }
+
+    window.addEventListener('click', handleInteraction, { once: true })
+    window.addEventListener('touchstart', handleInteraction, { once: true })
+
+    return () => {
+      window.removeEventListener('click', handleInteraction)
+      window.removeEventListener('touchstart', handleInteraction)
+    }
+  }, [autoPlay, audioFailed, createAndPlay])
 
   useEffect(() => {
     return () => {
