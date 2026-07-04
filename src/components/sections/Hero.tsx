@@ -38,8 +38,13 @@ const nameReveal: Variants = {
 
 const STAGGER = 0.08
 
-function DateReveal() {
+function DateReveal({ onReveal }: { onReveal: () => void }) {
   const [revealed, setRevealed] = useState(false)
+
+  const handleReveal = () => {
+    setRevealed(true)
+    onReveal()
+  }
 
   if (prefersReducedMotion) {
     return (
@@ -57,37 +62,48 @@ function DateReveal() {
   return (
     <button
       type="button"
-      onClick={() => setRevealed(true)}
+      onClick={handleReveal}
       aria-label={revealed ? `${wedding.displayDate}, ${wedding.location}` : 'Tap to reveal the wedding date'}
       className="flex flex-col items-center gap-1 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
       style={{ perspective: '800px' }}
     >
-      <motion.p
-        animate={{ rotateY: revealed ? 1080 : 180 }}
-        transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
-        className={`font-body text-white/90 text-sm sm:text-base tracking-widest uppercase ${revealed ? 'underline-draw' : ''}`}
-        style={{ transformStyle: 'preserve-3d' }}
+      {/* Bouncing text */}
+      <motion.div
+        animate={revealed ? {} : { translateY: [0, -18, 0] }}
+        transition={
+          revealed
+            ? {}
+            : { duration: 1.4, repeat: Infinity, ease: [0.45, 0, 0.55, 1], times: [0, 0.4, 1] }
+        }
       >
-        {wedding.displayDate}
-      </motion.p>
-      <motion.p
-        animate={{ rotateY: revealed ? 1080 : 180 }}
-        transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
-        className="font-body text-white/60 text-xs sm:text-sm tracking-wider"
-        style={{ transformStyle: 'preserve-3d' }}
-      >
-        {wedding.location}
-      </motion.p>
+        <motion.p
+          animate={{ rotateY: revealed ? 1080 : 180 }}
+          transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
+          className={`font-body text-white/90 text-sm sm:text-base tracking-widest uppercase ${revealed ? 'underline-draw' : ''}`}
+          style={{ transformStyle: 'preserve-3d' }}
+        >
+          {wedding.displayDate}
+        </motion.p>
+        <motion.p
+          animate={{ rotateY: revealed ? 1080 : 180 }}
+          transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
+          className="font-body text-white/60 text-xs sm:text-sm tracking-wider"
+          style={{ transformStyle: 'preserve-3d' }}
+        >
+          {wedding.location}
+        </motion.p>
+      </motion.div>
     </button>
   )
 }
 
 export default function Hero() {
   const [imgError, setImgError] = useState(false)
+  const [dateRevealed, setDateRevealed] = useState(false)
   return (
     <section
       id="hero"
-      className="relative min-h-dvh flex flex-col items-center justify-center px-6 py-20 overflow-hidden"
+      className={`relative min-h-dvh flex flex-col items-center justify-center px-6 py-20 overflow-hidden ${!dateRevealed && !prefersReducedMotion ? 'hero-shake' : ''}`}
     >
       {/* Ken Burns background image */}
       <div className="absolute inset-0 overflow-hidden" aria-hidden>
@@ -148,7 +164,7 @@ export default function Hero() {
           custom={STAGGER * 2}
           className="flex flex-col items-center gap-1"
         >
-          <DateReveal />
+          <DateReveal onReveal={() => setDateRevealed(true)} />
         </motion.div>
 
         {/* RSVP CTA */}

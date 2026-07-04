@@ -103,6 +103,19 @@
   width: 0;
 }
 
+/* ── Hero screen shake on bounce impact ── */
+@keyframes hero-shake {
+  0%, 40%, 100% { transform: translateX(0); }
+  44% { transform: translateX(-3px); }
+  48% { transform: translateX(3px); }
+  52% { transform: translateX(-2px); }
+  56% { transform: translateX(1px); }
+}
+
+.hero-shake {
+  animation: hero-shake 1.4s ease-in-out infinite;
+}
+
 /* ── Letter-spacing expand ── */
 @keyframes letter-expand {
   from {
