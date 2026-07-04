@@ -23,8 +23,8 @@ export default function MusicControl({ autoPlay = false }: MusicControlProps) {
     return () => clearTimeout(timer)
   }, [])
 
-  const createAndPlay = useCallback(() => {
-    if (audioFailed || audioRef.current) return
+  const createAudio = useCallback(() => {
+    if (audioRef.current) return audioRef.current
 
     const el = new Audio(AUDIO_SRC)
     el.preload = 'auto'
@@ -36,22 +36,34 @@ export default function MusicControl({ autoPlay = false }: MusicControlProps) {
       audioRef.current = null
     }, { once: true })
 
-    el.play().then(() => {
-      setPlaying(true)
-    }).catch(() => {
-      setAudioFailed(true)
-      audioRef.current = null
-    })
-
     audioRef.current = el
-  }, [audioFailed])
+    return el
+  }, [])
+
+  const tryPlay = useCallback(() => {
+    if (audioFailed) return
+    const audio = createAudio()
+    if (audio.paused) {
+      audio.play().then(() => {
+        setPlaying(true)
+      }).catch(() => {
+        // Autoplay blocked — will play on next user interaction
+      })
+    }
+  }, [audioFailed, createAudio])
 
   const toggle = useCallback(() => {
     if (audioFailed) return
 
     const audio = audioRef.current
     if (!audio) {
-      createAndPlay()
+      const el = createAudio()
+      el.play().then(() => {
+        setPlaying(true)
+      }).catch(() => {
+        setAudioFailed(true)
+        audioRef.current = null
+      })
       return
     }
     if (audio.paused) {
@@ -63,19 +75,19 @@ export default function MusicControl({ autoPlay = false }: MusicControlProps) {
       audio.pause()
       setPlaying(false)
     }
-  }, [audioFailed, createAndPlay])
+  }, [audioFailed, createAudio])
 
   useEffect(() => {
     if (!autoPlay || autoPlayAttempted.current) return
     autoPlayAttempted.current = true
-    createAndPlay()
-  }, [autoPlay, createAndPlay])
+    tryPlay()
+  }, [autoPlay, tryPlay])
 
   useEffect(() => {
-    if (autoPlay || audioFailed) return
+    if (audioFailed) return
 
     const handleInteraction = () => {
-      createAndPlay()
+      tryPlay()
       window.removeEventListener('click', handleInteraction)
       window.removeEventListener('touchstart', handleInteraction)
     }
@@ -87,7 +99,7 @@ export default function MusicControl({ autoPlay = false }: MusicControlProps) {
       window.removeEventListener('click', handleInteraction)
       window.removeEventListener('touchstart', handleInteraction)
     }
-  }, [autoPlay, audioFailed, createAndPlay])
+  }, [audioFailed, tryPlay])
 
   useEffect(() => {
     return () => {
