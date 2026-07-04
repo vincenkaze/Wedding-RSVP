@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react'
+import { createContext } from 'react'
 import type Lenis from 'lenis'
 
 export interface SmoothScrollContextValue {
@@ -8,7 +8,3 @@ export interface SmoothScrollContextValue {
 export const SmoothScrollContext = createContext<SmoothScrollContextValue>({
   lenis: null,
 })
-
-export function useSmoothScroll() {
-  return useContext(SmoothScrollContext)
-}

@@ -2,16 +2,9 @@ import { useRef, useState } from 'react'
 import { motion, useReducedMotion, useInView } from 'framer-motion'
 import { venue, sections } from '../../content/content'
 import { downloadICS } from '../../lib/ics'
+import { buildMapsUrl, buildDirectionsUrl } from '../../lib/maps'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
 import { MapPin, Navigation, Calendar, ChevronDown, ExternalLink } from 'lucide-react'
-
-function buildMapsUrl(query: string): string {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
-}
-
-function buildDirectionsUrl(query: string): string {
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`
-}
 
 export default function VenueSection() {
   const prefersReducedMotion = useReducedMotion()

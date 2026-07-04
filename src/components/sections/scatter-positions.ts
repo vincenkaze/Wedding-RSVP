@@ -91,6 +91,3 @@ export function getScatterPositions(
 
   return positions
 }
-
-// Alias for backward compat with FloatingGallery
-export const getResponsiveScatterPositions = getScatterPositions

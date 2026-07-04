@@ -1,4 +1,5 @@
 import { MapPin } from 'lucide-react'
+import { buildMapsUrl } from '../../lib/maps'
 
 interface EventCardProps {
   title: string
@@ -7,11 +8,6 @@ interface EventCardProps {
   location: string
   description?: string
   mapsQuery: string
-}
-
-function buildMapsUrl(query: string): string {
-  const encoded = encodeURIComponent(query)
-  return `https://www.google.com/maps/search/?api=1&query=${encoded}`
 }
 
 export default function EventCard({
