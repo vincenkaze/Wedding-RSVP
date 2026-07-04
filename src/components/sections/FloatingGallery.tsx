@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { gallery, sections } from '../../content/content'
-import GalleryCard from './GalleryCard'
+import CylinderCarousel from './CylinderCarousel'
 import Lightbox from './Lightbox'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
 
@@ -42,17 +42,8 @@ export default function FloatingGallery() {
           </motion.h2>
         </div>
 
-        {/* Soft-Overlap Grid — static CSS composition */}
-        <div className="gallery-grid">
-          {gallery.map((item, i) => (
-            <GalleryCard
-              key={item.src}
-              item={item}
-              index={i}
-              onOpen={() => setLightboxIndex(i)}
-            />
-          ))}
-        </div>
+        {/* 3D Cylinder Carousel */}
+        <CylinderCarousel items={gallery} onOpen={setLightboxIndex} />
       </div>
 
       {/* Lightbox */}
