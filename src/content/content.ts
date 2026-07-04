@@ -216,52 +216,54 @@ export const liveStream: LiveStream = {
 
 export const gallery: GalleryItem[] = [
   {
-    src: '/gallery/first-moment.jpg',
-    srcWebp: '/gallery/first-moment.webp',
-    srcAvif: '/gallery/first-moment.avif',
+    src: '/gallery/1.jpeg',
     alt: 'The happy couple sharing a moment together',
-    caption: 'The beginning',
-    aspect: 'aspect-[3/4]',
+    aspect: 'aspect-square',
   },
   {
-    src: '/gallery/proposal.jpg',
-    srcWebp: '/gallery/proposal.webp',
-    srcAvif: '/gallery/proposal.avif',
+    src: '/gallery/2.jpeg',
     alt: 'The proposal at sunset',
-    caption: 'She said yes',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/vineyard-walk.jpg',
-    srcWebp: '/gallery/vineyard-walk.webp',
-    srcAvif: '/gallery/vineyard-walk.avif',
+    src: '/gallery/3.jpeg',
     alt: 'Walking hand in hand through a sunlit path',
-    caption: 'Sunday afternoons',
-    aspect: 'aspect-[4/5]',
-  },
-  {
-    src: '/gallery/engagement.jpg',
-    srcWebp: '/gallery/engagement.webp',
-    srcAvif: '/gallery/engagement.avif',
-    alt: 'Laughing together during their engagement shoot',
-    caption: 'Pure joy',
-    aspect: 'aspect-[3/4]',
-  },
-  {
-    src: '/gallery/detail-rings.jpg',
-    srcWebp: '/gallery/detail-rings.webp',
-    srcAvif: '/gallery/detail-rings.avif',
-    alt: 'Close-up of the wedding rings on a linen surface',
-    caption: '',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/toast.jpg',
-    srcWebp: '/gallery/toast.webp',
-    srcAvif: '/gallery/toast.avif',
+    src: '/gallery/4.jpeg',
+    alt: 'Laughing together during their engagement shoot',
+    aspect: 'aspect-square',
+  },
+  {
+    src: '/gallery/5.jpeg',
+    alt: 'Close-up of the wedding rings on a linen surface',
+    aspect: 'aspect-square',
+  },
+  {
+    src: '/gallery/6.jpeg',
     alt: 'Friends raising a glass to the happy couple',
-    caption: 'Our people',
-    aspect: 'aspect-[4/5]',
+    aspect: 'aspect-square',
+  },
+  {
+    src: '/gallery/7.jpeg',
+    alt: 'A beautiful moment captured together',
+    aspect: 'aspect-square',
+  },
+  {
+    src: '/gallery/8.jpeg',
+    alt: 'Sharing a laugh together',
+    aspect: 'aspect-square',
+  },
+  {
+    src: '/gallery/9.jpeg',
+    alt: 'Together in love',
+    aspect: 'aspect-square',
+  },
+  {
+    src: '/gallery/10.jpeg',
+    alt: 'A cherished memory',
+    aspect: 'aspect-square',
   },
 ]
 

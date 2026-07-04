@@ -3,17 +3,22 @@ import {
   motion,
   useMotionValue,
   useSpring,
+  useTransform,
   useReducedMotion,
 } from 'framer-motion'
 import { useDrag, usePinch } from '@use-gesture/react'
 import type { GalleryItem } from '../../content/content'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
 import type { ScatterPosition } from './scatter-positions'
+import { useDominantColor } from '../../hooks/useDominantColor'
 
 interface FloatingPhotoProps extends GalleryItem {
   index: number
   total: number
   scatter: ScatterPosition
+  depth: number
+  gyroPitch: number
+  gyroRoll: number
   onActivate: (index: number) => void
   onBringToFront: (index: number) => void
   isTopmost: boolean
@@ -24,11 +29,13 @@ export default function FloatingPhoto({
   srcWebp,
   srcAvif,
   alt,
-  caption,
-  aspect = 'aspect-[4/5]',
+  aspect = 'aspect-square',
   index,
   total,
   scatter,
+  depth,
+  gyroPitch,
+  gyroRoll,
   onActivate,
   onBringToFront,
   isTopmost,
@@ -37,40 +44,27 @@ export default function FloatingPhoto({
   const [hasError, setHasError] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
-  const [isScaledUp, setIsScaledUp] = useState(false)
+  const dominantColor = useDominantColor(src)
 
   const dragDistance = useRef(0)
-  const containerRef = useRef<HTMLDivElement>(null)
 
-  // Motion values for animated offsets (drift/drag only — base position is via top/left)
   const x = useMotionValue(0)
   const y = useMotionValue(0)
   const rotation = useMotionValue(scatter.rotation)
   const scale = useMotionValue(scatter.scale)
 
-  // Springs for smooth transitions
-  const springX = useSpring(x, {
-    stiffness: 120,
-    damping: 20,
-    mass: 0.8,
-  })
-  const springY = useSpring(y, {
-    stiffness: 120,
-    damping: 20,
-    mass: 0.8,
-  })
-  const springRotation = useSpring(rotation, {
-    stiffness: 150,
-    damping: 25,
-    mass: 0.6,
-  })
-  const springScale = useSpring(scale, {
-    stiffness: 200,
-    damping: 25,
-    mass: 0.5,
-  })
+  const springX = useSpring(x, { stiffness: 120, damping: 20, mass: 0.8 })
+  const springY = useSpring(y, { stiffness: 120, damping: 20, mass: 0.8 })
+  const springRotation = useSpring(rotation, { stiffness: 150, damping: 25, mass: 0.6 })
+  const springScale = useSpring(scale, { stiffness: 200, damping: 25, mass: 0.5 })
 
-  // Idle animation — subtle drift around zero
+  const gyroOffsetX = useTransform(() => gyroRoll * depth * 40)
+  const gyroOffsetY = useTransform(() => gyroPitch * depth * 40)
+  const gyroOffsetZ = useTransform(() => depth * 30)
+
+  const springGyroX = useSpring(gyroOffsetX, { stiffness: 80, damping: 15, mass: 1 })
+  const springGyroY = useSpring(gyroOffsetY, { stiffness: 80, damping: 15, mass: 1 })
+
   const idleAnimRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -97,17 +91,8 @@ export default function FloatingPhoto({
     }
   }, [prefersReducedMotion, isDragging, isHovered, index, scatter.rotation, x, y, rotation])
 
-  // Return home — reset animated offsets to zero
-  const returnToHome = useCallback(() => {
-    x.set(0)
-    y.set(0)
-    rotation.set(scatter.rotation)
-    scale.set(isScaledUp ? 1.5 : scatter.scale)
-  }, [x, y, rotation, scale, scatter.rotation, scatter.scale, isScaledUp])
-
-  // Drag handling
   const bindDrag = useDrag(
-    ({ active, movement: [mx, my], first, last }) => {
+    ({ active, movement: [mx, my], first, last, offset: [ox, oy] }) => {
       if (prefersReducedMotion) return
 
       if (first) {
@@ -123,71 +108,44 @@ export default function FloatingPhoto({
       dragDistance.current = Math.sqrt(mx * mx + my * my)
 
       if (active) {
-        x.set(mx)
-        y.set(my)
+        x.set(ox)
+        y.set(oy)
         rotation.set(scatter.rotation + mx * 0.04)
       }
 
       if (last) {
         setIsDragging(false)
-
         if (dragDistance.current < 8) {
           onActivate(index)
-        } else {
-          returnToHome()
         }
       }
     },
-    {
-      filterTaps: true,
-      threshold: 4,
-    },
+    { filterTaps: true, threshold: 4 },
   )
 
-  // Pinch handling
   const bindPinch = usePinch(
-    ({ offset: [s], first, last }) => {
+    ({ offset: [s], first }) => {
       if (prefersReducedMotion) return
-
-      if (first) {
-        onBringToFront(index)
-      }
-
-      const clampedScale = Math.min(Math.max(s, 0.8), 4)
-      scale.set(scatter.scale * clampedScale)
-
-      if (last) {
-        setIsScaledUp(clampedScale > 1.2)
-        if (clampedScale < 1.2) {
-          scale.set(scatter.scale)
-        }
-      }
+      if (first) onBringToFront(index)
+      scale.set(scatter.scale * Math.min(Math.max(s, 0.8), 4))
     },
-    {
-      scaleBounds: { min: 0.8, max: 4 },
-    },
+    { scaleBounds: { min: 0.8, max: 4 } },
   )
 
-  // Keyboard handling
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault()
         onActivate(index)
       }
-      if (e.key === 'Escape') {
-        returnToHome()
-      }
     },
-    [index, onActivate, returnToHome],
+    [index, onActivate],
   )
 
   const shadowIntensity = isDragging ? 0.3 : isHovered ? 0.2 : 0.1
-  const captionId = caption ? `gallery-caption-${index}` : undefined
 
   return (
     <div
-      ref={containerRef}
       {...bindDrag()}
       {...bindPinch()}
       className={`absolute ${aspect} w-[45%] max-w-50 cursor-grab select-none sm:w-[35%] sm:max-w-65 md:w-[28%] md:max-w-80 ${
@@ -213,6 +171,10 @@ export default function FloatingPhoto({
           y: springY,
           rotate: springRotation,
           scale: springScale,
+          translateX: springGyroX,
+          translateY: springGyroY,
+          translateZ: gyroOffsetZ,
+          transformStyle: 'preserve-3d',
         }}
         onHoverStart={() => {
           setIsHovered(true)
@@ -220,15 +182,26 @@ export default function FloatingPhoto({
             onBringToFront(index)
           }
         }}
-        onHoverEnd={() => {
-          setIsHovered(false)
-        }}
+        onHoverEnd={() => setIsHovered(false)}
         role="button"
         tabIndex={0}
         aria-label={`Photo ${index + 1} of ${total}: ${alt}`}
-        aria-describedby={captionId}
         onKeyDown={handleKeyDown}
       >
+        {/* Ambient glow — subsurface color aura */}
+        {!prefersReducedMotion && dominantColor && (
+          <div
+            className="absolute -inset-6 -z-10 rounded-3xl opacity-40 blur-3xl"
+            style={{
+              backgroundColor: dominantColor,
+              mixBlendMode: 'multiply',
+              transition: 'opacity 0.6s ease',
+              opacity: isHovered ? 0.55 : 0.35,
+            }}
+            aria-hidden
+          />
+        )}
+
         <div
           className="relative h-full w-full overflow-hidden rounded-xl bg-surface"
           style={{
@@ -262,6 +235,7 @@ export default function FloatingPhoto({
                 loading="lazy"
                 decoding="async"
                 draggable={false}
+                sizes="(max-width: 640px) 45vw, (max-width: 768px) 35vw, 28vw"
                 onError={() => setHasError(true)}
                 className="h-full w-full object-cover"
               />
@@ -308,15 +282,6 @@ export default function FloatingPhoto({
             </div>
           )}
         </div>
-
-        {caption && (
-          <figcaption
-            id={captionId}
-            className="mt-2 text-center font-body text-xs text-muted sm:text-sm"
-          >
-            {caption}
-          </figcaption>
-        )}
       </motion.div>
     </div>
   )
