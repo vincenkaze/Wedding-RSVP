@@ -38,6 +38,50 @@ const nameReveal: Variants = {
 
 const STAGGER = 0.08
 
+function DateReveal() {
+  const [revealed, setRevealed] = useState(false)
+
+  if (prefersReducedMotion) {
+    return (
+      <>
+        <p className="font-body text-white/90 text-sm sm:text-base tracking-widest uppercase">
+          {wedding.displayDate}
+        </p>
+        <p className="font-body text-white/60 text-xs sm:text-sm tracking-wider">
+          {wedding.location}
+        </p>
+      </>
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setRevealed(true)}
+      aria-label={revealed ? `${wedding.displayDate}, ${wedding.location}` : 'Tap to reveal the wedding date'}
+      className="flex flex-col items-center gap-1 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+      style={{ perspective: '800px' }}
+    >
+      <motion.p
+        animate={{ rotateY: revealed ? 1080 : 180 }}
+        transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
+        className={`font-body text-white/90 text-sm sm:text-base tracking-widest uppercase ${revealed ? 'underline-draw' : ''}`}
+        style={{ transformStyle: 'preserve-3d' }}
+      >
+        {wedding.displayDate}
+      </motion.p>
+      <motion.p
+        animate={{ rotateY: revealed ? 1080 : 180 }}
+        transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
+        className="font-body text-white/60 text-xs sm:text-sm tracking-wider"
+        style={{ transformStyle: 'preserve-3d' }}
+      >
+        {wedding.location}
+      </motion.p>
+    </button>
+  )
+}
+
 export default function Hero() {
   const [imgError, setImgError] = useState(false)
   return (
@@ -96,7 +140,7 @@ export default function Hero() {
           {couple.displayName}
         </motion.h1>
 
-        {/* Date with gold underline draw */}
+        {/* Date — mirrored, tap to reveal */}
         <motion.div
           initial={prefersReducedMotion ? undefined : 'hidden'}
           animate="visible"
@@ -104,12 +148,7 @@ export default function Hero() {
           custom={STAGGER * 2}
           className="flex flex-col items-center gap-1"
         >
-          <p className={`font-body text-white/90 text-sm sm:text-base tracking-widest uppercase ${prefersReducedMotion ? '' : 'underline-draw'}`}>
-            {wedding.displayDate}
-          </p>
-          <p className="font-body text-white/60 text-xs sm:text-sm tracking-wider">
-            {wedding.location}
-          </p>
+          <DateReveal />
         </motion.div>
 
         {/* RSVP CTA */}
