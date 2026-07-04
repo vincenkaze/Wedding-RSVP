@@ -1,50 +1,13 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { gallery, sections } from '../../content/content'
-import FloatingPhoto from './FloatingPhoto'
+import GalleryCard from './GalleryCard'
 import Lightbox from './Lightbox'
-import {
-  getScatterPositions,
-  type ScatterPosition,
-} from './scatter-positions'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
-import { useGyroscope } from '../../hooks/useGyroscope'
-
-const DEPTH_COEFFICIENTS = [1.0, 0.7, 1.2, 0.5, 0.9, 1.1, 0.6, 0.8, 1.3, 0.4]
 
 export default function FloatingGallery() {
   const prefersReducedMotion = useReducedMotion()
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
-  const [topmostIndex, setTopmostIndex] = useState<number | null>(null)
-  const [scatterPositions, setScatterPositions] = useState<ScatterPosition[]>(
-    () => getScatterPositions(gallery.length, 1024),
-  )
-  const canvasRef = useRef<HTMLDivElement>(null)
-  const gyro = useGyroscope()
-
-  useEffect(() => {
-    const updatePositions = () => {
-      const width = canvasRef.current?.clientWidth ?? 1024
-      setScatterPositions(getScatterPositions(gallery.length, width))
-    }
-
-    updatePositions()
-
-    const observer = new ResizeObserver(updatePositions)
-    if (canvasRef.current) {
-      observer.observe(canvasRef.current)
-    }
-
-    return () => observer.disconnect()
-  }, [])
-
-  const handleBringToFront = useCallback((index: number) => {
-    setTopmostIndex(index)
-  }, [])
-
-  const handleActivate = useCallback((index: number) => {
-    setLightboxIndex(index)
-  }, [])
 
   return (
     <section id="gallery" className="relative px-6 py-20 sm:py-28 md:py-32">
@@ -77,41 +40,16 @@ export default function FloatingGallery() {
           >
             {sections.gallery.heading}
           </motion.h2>
-
-          {/* Gyroscope permission button — mobile only */}
-          {gyro.isSupported && !gyro.permissionGranted && !prefersReducedMotion && (
-            <motion.button
-              type="button"
-              onClick={gyro.requestGyroPermission}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1, duration: 0.5 }}
-              className="mt-6 font-body text-xs tracking-wider text-muted/60 underline decoration-muted/30 underline-offset-4 transition-colors hover:text-accent sm:text-sm"
-            >
-              Enable motion for floating effect
-            </motion.button>
-          )}
         </div>
 
-        {/* Floating canvas — 3D perspective viewport */}
-        <div
-          ref={canvasRef}
-          className="gallery-canvas relative mx-auto h-[480px] w-full sm:h-[520px] md:h-[600px]"
-          style={{ perspective: '1200px', perspectiveOrigin: '50% 50%' }}
-        >
+        {/* Soft-Overlap Grid — static CSS composition */}
+        <div className="gallery-grid">
           {gallery.map((item, i) => (
-            <FloatingPhoto
+            <GalleryCard
               key={item.src}
-              {...item}
+              item={item}
               index={i}
-              total={gallery.length}
-              scatter={scatterPositions[i]}
-              depth={DEPTH_COEFFICIENTS[i % DEPTH_COEFFICIENTS.length]}
-              gyroPitch={gyro.pitch}
-              gyroRoll={gyro.roll}
-              onActivate={handleActivate}
-              onBringToFront={handleBringToFront}
-              isTopmost={topmostIndex === i}
+              onOpen={() => setLightboxIndex(i)}
             />
           ))}
         </div>
