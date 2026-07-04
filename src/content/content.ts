@@ -143,12 +143,12 @@ export const family: { bride: FamilySide; groom: FamilySide } = {
   bride: {
     label: 'The Bride\u2019s Family',
     parents: ['Mr. Sivannandan K.K', 'Mrs. Usha Sivanandan'],
-    members: [],
+    members: ['Vaishnav'],
   },
   groom: {
     label: 'The Groom\u2019s Family',
     parents: ['Late Mr. Thulasidas', 'Mrs. Ushakumari'],
-    members: [],
+    members: ['Krishnapriya', 'Praveen', 'Avanthika', 'Advay Krishna'],
   },
 }
 
@@ -161,6 +161,15 @@ export const events: WeddingEvent[] = [
     description:
       'A sacred Muhurtham ceremony uniting Anjana and Krishnaprasad in the presence of family and loved ones.',
     mapsQuery: 'Akhilanjali Convention Centre, Varanad Rd, near Sastham kavala, Cherthala, Nedumprakkad, Kerala 688539',
+  },
+  {
+    title: 'Marriage Reception',
+    date: 'Monday, September 14, 2026',
+    time: '4:00 PM \u2013 8:00 PM',
+    location: 'Janakiram Auditorium, Chelakkara, Thrissur, Kerala',
+    description:
+      "A celebration with the groom's family in Chelakkara. Hosted by Krishnapriya, Praveen, Avanthika and Advay Krishna.",
+    mapsQuery: 'Janakiram Auditorium, Chelakkara, Thrissur, Kerala',
   },
 ]
 
@@ -264,6 +273,7 @@ export const rsvp: RSVP = {
     'Thank you, {name}! We look forward to celebrating with you.',
   events: [
     'Wedding Ceremony \u2014 Sept 13',
+    'Marriage Reception \u2014 Sept 14',
   ],
   dietaryOptions: [
     'No dietary restrictions',
