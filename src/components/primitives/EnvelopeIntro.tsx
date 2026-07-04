@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { couple } from '../../content/content'
 
@@ -12,7 +12,7 @@ function hasVisited(): boolean {
     if (typeof window !== 'undefined' && window.location.search.includes('intro=1')) {
       return false
     }
-    return localStorage.getItem(STORAGE_KEY) === 'true'
+    return sessionStorage.getItem(STORAGE_KEY) === 'true'
   } catch {
     return true
   }
@@ -20,7 +20,17 @@ function hasVisited(): boolean {
 
 function markVisited() {
   try {
-    localStorage.setItem(STORAGE_KEY, 'true')
+    sessionStorage.setItem(STORAGE_KEY, 'true')
+  } catch {
+    // ignore
+  }
+}
+
+function triggerHaptic() {
+  try {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(10)
+    }
   } catch {
     // ignore
   }
@@ -35,14 +45,42 @@ export default function EnvelopeIntro({ onComplete }: EnvelopeIntroProps) {
     if (prefersReduced || hasVisited()) return false
     return true
   })
+  const [sealed, setSealed] = useState(true)
+  const completedRef = useRef(false)
 
   const handleComplete = useCallback(() => {
+    if (completedRef.current) return
+    completedRef.current = true
     markVisited()
     setShow(false)
     onComplete()
   }, [onComplete])
 
+  useEffect(() => {
+    if (!show && !completedRef.current) {
+      completedRef.current = true
+      onComplete()
+    }
+  }, [show, onComplete])
+
+  const handleSealClick = useCallback(() => {
+    if (!sealed) return
+    setSealed(false)
+    triggerHaptic()
+  }, [sealed])
+
+  useEffect(() => {
+    if (sealed) return
+    const t = setTimeout(handleComplete, 2800)
+    return () => clearTimeout(t)
+  }, [sealed, handleComplete])
+
   const initials = `${couple.firstName[0]}${couple.secondName[0]}`
+
+  const sealedAnimate = { scale: [1, 1.08, 1] as number[], boxShadow: ['0 0 0 0 rgba(176,141,87,0)', '0 0 12px 4px rgba(176,141,87,0.35)', '0 0 0 0 rgba(176,141,87,0)'] }
+  const unsealedAnimate = { opacity: 0, scale: 0.4 }
+  const sealedTransition = { scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' as const }, boxShadow: { duration: 2, repeat: Infinity, ease: 'easeInOut' as const } }
+  const unsealedTransition = { duration: 0.4, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }
 
   return (
     <AnimatePresence>
@@ -55,18 +93,26 @@ export default function EnvelopeIntro({ onComplete }: EnvelopeIntroProps) {
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="fixed inset-0 z-[90] flex flex-col items-center justify-center bg-bg"
         >
-          {/* Skip button */}
+          {/* Skip intro — top right */}
           <button
             type="button"
             onClick={handleComplete}
-            className="absolute bottom-8 right-6 font-body text-xs uppercase tracking-wider text-muted/50 transition-colors hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:bottom-10 sm:right-10"
+            className="absolute top-6 right-6 font-body text-xs uppercase tracking-wider text-muted/50 transition-colors hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:top-8 sm:right-10"
           >
-            Skip
+            Skip Intro
           </button>
 
-          {/* SVG Envelope */}
-          <div className="relative h-40 w-56 sm:h-48 sm:w-64">
-            {/* Envelope body */}
+          {/* Floating envelope container */}
+          <motion.div
+            animate={{ y: [0, -6, 0] }}
+            transition={{
+              duration: 3,
+              ease: 'easeInOut',
+              repeat: Infinity,
+            }}
+            className="relative h-48 w-64 sm:h-56 sm:w-72"
+          >
+            {/* SVG Envelope */}
             <svg
               viewBox="0 0 240 160"
               fill="none"
@@ -84,16 +130,17 @@ export default function EnvelopeIntro({ onComplete }: EnvelopeIntroProps) {
                 stroke="var(--color-accent, #b08d57)"
                 strokeWidth="1"
               />
-              {/* Flap */}
+              {/* Flap — stays closed until seal is clicked */}
               <motion.path
                 d="M4 4 L120 80 L236 4"
                 fill="var(--color-surface, #f5f0eb)"
                 stroke="var(--color-accent, #b08d57)"
                 strokeWidth="1"
                 initial={{ rotateX: 0 }}
-                animate={{ rotateX: 180 }}
-                transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
+                animate={{ rotateX: sealed ? 0 : 180 }}
+                transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
                 style={{ transformOrigin: '120px 4px' }}
+                onAnimationComplete={triggerHaptic}
               />
               {/* Front fold lines */}
               <path
@@ -110,36 +157,66 @@ export default function EnvelopeIntro({ onComplete }: EnvelopeIntroProps) {
               />
             </svg>
 
-            {/* Initials inside envelope */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.8,
-                ease: [0.22, 1, 0.36, 1],
-                delay: 0.8,
-              }}
-              className="absolute inset-0 flex items-center justify-center pt-6"
+            {/* Wax seal — clickable trigger */}
+            <button
+              type="button"
+              onClick={handleSealClick}
+              disabled={!sealed}
+              aria-label="Open envelope"
+              className="absolute left-1/2 top-[42%] -translate-x-1/2 -translate-y-1/2 z-10"
             >
-              <span className="font-display text-2xl tracking-tight text-accent sm:text-3xl">
-                {initials}
-              </span>
-            </motion.div>
-          </div>
+              <motion.div
+                animate={sealed ? sealedAnimate : unsealedAnimate}
+                transition={sealed ? sealedTransition : unsealedTransition}
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-accent shadow-lg"
+              >
+                <span className="font-display text-sm font-bold text-bg">
+                  {initials}
+                </span>
+              </motion.div>
+            </button>
 
-          {/* Couple name */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{
-              duration: 0.6,
-              ease: [0.22, 1, 0.36, 1],
-              delay: 1.2,
-            }}
-            className="mt-6 font-display text-lg tracking-tight text-text sm:text-xl"
-          >
-            {couple.displayName}
-          </motion.p>
+            {/* Card reveal — slides up after seal breaks */}
+            <AnimatePresence>
+              {!sealed && (
+                <motion.div
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.6 }}
+                  className="absolute inset-0 flex items-center justify-center pt-4"
+                >
+                  <div className="flex flex-col items-center">
+                    <span className="font-display text-3xl tracking-tight text-accent sm:text-4xl">
+                      {initials}
+                    </span>
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 1.2 }}
+                      className="mt-3 font-display text-base tracking-tight text-text sm:text-lg"
+                    >
+                      {couple.displayName}
+                    </motion.p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
+          {/* Hint text */}
+          <AnimatePresence>
+            {sealed && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.6, delay: 1.5 }}
+                className="mt-8 font-body text-xs tracking-wider text-muted/60 sm:text-sm"
+              >
+                Tap the seal to open
+              </motion.p>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>

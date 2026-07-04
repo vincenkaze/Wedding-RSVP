@@ -34,16 +34,20 @@ function App() {
         <EnvelopeIntro onComplete={handleEnvelopeComplete} />
       )}
       <main className="min-h-dvh bg-bg">
-        <Hero />
-        <Countdown />
-        <Verse />
-        <Story />
-        <Events />
-        <Family />
-        <Venue />
-        <FloatingGallery />
-        <RSVP />
-        <Footer />
+        {envelopeDone && (
+          <>
+            <Hero />
+            <Countdown />
+            <Verse />
+            <Story />
+            <Events />
+            <Family />
+            <Venue />
+            <FloatingGallery />
+            <RSVP />
+            <Footer />
+          </>
+        )}
       </main>
       <MusicControl autoPlay={envelopeDone} />
     </>
