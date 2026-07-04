@@ -191,7 +191,7 @@ export default function FloatingPhoto({
         {/* Ambient glow — subsurface color aura */}
         {!prefersReducedMotion && dominantColor && (
           <div
-            className="absolute -inset-6 -z-10 rounded-3xl opacity-40 blur-3xl"
+            className="absolute -inset-6 -z-10 rounded-3xl opacity-40 blur-3xl pointer-events-none"
             style={{
               backgroundColor: dominantColor,
               mixBlendMode: 'multiply',
