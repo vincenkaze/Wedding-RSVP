@@ -64,7 +64,7 @@ export default function Countdown() {
           {sections.countdown.heading}
         </motion.h2>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-6 md:flex-nowrap">
+        <div className="mt-10 flex flex-nowrap items-center justify-center gap-2 sm:gap-4 md:gap-6">
           {units.map((unit, i) => (
             <motion.div
               key={unit.label}
@@ -80,12 +80,15 @@ export default function Countdown() {
                 ease: EASE_ENTRANCE,
                 delay: 0.2 + i * 0.1,
               }}
-              className="flex w-20 flex-col items-center rounded-2xl bg-surface px-3 py-5 shadow-sm ring-1 ring-black/5 sm:w-32 sm:px-4 sm:py-7 md:w-36"
+              className="flex flex-1 min-w-0 flex-col items-center rounded-2xl bg-surface px-2 py-4 shadow-sm ring-1 ring-black/5 sm:px-4 sm:py-7"
             >
-              <span className="font-display text-3xl tabular-nums text-text sm:text-4xl">
+              <span
+                className="font-display tabular-nums text-text"
+                style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)' }}
+              >
                 {String(unit.value).padStart(2, '0')}
               </span>
-              <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs">
+              <span className="mt-1 truncate text-[10px] font-semibold uppercase tracking-[0.16em] text-muted sm:text-xs">
                 {unit.label}
               </span>
             </motion.div>
