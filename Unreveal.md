@@ -1,72 +1,291 @@
-# Unreveal — Hiding the Date at Entrance
+Unreveal Animation
 
-## Problem
 
-The Hero originally revealed "September 13, 2026" + "Cherthala, Kerala" immediately on load, giving away the date before the guest has done anything. The invite loses its sense of unfolding.
 
-## Goal
+Spec for the unreveal (the way the hero image appears, "un-revealing" itself) in .
 
-Don't reveal the date in the first view. Make guests discover it through interaction.
+✅ Decision: Option A — "Curtain from middle" (curtain-from-middle split)
 
-## Implemented Solution — Mirrored Bounce Reveal
 
-The date text renders mirrored (backwards) with a looping bounce animation. The entire hero section shakes on each impact, drawing attention and creating a playful, tactile hint. On tap, the text spins 2.5 rotations and lands in its normal readable view with a gold underline draw.
 
-### Visual Behavior
 
-```
-┌─────────────────────────────────────┐
-│         [Anjana & Krishnaprasad]     │  ← visible, normal
-│                                     │
-│         ┌─────────────────┐         │
-│         │  6202 ,31 rebmeS │        │  ← mirrored, bouncing
-│         │  alarahK ,alahlerC │      │
-│         └─────────────────┘         │
-│                                     │
-│         [ RSVP NOW ]                │  ← visible, normal
-│                                     │
-│              ↓ scroll               │
-└─────────────────────────────────────┘
-```
 
-### Animation Timeline
+Two halves slide apart horizontally from the center seam, revealing the hero image and couple's names underneath.
 
-| Time | Event |
-|------|-------|
-| 0.0s | Date text visible but mirrored (`rotateY: 180deg`) |
-| 0.0s | Bounce loop starts: `translateY: 0 → -18px → 0` on 1.4s cycle |
-| 0.0s | Hero section shake synced to bounce impact (`±3px` horizontal) |
-| tap  | Text spins: `rotateY: 180 → 1080deg` (2.5 rotations) over 1.6s |
-| tap  | Shake stops, bounce stops |
-| 1.6s | Text lands at normal orientation, gold underline draws |
 
-### Implementation Details
 
-**Files changed:**
-- `src/components/sections/Hero.tsx` — `DateReveal` local component, `dateRevealed` state
-- `src/styles/base.css` — `hero-shake` keyframe animation
+Clean, symmetric, suits the "envelope → letter" metaphor that the rest of the site already uses.
 
-**How it works:**
+Animation timeline
 
-1. `DateReveal` renders the date/location text inside a `motion.div` with `rotateY: 180` (mirrored)
-2. A bounce animation loops: `translateY: [0, -18, 0]` with `times: [0, 0.4, 1]` so impact happens at 40% of the 1.4s cycle
-3. The hero `<section>` gets class `hero-shake` which applies a matching shake keyframe — `translateX` oscillation timed to the bounce impact
-4. On tap, `setRevealed(true)` triggers `rotateY: 1080` (2.5 spins from 180, landing at 0/normal)
-5. `hero-shake` class is removed once revealed
 
-**Reduced motion:** If `prefers-reduced-motion: reduce`, date renders normally without bounce/shake/interaction.
 
-**Accessibility:**
-- `aria-label` updates from "Tap to reveal the wedding date" to the actual date on reveal
-- `cursor-pointer` + focus-visible outline for keyboard users
 
-### What We Considered but Reverted
 
-| Option | Why Reverted |
-|--------|-------------|
-| Curtain split reveal | Too complex for a 1.2s effect |
-| "Save the Date" flip card | Extra visual design, user preferred simpler text-only approach |
-| Gold foil scratch reveal | Overkill for the interaction model |
-| Water splash particles | Didn't match the premium tone |
-| Jelly/bounce easing | Too aggressive, user preferred the impact shake |
-| Fluid breeze sway | Too subtle, not enough attention grab |
+
+
+Time
+
+
+
+Event
+
+
+
+
+
+0.00s
+
+
+
+Both halves fully closed (no gap)
+
+
+
+
+
+0.30s
+
+
+
+Halves start sliding outward (left half ←, right half →)
+
+
+
+
+
+1.20s
+
+
+
+Halves fully open; hero image and names are now visible
+
+
+
+
+
+1.50s
+
+
+
+Names start fading in (handled by existing nameReveal variant)
+
+
+
+
+
+1.80s
+
+
+
+Date underline draws (underline-draw class — already present)
+
+
+
+
+
+2.10s
+
+
+
+RSVP button fades in
+
+Total: ~2.1 seconds, matching the existing envelope-intro pacing.
+
+How it works
+
+
+
+
+
+Add two <motion.div> overlays on top of the hero <picture>, one positioned left: 0; right: 50% and the other left: 50%; right: 0.
+
+
+
+Each animates scaleX from 1 → 0 (using transform-origin set to the inner edge — left half uses right, right half uses left) over 1.2s, easing [0.22, 1, 0.36, 1].
+
+
+
+Background color of the overlays matches the hero backdrop (bg-accent or bg-bg) so it looks like a single curtain that splits.
+
+
+
+After 1.2s, both overlays have scaleX: 0, effectively gone; remove them from the DOM via AnimatePresence once exit completes (or just leave them at pointer-events-none — they won't intercept anything because they're at pointer-events: none).
+
+
+
+Names/date/CTA use the existing variants (nameReveal, lineVariants) with STAGGER delays as before.
+
+Reduced motion
+
+
+
+
+
+If useReducedMotion() returns true, skip the curtain entirely. Halves render with opacity: 0 and never animate. The hero content fades in via the existing variants but with no sliding effect.
+
+Accessibility
+
+
+
+
+
+The two halves are aria-hidden.
+
+
+
+The hero <section> keeps its existing aria-label.
+
+
+
+No focusable elements inside the curtain; no keyboard interaction needed.
+
+Files to change
+
+
+
+
+
+
+
+File
+
+
+
+Change
+
+
+
+
+
+
+
+
+
+Add two <motion.div> curtain overlays + one useEffect or animation prop to trigger after a 300ms delay. Existing variants stay untouched.
+
+
+
+
+
+ (optional)
+
+
+
+Add a .curtain-half utility class if we want to keep JSX clean. Not required — inline style works.
+
+Date + location highlight (the "clue" for skimmers)
+
+Most guests skim. The date and place line is the real eye-magnet — give it a specific treatment so it reads as the anchor without breaking the premium feel.
+
+Color: warm gold #d4a85a (with a #c8993e mid-stop for the gradient). Already in the existing palette, so it reads as intentional, not added. Avoid red, blue, or white-glow — all break the premium tone.
+
+Treatment — three layers, in order of visual weight:
+
+
+
+
+
+Gold gradient text on the date + location line only
+
+
+
+
+
+
+bg-gradient-to-r from-[#d4a85a] via-[#c8993e] to-[#d4a85a]
+
+
+
+bg-clip-text text-transparent
+
+
+
+Slight weight bump: font-medium (or font-semibold if it still feels soft on mobile)
+
+
+
+Underline color shift — the existing underline-draw animation stays, but its stroke uses var(--accent) (the gold token) instead of the default text color, on this line only
+
+
+
+Soft glow pulse — very low opacity, 2s loop
+
+
+
+
+
+
+box-shadow: 0 0 24px rgba(212, 168, 90, 0.15) keyframed between 0.15 → 0.25 → 0.15
+
+
+
+Wrap the line in a <span> that holds the pulse so the gradient text is not affected
+
+
+
+Reduced-motion: pulse becomes a static 0.15 glow, no loop
+
+Why this works: gold is the "important moment" color in your palette. The gradient gives it dimension (not flat), the underline keeps the existing rhythm, the pulse is the eye-catch without being loud. Skimmers see gold → read date. Slow readers see it as part of the same ivory/brown language.
+
+What to AVOID on this line:
+
+
+
+
+
+❌ Red, blue, green — breaks palette
+
+
+
+❌ White text or white glow on dark — looks cheap on wedding sites
+
+
+
+❌ Bouncing or scaling animation — distracts from the names above
+
+
+
+❌ Background highlight box (like a yellow marker) — too "sticky note"
+
+Why NOT the other options
+
+
+
+
+
+B (Letter fold) — visually clever, but folds are hard to time without a real SVG mask and break on the title text overlay.
+
+
+
+C (Fade + blur) — too soft for a wedding site; the existing envelope intro already establishes the "lift" feeling. A curtain split gives a clearer "reveal" beat.
+
+
+
+D (Vellum tear) — gorgeous but needs an SVG mask + a tear texture asset, which is overkill for a 1.2-second effect.
+
+Implementation order
+
+
+
+
+
+Add the two curtain <motion.div>s inside <section> (above the <picture> but below the gradient overlay).
+
+
+
+Wire their initial / animate to use scaleX: 0 with a 0.3s delay.
+
+
+
+Test at 360px / 768px / 1440px.
+
+
+
+Test prefers-reduced-motion: reduce — halves should be opacity: 0, no animation.
+
+
+
+Test on iPhone Safari + Android Chrome + WhatsApp in-app browser.
+
+Ready to implement as soon as you push this file to GitHub.

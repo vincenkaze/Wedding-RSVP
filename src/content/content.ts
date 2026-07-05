@@ -112,7 +112,7 @@ export const hero = {
   preTitle: 'Together with their families',
   ctaText: 'RSVP Now',
   countdownLabel: 'Countdown to our wedding',
-  image: '/hero/couple.jpg',
+  image: '/hero/couple.webp',
   imageWebp: '/hero/couple.webp',
   imageAvif: '/hero/couple.avif',
   imageAlt: 'Anjana and Krishnaprasad together in the warm light of Cherthala, Kerala',
@@ -216,52 +216,52 @@ export const liveStream: LiveStream = {
 
 export const gallery: GalleryItem[] = [
   {
-    src: '/gallery/1.jpeg',
+    src: '/gallery/1.webp',
     alt: 'The happy couple sharing a moment together',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/2.jpeg',
+    src: '/gallery/2.webp',
     alt: 'The proposal at sunset',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/3.jpeg',
+    src: '/gallery/3.webp',
     alt: 'Walking hand in hand through a sunlit path',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/4.jpeg',
+    src: '/gallery/4.webp',
     alt: 'Laughing together during their engagement shoot',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/5.jpeg',
+    src: '/gallery/5.webp',
     alt: 'Close-up of the wedding rings on a linen surface',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/6.jpeg',
+    src: '/gallery/6.webp',
     alt: 'Friends raising a glass to the happy couple',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/7.jpeg',
+    src: '/gallery/7.webp',
     alt: 'A beautiful moment captured together',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/8.jpeg',
+    src: '/gallery/8.webp',
     alt: 'Sharing a laugh together',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/9.jpeg',
+    src: '/gallery/9.webp',
     alt: 'Together in love',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/10.jpeg',
+    src: '/gallery/10.webp',
     alt: 'A cherished memory',
     aspect: 'aspect-square',
   },

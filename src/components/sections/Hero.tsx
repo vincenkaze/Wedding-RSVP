@@ -103,7 +103,7 @@ export default function Hero() {
   return (
     <section
       id="hero"
-      className={`relative min-h-dvh flex flex-col items-center justify-center px-6 py-20 overflow-hidden ${!dateRevealed && !prefersReducedMotion ? 'hero-shake' : ''}`}
+      className="relative min-h-dvh flex flex-col items-center justify-center px-6 py-20 overflow-hidden"
     >
       {/* Ken Burns background image */}
       <div className="absolute inset-0 overflow-hidden" aria-hidden>
