@@ -37,7 +37,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
       setVisible(false)
       markSeen()
       setTimeout(onComplete, 400)
-    }, 2000)
+    }, 1000)
     return () => clearTimeout(timer)
   }, [visible, onComplete])
 

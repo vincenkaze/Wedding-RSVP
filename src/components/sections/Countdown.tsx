@@ -55,10 +55,6 @@ export default function Countdown() {
           {sections.countdown.label}
         </motion.p>
         <motion.h2
-          initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: EASE_ENTRANCE, delay: 0.08 }}
           className="mt-3 font-display text-3xl tracking-wide text-text sm:text-4xl"
         >
           {sections.countdown.heading}
