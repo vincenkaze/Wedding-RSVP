@@ -64,9 +64,6 @@ export interface GalleryItem {
 }
 
 export interface RSVP {
-  contactNumber: string
-  contactEmail: string
-  web3FormsEndpoint?: string
   successMessage?: string
   events?: string[]
   dietaryOptions?: string[]
@@ -267,9 +264,6 @@ export const gallery: GalleryItem[] = [
 ]
 
 export const rsvp: RSVP = {
-  contactNumber: '+918848038744',
-  contactEmail: '',
-  web3FormsEndpoint: undefined,
   successMessage:
     'Thank you, {name}! We look forward to celebrating with you.',
   events: [

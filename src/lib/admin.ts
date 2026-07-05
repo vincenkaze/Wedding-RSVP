@@ -1,8 +1,6 @@
-import { supabase } from './supabase'
 import type { RsvpRow } from './rsvp'
 
 const SESSION_KEY = 'admin_session'
-const TOKEN_TTL_MS = 12 * 60 * 60 * 1000
 
 interface Session {
   token: string
@@ -26,7 +24,7 @@ function getSession(): Session | null {
 }
 
 function setSession(token: string): void {
-  const session: Session = { token, expiresAt: Date.now() + TOKEN_TTL_MS }
+  const session: Session = { token, expiresAt: Date.now() + 12 * 60 * 60 * 1000 }
   localStorage.setItem(SESSION_KEY, JSON.stringify(session))
 }
 
@@ -57,15 +55,11 @@ export async function login(
   }
 
   const passwordHash = await hashPassword(password)
-  const apiKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
   try {
     const res = await fetch(functionUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(apiKey ? { apikey: apiKey } : {}),
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: passwordHash }),
     })
 
@@ -98,12 +92,8 @@ export async function fetchRows(): Promise<{
   if (!functionUrl) return { rows: [], error: 'Admin function not configured.' }
 
   try {
-    const apiKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
     const res = await fetch(functionUrl, {
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-        ...(apiKey ? { apikey: apiKey } : {}),
-      },
+      headers: { Authorization: `Bearer ${session.token}` },
     })
 
     if (!res.ok) {
@@ -128,12 +118,8 @@ export async function downloadCsv(): Promise<void> {
   if (!functionUrl) return
 
   try {
-    const apiKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
     const res = await fetch(`${functionUrl}?format=csv`, {
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-        ...(apiKey ? { apikey: apiKey } : {}),
-      },
+      headers: { Authorization: `Bearer ${session.token}` },
     })
 
     if (!res.ok) return
@@ -151,9 +137,24 @@ export async function downloadCsv(): Promise<void> {
 }
 
 export async function deleteRow(id: string): Promise<{ ok: boolean; error?: string }> {
-  if (!supabase) return { ok: false, error: 'Supabase not configured.' }
+  const session = getSession()
+  if (!session) return { ok: false, error: 'Not authenticated.' }
 
-  const { error } = await supabase.from('rsvps').delete().eq('id', id)
-  if (error) return { ok: false, error: error.message }
-  return { ok: true }
+  const functionUrl = import.meta.env.VITE_ADMIN_FUNCTION_URL as
+    | string
+    | undefined
+  if (!functionUrl) return { ok: false, error: 'Admin function not configured.' }
+
+  try {
+    const res = await fetch(functionUrl, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${session.token}` },
+      body: JSON.stringify({ id }),
+    })
+
+    if (!res.ok) return { ok: false, error: 'Delete failed.' }
+    return { ok: true }
+  } catch {
+    return { ok: false, error: 'Network error.' }
+  }
 }

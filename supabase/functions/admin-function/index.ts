@@ -2,7 +2,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, GET, DELETE, OPTIONS",
 };
 
 Deno.serve(async (req) => {
@@ -10,11 +10,9 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  const jwtSecret = Deno.env.get("SUPABASE_JWT_SECRET") ?? "";
   const adminHash = Deno.env.get("ADMIN_PASSWORD_HASH") ?? "";
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const url = new URL(req.url);
 
   const authHeader = req.headers.get("Authorization") ?? "";
   const bearerToken = authHeader.startsWith("Bearer ")
@@ -33,31 +31,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Sign a simple JWT
-      const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-      const now = Math.floor(Date.now() / 1000);
-      const payload = btoa(
-        JSON.stringify({ role: "admin", iat: now, exp: now + 86400 }),
-      );
-      const signingData = `${header}.${payload}`;
-      const key = await crypto.subtle.importKey(
-        "raw",
-        new TextEncoder().encode(jwtSecret),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"],
-      );
-      const sig = await crypto.subtle.sign(
-        "HMAC",
-        key,
-        new TextEncoder().encode(signingData),
-      );
-      const signature = btoa(String.fromCharCode(...new Uint8Array(sig)))
-        .replace(/=/g, "")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_");
-      const jwt = `${signingData}.${signature}`;
-
       // Fetch rows via REST API
       const dbRes = await fetch(
         `${supabaseUrl}/rest/v1/rsvps?order=created_at.desc`,
@@ -70,11 +43,11 @@ Deno.serve(async (req) => {
       );
       const rows = dbRes.ok ? await dbRes.json() : [];
 
-      return new Response(JSON.stringify({ token: jwt, rows }), {
+      return new Response(JSON.stringify({ token: "ok", rows }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Unknown error";
+      const msg = e instanceof Error ? e.message : String(e);
       return new Response(
         JSON.stringify({ error: "Bad request", detail: msg }),
         {
@@ -85,9 +58,8 @@ Deno.serve(async (req) => {
     }
   }
 
-  // GET = fetch rows
+  // GET = fetch rows (requires bearer token)
   if (req.method === "GET") {
-    // Verify JWT
     if (!bearerToken) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -95,39 +67,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    try {
-      const parts = bearerToken.split(".");
-      if (parts.length !== 3) throw new Error("bad token");
-      const key = await crypto.subtle.importKey(
-        "raw",
-        new TextEncoder().encode(jwtSecret),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["verify"],
-      );
-      const sigBytes = Uint8Array.from(
-        atob(parts[2].replace(/-/g, "+").replace(/_/g, "/")),
-        (c) => c.charCodeAt(0),
-      );
-      const valid = await crypto.subtle.verify(
-        "HMAC",
-        key,
-        sigBytes,
-        new TextEncoder().encode(`${parts[0]}.${parts[1]}`),
-      );
-      if (!valid) throw new Error("invalid sig");
-      const payload = JSON.parse(atob(parts[1]));
-      if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-        throw new Error("expired");
-      }
-    } catch {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const url = new URL(req.url);
 
-    // Fetch rows
     const dbRes = await fetch(
       `${supabaseUrl}/rest/v1/rsvps?order=created_at.desc`,
       {
@@ -139,13 +80,10 @@ Deno.serve(async (req) => {
     );
 
     if (!dbRes.ok) {
-      return new Response(
-        JSON.stringify({ error: `DB error ${dbRes.status}` }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
+      return new Response(JSON.stringify({ error: `DB error ${dbRes.status}` }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const rows = await dbRes.json();
@@ -157,11 +95,11 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "text/csv" },
         });
       }
-      const headers = Object.keys(rows[0]);
-      const lines = [headers.join(",")];
+      const keys = Object.keys(rows[0]);
+      const lines = [keys.join(",")];
       for (const row of rows) {
         lines.push(
-          headers
+          keys
             .map((h) => {
               const val = String(row[h] ?? "");
               return val.includes(",") || val.includes('"') || val.includes("\n")
@@ -183,6 +121,54 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ rows }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  }
+
+  // DELETE = remove row
+  if (req.method === "DELETE") {
+    if (!bearerToken) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    try {
+      const { id } = await req.json();
+      if (!id) {
+        return new Response(JSON.stringify({ error: "Missing id" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const dbRes = await fetch(
+        `${supabaseUrl}/rest/v1/rsvps?id=eq.${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            apikey: serviceKey,
+            Authorization: `Bearer ${serviceKey}`,
+          },
+        },
+      );
+
+      if (!dbRes.ok) {
+        return new Response(JSON.stringify({ error: `Delete failed ${dbRes.status}` }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return new Response(JSON.stringify({ error: "Bad request", detail: msg }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
   }
 
   return new Response("Method not allowed", {
