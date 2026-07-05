@@ -215,52 +215,52 @@ export const liveStream: LiveStream = {
 
 export const gallery: GalleryItem[] = [
   {
-    src: '/gallery/1.webp',
+    src: '/gallery/1.avif',
     alt: 'The happy couple sharing a moment together',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/2.webp',
+    src: '/gallery/2.avif',
     alt: 'The proposal at sunset',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/3.webp',
+    src: '/gallery/3.avif',
     alt: 'Walking hand in hand through a sunlit path',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/4.webp',
+    src: '/gallery/4.avif',
     alt: 'Laughing together during their engagement shoot',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/5.webp',
+    src: '/gallery/5.avif',
     alt: 'Close-up of the wedding rings on a linen surface',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/6.webp',
+    src: '/gallery/6.avif',
     alt: 'Friends raising a glass to the happy couple',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/7.webp',
+    src: '/gallery/7.avif',
     alt: 'A beautiful moment captured together',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/8.webp',
+    src: '/gallery/8.avif',
     alt: 'Sharing a laugh together',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/9.webp',
+    src: '/gallery/9.avif',
     alt: 'Together in love',
     aspect: 'aspect-square',
   },
   {
-    src: '/gallery/10.webp',
+    src: '/gallery/10.avif',
     alt: 'A cherished memory',
     aspect: 'aspect-square',
   },

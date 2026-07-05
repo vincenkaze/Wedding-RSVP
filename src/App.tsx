@@ -10,12 +10,20 @@ import Events from './components/sections/Events'
 import Family from './components/sections/Family'
 import Footer from './components/sections/Footer'
 
+const AdminGate = lazy(() => import('./components/admin/AdminGate'))
 const Story = lazy(() => import('./components/sections/Story'))
 const Venue = lazy(() => import('./components/sections/Venue'))
 const FloatingGallery = lazy(() => import('./components/sections/FloatingGallery'))
 const RSVP = lazy(() => import('./components/sections/RSVP'))
 
-function App() {
+function isAdminRoute() {
+  return (
+    typeof window !== 'undefined' &&
+    window.location.pathname.startsWith('/admin')
+  )
+}
+
+function WeddingSite() {
   const [loaded, setLoaded] = useState(false)
   const [envelopeDone, setEnvelopeDone] = useState(false)
 
@@ -53,6 +61,18 @@ function App() {
       <MusicControl autoPlay={envelopeDone} />
     </>
   )
+}
+
+function App() {
+  if (isAdminRoute()) {
+    return (
+      <Suspense>
+        <AdminGate />
+      </Suspense>
+    )
+  }
+
+  return <WeddingSite />
 }
 
 export default App

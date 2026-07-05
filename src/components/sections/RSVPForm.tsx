@@ -1,6 +1,7 @@
 import { useState, useCallback, type FormEvent } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { couple, rsvp } from '../../content/content'
+import { rsvp } from '../../content/content'
+import { persistRsvp } from '../../lib/rsvp'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
 
 interface FormData {
@@ -9,40 +10,6 @@ interface FormData {
   events: string[]
   dietary: string
   message: string
-}
-
-function buildWhatsAppUrl(data: FormData): string {
-  const lines = [
-    `Hi! I'm ${data.name} and I'm RSVPing for ${couple.displayName}'s wedding.`,
-    '',
-    `Guests: ${data.guests}`,
-  ]
-  if (data.events.length > 0) {
-    lines.push(`Events: ${data.events.join(', ')}`)
-  }
-  if (data.dietary) {
-    lines.push(`Dietary: ${data.dietary}`)
-  }
-  if (data.message) {
-    lines.push('', `Message: ${data.message}`)
-  }
-  const text = encodeURIComponent(lines.join('\n'))
-  return `https://wa.me/${rsvp.contactNumber}?text=${text}`
-}
-
-async function postToWeb3Forms(data: FormData): Promise<void> {
-  if (!rsvp.web3FormsEndpoint) return
-  await fetch(rsvp.web3FormsEndpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: data.name,
-      guests: data.guests,
-      events: data.events.join(', '),
-      dietary: data.dietary,
-      message: data.message,
-    }),
-  })
 }
 
 function getSuccessMessage(name: string): string {
@@ -95,9 +62,8 @@ export default function RSVPForm() {
     // Optimistic: show success immediately
     setSubmitted(true)
 
-    // Fire async paths (don't block UI)
-    void postToWeb3Forms(data)
-    window.open(buildWhatsAppUrl(data), '_blank', 'noopener,noreferrer')
+    // Fire-and-forget: persist to Supabase (don't block UI)
+    void persistRsvp(data)
     setIsSubmitting(false)
   }
 
