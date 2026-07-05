@@ -99,7 +99,6 @@ function DateReveal({ onReveal }: { onReveal: () => void }) {
 
 export default function Hero() {
   const [imgError, setImgError] = useState(false)
-  const [dateRevealed, setDateRevealed] = useState(false)
   return (
     <section
       id="hero"
@@ -112,7 +111,6 @@ export default function Hero() {
         ) : (
           <picture>
             <source srcSet={hero.imageAvif} type="image/avif" />
-            <source srcSet={hero.imageWebp} type="image/webp" />
             <img
               src={hero.image}
               alt=""
@@ -164,7 +162,7 @@ export default function Hero() {
           custom={STAGGER * 2}
           className="flex flex-col items-center gap-1"
         >
-          <DateReveal onReveal={() => setDateRevealed(true)} />
+          <DateReveal onReveal={() => {}} />
         </motion.div>
 
         {/* RSVP CTA */}

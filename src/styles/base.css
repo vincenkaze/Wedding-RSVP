@@ -253,6 +253,12 @@ body::after {
   aria-hidden: true;
 }
 
+@media (max-width: 768px) {
+  body::after {
+    display: none;
+  }
+}
+
 /* ── 3D Cylinder Carousel ── */
 .cylinder-viewport {
   perspective: 1000px;

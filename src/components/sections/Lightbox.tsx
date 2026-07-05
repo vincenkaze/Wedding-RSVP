@@ -279,6 +279,8 @@ export default function Lightbox({
                   src={item.src}
                   alt={item.alt}
                   draggable={false}
+                  loading="lazy"
+                  decoding="async"
                   className="max-h-[80vh] max-w-full rounded-lg object-contain select-none"
                   style={{
                     transform: `translateX(${swipeX}px)`,

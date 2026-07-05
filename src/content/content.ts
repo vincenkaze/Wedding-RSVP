@@ -113,7 +113,6 @@ export const hero = {
   ctaText: 'RSVP Now',
   countdownLabel: 'Countdown to our wedding',
   image: '/hero/couple.webp',
-  imageWebp: '/hero/couple.webp',
   imageAvif: '/hero/couple.avif',
   imageAlt: 'Anjana and Krishnaprasad together in the warm light of Cherthala, Kerala',
 }

@@ -246,14 +246,17 @@ export default function VenueSection() {
             <motion.div
               initial={false}
               animate={{
-                height: travelOpen ? 'auto' : 0,
                 opacity: travelOpen ? 1 : 0,
               }}
               transition={{
-                height: { duration: 0.35, ease: EASE_ENTRANCE },
                 opacity: { duration: 0.25, ease: EASE_ENTRANCE },
               }}
               className="overflow-hidden"
+              style={{
+                display: 'grid',
+                gridTemplateRows: travelOpen ? '1fr' : '0fr',
+                transition: 'grid-template-rows 0.35s ease',
+              }}
             >
               <ul className="flex flex-col gap-2.5 px-6 pt-4 pb-2">
                 {venue.travelStay.items.map((item) => (

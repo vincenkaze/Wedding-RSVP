@@ -52,6 +52,10 @@ function getSuccessMessage(name: string): string {
   return template.replace('{name}', name)
 }
 
+const prefersReducedMotion =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 function getFirstName(fullName: string): string {
   return fullName.split(' ')[0] || fullName
 }
@@ -115,7 +119,7 @@ export default function RSVPForm() {
         <motion.div
           key="success"
           initial={
-            prefersReducedMotion()
+            prefersReducedMotion
               ? { opacity: 1 }
               : { opacity: 0, scale: 0.96 }
           }
@@ -129,7 +133,7 @@ export default function RSVPForm() {
           <motion.svg
             viewBox="0 0 52 52"
             className="h-14 w-14"
-            initial={prefersReducedMotion() ? { opacity: 1 } : { opacity: 0 }}
+            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.1 }}
           >
@@ -141,7 +145,7 @@ export default function RSVPForm() {
               stroke="currentColor"
               strokeWidth="2"
               className="text-accent"
-              initial={prefersReducedMotion() ? { pathLength: 1 } : { pathLength: 0 }}
+              initial={prefersReducedMotion ? { pathLength: 1 } : { pathLength: 0 }}
               animate={{ pathLength: 1 }}
               transition={{ duration: 0.6, ease: EASE_ENTRANCE, delay: 0.15 }}
             />
@@ -153,14 +157,14 @@ export default function RSVPForm() {
               strokeLinecap="round"
               strokeLinejoin="round"
               className="text-accent"
-              initial={prefersReducedMotion() ? { pathLength: 1 } : { pathLength: 0 }}
+              initial={prefersReducedMotion ? { pathLength: 1 } : { pathLength: 0 }}
               animate={{ pathLength: 1 }}
               transition={{ duration: 0.4, ease: EASE_ENTRANCE, delay: 0.5 }}
             />
           </motion.svg>
 
           <motion.p
-            initial={prefersReducedMotion() ? { opacity: 1 } : { opacity: 0 }}
+            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.6 }}
             className="font-display text-2xl tracking-tight text-text sm:text-3xl"
@@ -168,7 +172,7 @@ export default function RSVPForm() {
             Thank you
           </motion.p>
           <motion.p
-            initial={prefersReducedMotion() ? { opacity: 1 } : { opacity: 0 }}
+            initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.7 }}
             className="max-w-sm font-body text-sm leading-relaxed text-muted sm:text-base"
@@ -182,9 +186,9 @@ export default function RSVPForm() {
           onSubmit={handleSubmit}
           className="flex flex-col gap-7"
           noValidate
-          initial={prefersReducedMotion() ? { opacity: 1 } : { opacity: 1 }}
+          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 1 }}
           exit={
-            prefersReducedMotion()
+            prefersReducedMotion
               ? { opacity: 0 }
               : { opacity: 0, y: -8 }
           }
@@ -388,7 +392,3 @@ function fieldVariant(delay: number) {
   }
 }
 
-function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
