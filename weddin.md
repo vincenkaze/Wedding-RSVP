@@ -1,38 +1,20 @@
-# Problems to Fix
+# Problems to Fix (Archive)
 
-> Living list of design/UX/behavior issues for the wedding site.
-> Status legend: 🔴 Open  🟡 In Progress  🟢 Resolved
-
----
-
-## 🟢 P-001 — Story → Events gap feels empty
-
-**Location:** `src/components/sections/Story.tsx` and `StoryBridge.tsx`
-
-**Symptom:** `storyTimeline: StoryMilestone[] = []` (content.ts line 205) — the Story section ends abruptly after the prologue, leaving a visible whitespace void before Events begins.
-
-**Status:** Resolved. `StoryBridge` component is in place and rendering between Story and Events (`App.tsx` line 30).
+> **This file is archived.** The current living issue tracker is `Problems-to-fix.md`.
+> This file preserves the original P-006/P-007 discussion for reference.
 
 ---
 
-## 🟡 P-002 — Gallery needs a kinetic canvas, not a static grid
+## P-006 — Gallery canvas was too small and photo transforms didn't move them off the stack
 
-**Status:** P-002 was the original "mouse-reactive floating" pattern proposal. Superseded by P-003/P-006.
+**Original problem (now resolved):** The gallery rendered as a 6x vertical stack instead of a scattered canvas. All photos positioned at `left: 0, top: 0` with transforms that only nudged them a few pixels.
 
----
-
-## 🟢 P-003 — Gallery: true interactivity, not just float animation
-
-**Status:** Implemented. `FloatingPhoto.tsx` and `FloatingGallery.tsx` exist with drag + pinch + rotate handle + scatter positions. `@use-gesture/react` is installed.
-
-**But the implementation has bugs** — see P-006, P-007.
+**Resolution:** Gallery was rewritten as a 3D CSS perspective cylinder carousel (`CylinderCarousel.tsx`), eliminating the scatter-positioning architecture entirely.
 
 ---
 
-## 🔴 P-006 — Gallery canvas is too small AND photo transforms don't move them off the stack
+## P-007 — Story section → YouTube live stream
 
-**Problem confirmed by DOM inspection (just ran the dev server at 1280×720):**
+**Status:** Story component rewritten as YouTube live stream embed. Pending YouTube video ID configuration from user.
 
-The canvas div is `h-[400px] sm:h-[450px] md:h-[550px]` wide enough, BUT:
-
-1. **Photo transforms are not moving photos off the origin.** Each photo receives a `transform: translateX(...) scale(...) rotate(...)` from the `useSpring` motion values, but the **sc
+**See:** `Problems-to-fix.md` P-007 for current status and action items.

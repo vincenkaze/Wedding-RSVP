@@ -1,4 +1,4 @@
-# Olivia & James — Wedding Invitation
+# Anjana & Krishnaprasad — Wedding Invitation
 
 A premium one-page wedding invitation website built with React, Tailwind CSS, and Framer Motion. Designed to deliver an emotional, cinematic experience optimized for sharing via WhatsApp, Instagram, and direct links.
 
@@ -6,28 +6,29 @@ A premium one-page wedding invitation website built with React, Tailwind CSS, an
 
 | Layer | Technology |
 |-------|-----------|
-| Runtime | Bun |
+| Runtime | npm (or Bun) |
 | Build | Vite 8 |
-| UI | React 19 + TypeScript 6 |
+| UI | React 19 + TypeScript 6 (strict) |
 | Styling | Tailwind CSS 4 |
 | Animation | Framer Motion 12 |
 | Smooth Scroll | Lenis |
 | Icons | Lucide React |
+| Gestures | @use-gesture/react |
 
 ## Getting Started
 
 ```bash
 # Install dependencies
-bun install
+npm install
 
 # Start dev server
-bun run dev
+npm run dev
 
 # Build for production
-bun run build
+npm run build
 
 # Preview production build
-bun run preview
+npm run preview
 ```
 
 ## Project Structure
@@ -35,34 +36,57 @@ bun run preview
 ```
 src/
 ├── components/
-│   ├── primitives/      # Preloader, EnvelopeIntro, MusicControl, CustomCursor, Section
-│   └── sections/        # Hero, Countdown, Verse, Story, Events, Family, Venue, Gallery, RSVP, Footer
+│   ├── primitives/
+│   │   ├── Section.tsx          # Scroll-triggered section wrapper
+│   │   ├── reveal.ts            # Shared animation constants & variants
+│   │   ├── Preloader.tsx        # Initial "A & K" splash (2s, localStorage-cached)
+│   │   ├── EnvelopeIntro.tsx    # Wax-seal envelope animation (sessionStorage-cached)
+│   │   ├── MusicControl.tsx     # Floating audio toggle
+│   │   └── CustomCursor.tsx     # Desktop-only dot cursor
+│   └── sections/
+│       ├── Hero.tsx             # Full-viewport hero with Ken Burns, date-reveal
+│       ├── Countdown.tsx        # Live countdown to Sept 13, 2026
+│       ├── Verse.tsx            # Quote blockquote
+│       ├── Story.tsx            # YouTube live stream embed (pre/live/post states)
+│       ├── Events.tsx           # Timeline with EventCard components
+│       ├── EventCard.tsx        # Individual event card
+│       ├── Family.tsx           # Bride + groom family side-by-side
+│       ├── FamilyGroup.tsx      # Single family group renderer
+│       ├── Venue.tsx            # Maps embed, directions, ICS download
+│       ├── FloatingGallery.tsx  # Gallery wrapper (carousel + lightbox)
+│       ├── CylinderCarousel.tsx # 3D CSS perspective carousel
+│       ├── Lightbox.tsx         # Full-screen image viewer
+│       ├── RSVP.tsx             # RSVP section wrapper
+│       ├── RSVPForm.tsx         # Form with WhatsApp + Web3Forms submission
+│       └── Footer.tsx           # Minimal footer
 ├── content/
-│   └── content.ts       # All copy, dates, venue info — single source of truth
+│   └── content.ts               # ALL copy — single source of truth
 ├── hooks/
-│   └── useSmoothScroll  # Lenis initialization with reduced-motion support
+│   ├── useSmoothScroll.tsx      # Lenis initialization
+│   └── smooth-scroll-context.ts # Lenis React context
 ├── lib/
-│   ├── ics.ts           # Calendar file generation
-│   └── wa.ts            # WhatsApp deep link helpers
+│   ├── ics.ts                   # ICS calendar file generation
+│   └── maps.ts                  # Google Maps URL builders
 ├── styles/
-│   ├── tokens.css       # Design tokens (colors, spacing, typography)
-│   └── base.css         # Global styles, animations, reduced-motion rules
-├── App.tsx
-└── main.tsx
+│   ├── tokens.css               # Design tokens (@theme block)
+│   └── base.css                 # Global styles, animations, reduced-motion
+├── App.tsx                      # Main composition
+└── main.tsx                     # Root render
 ```
 
 ## Customization
 
 All content lives in `src/content/content.ts`. Edit this single file to change:
 
-- **Couple names** — `couple.firstName`, `couple.secondName`, `couple.displayName`
-- **Wedding date** — `wedding.date`, `wedding.iso`, `wedding.displayDate`
+- **Couple names** — `couple.bride.firstName`, `couple.groom.firstName`, `couple.displayName`
+- **Wedding date** — `wedding.date`, `wedding.iso`, `wedding.time`
 - **Events** — `events[]` array (title, date, time, location, maps query)
 - **Venue** — `venue.name`, `venue.address`, `venue.mapsEmbedUrl`
-- **Story timeline** — `storyTimeline[]` array
+- **Family** — `family.bride`, `family.groom` (parents, siblings)
 - **Gallery** — `gallery[]` array (image paths, alt text, captions)
-- **RSVP** — `rsvp.deadline`, `rsvp.contactNumber`, `rsvp.web3FormsEndpoint`
-- **Family** — `family.bride`, `family.groom`
+- **Live stream** — `liveStream` (YouTube video ID, channel info)
+- **RSVP** — `rsvp.deadline`, `rsvp.contactNumber`, `rsvp.events`
+- **Verse** — `verse.text`, `verse.reference`
 
 No copy lives in component files. Ever.
 
@@ -76,16 +100,12 @@ public/
 │   ├── couple.jpg
 │   ├── couple.webp
 │   └── couple.avif
-├── story/
-│   ├── bookshop.jpg
-│   └── proposal.jpg
 ├── gallery/
-│   ├── first-moment.jpg
-│   └── ...
+│   ├── 1.jpeg through 10.jpeg
 └── og-image.jpg          # 1200×630px, <300KB — for WhatsApp/social previews
 ```
 
-Images should be optimized to WebP with AVIF where supported. Provide multiple formats via `srcWebp` / `srcAvif` fields in the gallery content.
+Images should be optimized to WebP with AVIF where supported.
 
 ## Adding Audio
 
@@ -94,22 +114,20 @@ Place an ambient audio file at `public/audio/ambient.mp3`. The music control wil
 ## Development
 
 ```bash
-# Force envelope intro on refresh (bypasses localStorage)
+# Force envelope intro on refresh (bypasses sessionStorage)
 open "http://localhost:5173/?intro=1"
 
-# Clear preloader/invite state manually
+# Clear preloader/envelope state manually
 localStorage.removeItem('wedding-preloader-seen')
-localStorage.removeItem('wedding-envelope-seen')
+sessionStorage.removeItem('wedding-envelope-seen')
 ```
 
 ## Performance Targets
 
 | Metric | Target |
 |--------|--------|
-| Lighthouse Mobile | ≥ 95 |
+| Lighthouse Mobile | ≥ 90 |
 | LCP | < 2.5s on 4G |
-| Bundle (JS gzip) | < 130 KB |
-| Bundle (CSS gzip) | < 10 KB |
 | Max animation duration | 1.2s |
 
 ## Browser Support
@@ -135,16 +153,16 @@ Key in-app browser considerations:
 - All images carry meaningful `alt` text
 - Decorative SVGs carry `aria-hidden`
 - All animations respect `prefers-reduced-motion`
-- Color contrast AA minimum (14:1 for body text)
+- Color contrast AA minimum
 
 ## Deploy
 
 ```bash
-bun run build
+npm run build
 ```
 
-Upload the `dist/` directory to any static host (Vercel, Netlify, Cloudflare Pages, GitHub Pages). The site is a single-page app with no server-side requirements.
+Upload the `dist/` directory to any static host (Vercel, Netlify, Cloudflare Pages, GitHub Pages).
 
 ## License
 
-Private — for Olivia & James's wedding celebration.
+Private — for Anjana & Krishnaprasad's wedding celebration.

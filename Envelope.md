@@ -1,119 +1,41 @@
-Envelope Intro
+# Envelope Intro — Implementation Status
 
+## What it does
 
+A tap-to-open wax-seal envelope animation that plays once per visitor. Displays an envelope that opens to reveal the couple's monogram, then the couple's names, then transitions to the main site.
 
-State machine + behavior spec for 
+## Current Implementation
 
-What it does
+**Files:**
+- `src/components/primitives/EnvelopeIntro.tsx`
 
-A 3-second, 3-stage entry animation that plays once per visitor. Displays an envelope that opens to reveal the couple's monogram, then the couple's names, then transitions to the main site.
+**Behavior:**
+1. Renders on first visit (skipped if `sessionStorage` has `wedding-envelope-seen`)
+2. SVG envelope with wax seal — user taps seal to "open"
+3. Seal breaks with haptic feedback (`navigator.vibrate`)
+4. Monogram (`{couple.bride.firstName[0]} & {couple.groom.firstName[0]}`) fades in
+5. Couple name (`{couple.displayName}`) fades in
+6. On complete: writes `sessionStorage`, unmounts, parent triggers `MusicControl` autoplay attempt
+7. Skip button available for accessibility
+8. `?intro=1` URL param forces replay
 
-State machine
+**Reduced motion:** If `prefers-reduced-motion: reduce`, envelope skips directly to idle state.
 
-[Load]
-  │
-  ├─ prefers-reduced-motion? ──────────→ [Idle] (skip intro)
-  │
-  ├─ hasVisited() returns true? ──────→ [Idle] (skip intro)
-  │
-  └─ otherwise → [Envelope Closed] (0–0.3s)
-                     │
-                     ├─ t=0.3s: flap rotates open
-                     │
-                     ├─ t=0.8s: monogram fades in
-                     │
-                     ├─ t=1.2s: names fade in
-                     │
-                     └─ t=2.5s: onComplete() fires
-                                    │
-                                    ├─ localStorage[STORAGE_KEY] = 'true'
-                                    │
-                                    └─ [Envelope Open] → exit animation → unmount
+## Storage
 
-Constants
+| Key | Value | Storage |
+|-----|-------|---------|
+| `wedding-envelope-seen` | `'true'` | sessionStorage |
 
-const STORAGE_KEY = 'wedding-envelope-seen'
-const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+**Override:** `?intro=1` in URL forces replay.
 
-Storage contract
+## Current Issues
 
+- None critical — envelope works as designed on revisit via sessionStorage
+- Music autoplay attempts on envelope complete but may be blocked by browser policy (expected behavior)
 
+## Notes
 
-
-
-Key: wedding-envelope-seen
-
-
-
-Value: 'true' after first visit
-
-
-
-Override: ?intro=1 in URL forces replay (used for testing)
-
-Current implementation (in )
-
-
-
-
-
-useState(() => show ? true : false) decides if the intro should render
-
-
-
-SVG envelope with motion.path for flap rotation (0.3s delay, 1s duration)
-
-
-
-Monogram ({couple.firstName[0]}{couple.secondName[0]}) fades in at 0.8s
-
-
-
-Couple name ({couple.displayName}) fades in at 1.2s
-
-
-
-handleComplete writes localStorage, sets show=false, calls onComplete
-
-
-
-Parent () calls handleEnvelopeComplete to gate the rest of the site
-
-Known issues
-
-
-
-
-
-No auto-dismiss: Intro only ends on onComplete (called by onComplete prop, but no current caller triggers it). The intro currently waits indefinitely. Needs a setTimeout(handleComplete, 2500) to auto-dismiss.
-
-
-
-No skip state for reduced-motion users: They get the localStorage path but the intro still renders on first visit with no animation. Should fully bypass for prefersReduced.
-
-Recommendations
-
-
-
-
-
-Add auto-dismiss in a useEffect:
-
-useEffect(() => {
-  if (!show) return
-  const t = setTimeout(handleComplete, 2500)
-  return () => clearTimeout(t)
-}, [show, handleComplete])
-
-
-
-Make the envelope more realistic with a tear-away seal or wax stamp.
-
-
-
-Add subtle haptic on mobile (navigator.vibrate) when the seal breaks.
-
-
-
-Persist dismissal only on engagement: If the user scrolls or clicks during the intro, dismiss it. Don't force the full 2.5s.
-
+- The envelope uses Framer Motion for the wax seal break animation
+- The intro is gated by a `show` state in `App.tsx` — parent calls `handleEnvelopeComplete` to unmount and render main content
+- `CustomCursor` and `MusicControl` persist outside the envelope gate
