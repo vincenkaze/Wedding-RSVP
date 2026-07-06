@@ -236,11 +236,7 @@ export const gallery: GalleryItem[] = [
     alt: 'Close-up of the wedding rings on a linen surface',
     aspect: 'aspect-square',
   },
-  {
-    src: '/gallery/6.avif',
-    alt: 'Friends raising a glass to the happy couple',
-    aspect: 'aspect-square',
-  },
+
   {
     src: '/gallery/7.avif',
     alt: 'A beautiful moment captured together',
