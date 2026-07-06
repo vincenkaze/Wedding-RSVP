@@ -298,25 +298,6 @@ body::after {
   z-index: 0;
 }
 
-.chrome-flower {
-  position: absolute;
-  left: 50%;
-  top: 38%;
-  width: clamp(120px, 32vw, 220px);
-  transform: translate(-50%, -50%)
-    rotateX(calc(var(--tiltY) * 12deg))
-    rotateY(calc(var(--tiltX) * -12deg))
-    translateZ(40px);
-  filter:
-    drop-shadow(0 10px 24px rgba(0, 0, 0, 0.35))
-    drop-shadow(0 0 18px rgba(255, 255, 255, 0.15))
-    contrast(1.05);
-  transition: transform 120ms linear;
-  will-change: transform;
-  z-index: 30;
-  pointer-events: none;
-}
-
 .floating-photo {
   animation: drift 14s ease-in-out infinite;
   animation-delay: var(--drift-delay, 0s);
@@ -446,7 +427,6 @@ body::after {
   }
 
   .kinetic-backdrop,
-  .chrome-flower,
   .floating-photo {
     transition: none !important;
     transform: none !important;

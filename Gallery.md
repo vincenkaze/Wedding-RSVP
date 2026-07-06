@@ -268,7 +268,7 @@ export default function FloatingGallery() {
 
   return (
     <section id="gallery" className="relative px-6 py-20">
-      <div className="kinetic-canvas mx-auto h-[400px] sm:h-[450px] md:h-[550px]">
+      <div className="kinetic-canvas mx-auto">
         <div
           className="kinetic-backdrop"
           style={{ ['--backdrop-url' as any]: `url(${gallery[0].src})` }}

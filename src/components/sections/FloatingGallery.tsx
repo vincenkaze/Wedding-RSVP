@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { gallery, sections } from '../../content/content'
 import { useDeviceTilt } from '../../hooks/useDeviceTilt'
-import ChromeFlower from './ChromeFlower'
 import FloatingPhoto from './FloatingPhoto'
 import Lightbox from './Lightbox'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
@@ -52,7 +51,6 @@ export default function FloatingGallery() {
             className="kinetic-backdrop"
             style={{ backgroundImage: `url(${gallery[0].src})` }}
           />
-          <ChromeFlower />
           {gallery.map((item, i) => (
             <FloatingPhoto
               key={item.src}
