@@ -1,8 +1,6 @@
-/admin            /index.html   200
-/index.html       /index.html   200
-/assets/*         /assets/*     200
-/gallery/*        /gallery/*    200
-/audio/*          /audio/*      200
-/favicon.svg      /favicon.svg  200
-/icons.svg        /icons.svg    200
-/*                /index.html   200
+/admin	/index.html	200
+/assets/*	/assets/*	200
+/gallery/*	/gallery/*	200
+/audio/*	/audio/*	200
+/favicon.svg	/favicon.svg	200
+/icons.svg	/icons.svg	200
