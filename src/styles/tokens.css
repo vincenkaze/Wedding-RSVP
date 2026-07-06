@@ -43,4 +43,7 @@
 
   --stagger-sibling: 80ms;
   --stagger-section: 200ms;
+
+  --tiltX: 0;
+  --tiltY: 0;
 }

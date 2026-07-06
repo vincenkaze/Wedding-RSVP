@@ -55,12 +55,11 @@ export interface Venue {
 }
 
 export interface GalleryItem {
+  id?: string
   src: string
-  srcWebp?: string
-  srcAvif?: string
   alt: string
   caption?: string
-  aspect?: string
+  rotation: number
 }
 
 export interface RSVP {
@@ -214,48 +213,47 @@ export const gallery: GalleryItem[] = [
   {
     src: '/gallery/1.avif',
     alt: 'The happy couple sharing a moment together',
-    aspect: 'aspect-square',
+    rotation: -3,
   },
   {
     src: '/gallery/2.avif',
     alt: 'The proposal at sunset',
-    aspect: 'aspect-square',
+    rotation: 2,
   },
   {
     src: '/gallery/3.avif',
     alt: 'Walking hand in hand through a sunlit path',
-    aspect: 'aspect-square',
+    rotation: -1.5,
   },
   {
     src: '/gallery/4.avif',
     alt: 'Laughing together during their engagement shoot',
-    aspect: 'aspect-square',
+    rotation: 4,
   },
   {
     src: '/gallery/5.avif',
     alt: 'Close-up of the wedding rings on a linen surface',
-    aspect: 'aspect-square',
+    rotation: -2,
   },
-
   {
     src: '/gallery/7.avif',
     alt: 'A beautiful moment captured together',
-    aspect: 'aspect-square',
+    rotation: 1,
   },
   {
     src: '/gallery/8.avif',
     alt: 'Sharing a laugh together',
-    aspect: 'aspect-square',
+    rotation: -3.5,
   },
   {
     src: '/gallery/9.avif',
     alt: 'Together in love',
-    aspect: 'aspect-square',
+    rotation: 2.5,
   },
   {
     src: '/gallery/10.avif',
     alt: 'A cherished memory',
-    aspect: 'aspect-square',
+    rotation: -1,
   },
 ]
 

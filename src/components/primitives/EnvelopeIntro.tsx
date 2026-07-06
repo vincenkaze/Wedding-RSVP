@@ -63,10 +63,22 @@ export default function EnvelopeIntro({ onComplete }: EnvelopeIntroProps) {
     }
   }, [show, onComplete])
 
-  const handleSealClick = useCallback(() => {
+  const handleSealClick = useCallback(async () => {
     if (!sealed) return
-    setSealed(false)
+
+    if (
+      typeof DeviceOrientationEvent !== 'undefined' &&
+      'requestPermission' in DeviceOrientationEvent
+    ) {
+      try {
+        await (DeviceOrientationEvent as unknown as { requestPermission: () => Promise<string> }).requestPermission()
+      } catch {
+        // iOS permission denied — gallery will work without tilt
+      }
+    }
+
     triggerHaptic()
+    setSealed(false)
   }, [sealed])
 
   useEffect(() => {

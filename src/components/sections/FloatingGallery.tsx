@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { gallery, sections } from '../../content/content'
-import CylinderCarousel from './CylinderCarousel'
+import { useDeviceTilt } from '../../hooks/useDeviceTilt'
+import ChromeFlower from './ChromeFlower'
+import FloatingPhoto from './FloatingPhoto'
 import Lightbox from './Lightbox'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
 
 export default function FloatingGallery() {
   const prefersReducedMotion = useReducedMotion()
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+
+  useDeviceTilt({ maxDeg: 15 })
 
   return (
     <section id="gallery" className="relative px-6 py-20 sm:py-28 md:py-32">
@@ -42,8 +46,22 @@ export default function FloatingGallery() {
           </motion.h2>
         </div>
 
-        {/* 3D Cylinder Carousel */}
-        <CylinderCarousel items={gallery} onOpen={setLightboxIndex} />
+        {/* Kinetic canvas */}
+        <div className="kinetic-canvas mx-auto">
+          <div
+            className="kinetic-backdrop"
+            style={{ backgroundImage: `url(${gallery[0].src})` }}
+          />
+          <ChromeFlower />
+          {gallery.map((item, i) => (
+            <FloatingPhoto
+              key={item.src}
+              item={item}
+              index={i}
+              onOpen={setLightboxIndex}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Lightbox */}
