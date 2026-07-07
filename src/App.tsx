@@ -13,7 +13,7 @@ import Footer from './components/sections/Footer'
 const AdminGate = lazy(() => import('./components/admin/AdminGate'))
 const Story = lazy(() => import('./components/sections/Story'))
 const Venue = lazy(() => import('./components/sections/Venue'))
-const FloatingGallery = lazy(() => import('./components/sections/FloatingGallery'))
+const Gallery = lazy(() => import('./components/sections/Gallery'))
 const RSVP = lazy(() => import('./components/sections/RSVP'))
 
 function isAdminRoute() {
@@ -52,7 +52,7 @@ function WeddingSite() {
             <Events />
             <Family />
             <Venue />
-            <FloatingGallery />
+            <Gallery />
             <RSVP />
             <Footer />
           </Suspense>

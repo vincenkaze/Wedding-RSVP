@@ -59,7 +59,8 @@ export interface GalleryItem {
   src: string
   alt: string
   caption?: string
-  rotation: number
+  span?: 'wide' | 'tall' | 'square'
+  priority?: boolean
 }
 
 export interface RSVP {
@@ -213,47 +214,48 @@ export const gallery: GalleryItem[] = [
   {
     src: '/gallery/1.avif',
     alt: 'The happy couple sharing a moment together',
-    rotation: -3,
+    caption: 'A moment we will always treasure',
+    priority: true,
   },
   {
     src: '/gallery/2.avif',
     alt: 'The proposal at sunset',
-    rotation: 2,
+    caption: 'The day everything changed',
   },
   {
     src: '/gallery/3.avif',
     alt: 'Walking hand in hand through a sunlit path',
-    rotation: -1.5,
+    caption: 'Walking together into forever',
   },
   {
     src: '/gallery/4.avif',
     alt: 'Laughing together during their engagement shoot',
-    rotation: 4,
+    caption: 'Our laughter tells our story',
   },
   {
     src: '/gallery/5.avif',
     alt: 'Close-up of the wedding rings on a linen surface',
-    rotation: -2,
+    caption: 'Promises made in gold',
   },
   {
     src: '/gallery/7.avif',
     alt: 'A beautiful moment captured together',
-    rotation: 1,
+    caption: 'Beautiful moments, captured forever',
   },
   {
     src: '/gallery/8.avif',
     alt: 'Sharing a laugh together',
-    rotation: -3.5,
+    caption: 'Joy in every shared smile',
   },
   {
     src: '/gallery/9.avif',
     alt: 'Together in love',
-    rotation: 2.5,
+    caption: 'Together in love, always',
   },
   {
     src: '/gallery/10.avif',
     alt: 'A cherished memory',
-    rotation: -1,
+    caption: 'A memory we hold dear',
   },
 ]
 
