@@ -259,95 +259,126 @@ body::after {
   }
 }
 
-/* ── 3D Photo Globe ── */
-.globe-wrapper {
+/* ── Two-Layer Photo Gallery ── */
+.gallery-stage {
   position: relative;
-  width: 280px;
-  height: 280px;
-  -webkit-perspective: 600px;
-  perspective: 600px;
+  width: 260px;
+  height: 260px;
+  -webkit-perspective: 800px;
+  perspective: 800px;
   -webkit-perspective-origin: 50% 50%;
   perspective-origin: 50% 50%;
-  touch-action: none;
   user-select: none;
   -webkit-user-select: none;
 }
 
-.globe {
+/* Layer 1: rotating sphere behind */
+.sphere-layer {
   position: absolute;
   inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sphere {
+  position: relative;
+  width: 0;
+  height: 0;
   transform-style: preserve-3d;
   -webkit-transform-style: preserve-3d;
-  will-change: transform;
-  cursor: grab;
 }
 
-.globe:active {
-  cursor: grabbing;
-}
-
-.photo {
+.sphere-photo {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: -40px;
+  left: -40px;
   width: 80px;
   height: 80px;
-  margin: -40px 0 0 -40px;
-  padding: 0;
-  border: 2px solid transparent;
   border-radius: 12px;
   overflow: hidden;
-  background: none;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  will-change: transform;
-  cursor: pointer;
-  outline: none;
-  transition:
-    border-color 300ms var(--ease-entrance),
-    box-shadow 300ms var(--ease-entrance);
+  filter: grayscale(100%) contrast(1.05) brightness(0.98);
+  will-change: transform, opacity;
 }
 
-.photo.is-active {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px var(--color-accent-light), 0 0 20px rgba(176, 141, 87, 0.25);
-}
-
-.photo:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
-.photo img {
+.sphere-photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 10px;
   display: block;
+  border-radius: 12px;
+  pointer-events: none;
 }
 
-.photo-bw {
-  filter: grayscale(100%) contrast(1.05) brightness(0.98);
-  transition: filter 600ms var(--ease-entrance);
+/* Layer 2: fixed front frame */
+.front-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 180px;
+  height: 180px;
+  margin: -90px 0 0 -90px;
+  border: 2px solid var(--color-accent);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--color-bg);
+  box-shadow:
+    0 0 0 4px var(--color-accent-light),
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    0 0 40px rgba(176, 141, 87, 0.15);
+  cursor: pointer;
+  outline: none;
+  z-index: 10;
+  transition: box-shadow 300ms var(--ease-entrance);
+  padding: 0;
 }
 
-.photo.is-active .photo-bw,
-.photo:hover .photo-bw,
-.photo:focus-visible .photo-bw {
-  filter: grayscale(0%) contrast(1) brightness(1);
+.front-frame:hover {
+  box-shadow:
+    0 0 0 4px var(--color-accent-light),
+    0 8px 40px rgba(0, 0, 0, 0.2),
+    0 0 60px rgba(176, 141, 87, 0.25);
+}
+
+.front-frame:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+}
+
+.front-frame-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 14px;
+  pointer-events: none;
 }
 
 @media (max-width: 400px) {
-  .globe-wrapper {
-    width: 220px;
-    height: 220px;
+  .gallery-stage {
+    width: 200px;
+    height: 200px;
+  }
+
+  .front-frame {
+    width: 140px;
+    height: 140px;
+    margin: -70px 0 0 -70px;
   }
 }
 
 @media (min-width: 768px) {
-  .globe-wrapper {
+  .gallery-stage {
     width: 300px;
     height: 300px;
+  }
+
+  .front-frame {
+    width: 210px;
+    height: 210px;
+    margin: -105px 0 0 -105px;
   }
 }
 
@@ -463,11 +494,11 @@ body::after {
     width: 100%;
   }
 
-  .globe {
-    cursor: default;
+  .sphere-photo {
+    filter: grayscale(100%) contrast(1.05) brightness(0.98);
   }
 
-  .globe:active {
+  .front-frame {
     cursor: default;
   }
 

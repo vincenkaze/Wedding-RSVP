@@ -291,18 +291,6 @@ export default function Lightbox({
             </AnimatePresence>
           </div>
 
-          {/* Caption */}
-          {item.caption && (
-            <motion.p
-              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.3, ease: EASE_ENTRANCE }}
-              className="absolute bottom-6 left-0 right-0 text-center font-body text-sm text-white/80 sm:text-base"
-            >
-              {item.caption}
-            </motion.p>
-          )}
-
           {/* Counter */}
           <motion.p
             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
