@@ -260,15 +260,25 @@ body::after {
 }
 
 /* ── 3D Photo Globe ── */
-.globe {
+.globe-wrapper {
   position: relative;
   width: 280px;
   height: 280px;
-  perspective: 900px;
+  -webkit-perspective: 600px;
+  perspective: 600px;
+  -webkit-perspective-origin: 50% 50%;
   perspective-origin: 50% 50%;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+}
+
+.globe {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  will-change: transform;
   cursor: grab;
 }
 
@@ -339,14 +349,14 @@ body::after {
 }
 
 @media (max-width: 400px) {
-  .globe {
+  .globe-wrapper {
     width: 220px;
     height: 220px;
   }
 }
 
 @media (min-width: 768px) {
-  .globe {
+  .globe-wrapper {
     width: 300px;
     height: 300px;
   }
@@ -476,5 +486,3 @@ body::after {
     display: none;
   }
 }
-
-/* ── Desktop: disable kinetic drift on hover devices ── */

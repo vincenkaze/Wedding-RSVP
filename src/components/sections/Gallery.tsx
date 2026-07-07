@@ -244,48 +244,50 @@ export default function Gallery() {
           transition={{ duration: DURATION_CINEMATIC, ease: EASE_ENTRANCE, delay: 0.15 }}
           className="flex justify-center"
         >
-          <div ref={globeRef} className="globe" style={{ touchAction: 'none' }}>
-            {RING_CONFIGS.map((ring, ringIdx) => (
-              <div key={ringIdx} className={`ring ring-${ringIdx === 0 ? 'top' : ringIdx === 1 ? 'mid' : 'bot'}`}>
-                {ring.photos.map((item, photoIdx) => {
-                  const globalIndex = ringIdx * PHOTOS_PER_RING + photoIdx
-                  const angle = (360 / PHOTOS_PER_RING) * photoIdx
-                  return (
-                    <button
-                      key={item.src}
-                      type="button"
-                      className="photo"
-                      style={{
-                        transform: `rotateY(${angle}deg) translateZ(${RADIUS}px)`,
-                      }}
-                      onClick={() => handlePhotoClick(globalIndex)}
-                      aria-label={`View photo: ${item.alt}`}
-                    >
-                      <picture>
-                        <source
-                          type="image/avif"
-                          srcSet={item.src.replace(/\.\w+$/, '.avif')}
-                        />
-                        <source
-                          type="image/webp"
-                          srcSet={item.src.replace(/\.\w+$/, '.webp')}
-                        />
-                        <img
-                          src={item.src.replace(/\.\w+$/, '.jpg')}
-                          alt={item.alt}
-                          loading={item.priority ? 'eager' : 'lazy'}
-                          decoding="async"
-                          draggable={false}
-                          className="photo-bw"
-                          width={90}
-                          height={90}
-                        />
-                      </picture>
-                    </button>
-                  )
-                })}
-              </div>
-            ))}
+          <div className="globe-wrapper">
+            <div ref={globeRef} className="globe">
+              {RING_CONFIGS.map((ring, ringIdx) => (
+                <div key={ringIdx} className={`ring ring-${ringIdx === 0 ? 'top' : ringIdx === 1 ? 'mid' : 'bot'}`}>
+                  {ring.photos.map((item, photoIdx) => {
+                    const globalIndex = ringIdx * PHOTOS_PER_RING + photoIdx
+                    const angle = (360 / PHOTOS_PER_RING) * photoIdx
+                    return (
+                      <button
+                        key={item.src}
+                        type="button"
+                        className="photo"
+                        style={{
+                          transform: `rotateY(${angle}deg) translateZ(${RADIUS}px)`,
+                        }}
+                        onClick={() => handlePhotoClick(globalIndex)}
+                        aria-label={`View photo: ${item.alt}`}
+                      >
+                        <picture>
+                          <source
+                            type="image/avif"
+                            srcSet={item.src.replace(/\.\w+$/, '.avif')}
+                          />
+                          <source
+                            type="image/webp"
+                            srcSet={item.src.replace(/\.\w+$/, '.webp')}
+                          />
+                          <img
+                            src={item.src.replace(/\.\w+$/, '.jpg')}
+                            alt={item.alt}
+                            loading={item.priority ? 'eager' : 'lazy'}
+                            decoding="async"
+                            draggable={false}
+                            className="photo-bw"
+                            width={90}
+                            height={90}
+                          />
+                        </picture>
+                      </button>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </motion.div>
 
