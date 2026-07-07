@@ -286,43 +286,31 @@ body::after {
   cursor: grabbing;
 }
 
-.ring {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-
-.ring-top {
-  transform: rotateX(35deg);
-}
-
-.ring-mid {
-  transform: rotateX(0deg);
-}
-
-.ring-bot {
-  transform: rotateX(-35deg);
-}
-
 .photo {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 90px;
-  height: 90px;
-  margin: -45px 0 0 -45px;
+  width: 80px;
+  height: 80px;
+  margin: -40px 0 0 -40px;
   padding: 0;
-  border: none;
+  border: 2px solid transparent;
   border-radius: 12px;
   overflow: hidden;
   background: none;
-  backface-visibility: visible;
-  -webkit-backface-visibility: visible;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   will-change: transform;
-  pointer-events: auto;
   cursor: pointer;
   outline: none;
+  transition:
+    border-color 300ms var(--ease-entrance),
+    box-shadow 300ms var(--ease-entrance);
+}
+
+.photo.is-active {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light), 0 0 20px rgba(176, 141, 87, 0.25);
 }
 
 .photo:focus-visible {
@@ -334,7 +322,7 @@ body::after {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 10px;
   display: block;
 }
 
@@ -343,6 +331,7 @@ body::after {
   transition: filter 600ms var(--ease-entrance);
 }
 
+.photo.is-active .photo-bw,
 .photo:hover .photo-bw,
 .photo:focus-visible .photo-bw {
   filter: grayscale(0%) contrast(1) brightness(1);
