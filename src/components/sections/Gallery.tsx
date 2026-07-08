@@ -164,12 +164,12 @@ export default function Gallery() {
 
     setActiveIndex((prev) => {
       if (prev !== bestIdx) {
-        const img = frontImgRef.current
-        if (img) {
-          const item = gallery[bestIdx]
-          img.src = item.src.replace(/\.\w+$/, '.jpg')
-          img.alt = item.alt
-        }
+          const img = frontImgRef.current
+          if (img) {
+            const item = gallery[bestIdx]
+            img.src = item.src
+            img.alt = item.alt
+          }
         if (isDragging.current) {
           playSound(swipeSoundRef)
         }
@@ -196,7 +196,7 @@ export default function Gallery() {
     const img = frontImgRef.current
     if (img && gallery[activeIndex]) {
       const item = gallery[activeIndex]
-      img.src = item.src.replace(/\.\w+$/, '.jpg')
+      img.src = item.src
       img.alt = item.alt
     }
   }, [activeIndex])
@@ -292,7 +292,7 @@ export default function Gallery() {
                     className="sphere-photo"
                   >
                     <img
-                      src={item.src.replace(/\.\w+$/, '.jpg')}
+                      src={item.src}
                       alt={item.alt}
                       loading="lazy"
                       decoding="async"
@@ -316,7 +316,7 @@ export default function Gallery() {
             >
               <img
                 ref={frontImgRef}
-                src={activeItem?.src.replace(/\.\w+$/, '.jpg') ?? ''}
+                src={activeItem?.src ?? ''}
                 alt={activeItem?.alt ?? ''}
                 className="front-frame-img"
                 draggable={false}

@@ -27,7 +27,7 @@ export default function MusicControl({ autoPlay = false }: MusicControlProps) {
     if (audioRef.current) return audioRef.current
 
     const el = new Audio(AUDIO_SRC)
-    el.preload = 'auto'
+    el.preload = 'none'
     el.loop = true
     el.volume = 0.3
 

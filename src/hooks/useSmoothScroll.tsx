@@ -26,11 +26,31 @@ export default function SmoothScrollRoot({ children }: Props) {
     setLenis(l)
 
     let id: number
-    const raf = (time: number) => {
-      l.raf(time)
-      id = requestAnimationFrame(raf)
+    let idle = false
+    let idleTimer: ReturnType<typeof setTimeout>
+
+    function startRaf() {
+      if (!idle) return
+      idle = false
+      clearTimeout(idleTimer)
+      const rafLoop = (time: number) => {
+        l.raf(time)
+        id = requestAnimationFrame(rafLoop)
+      }
+      id = requestAnimationFrame(rafLoop)
     }
-    id = requestAnimationFrame(raf)
+
+    function onScroll() {
+      if (idle) startRaf()
+      clearTimeout(idleTimer)
+      idleTimer = setTimeout(() => {
+        idle = true
+        cancelAnimationFrame(id)
+      }, 200)
+    }
+
+    startRaf()
+    window.addEventListener('scroll', onScroll, { passive: true })
 
     // Re-evaluate prefers-reduced-motion on change
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -52,6 +72,8 @@ export default function SmoothScrollRoot({ children }: Props) {
 
     return () => {
       cancelAnimationFrame(id)
+      clearTimeout(idleTimer)
+      window.removeEventListener('scroll', onScroll)
       mq.removeEventListener('change', onReducedMotionChange)
       window.removeEventListener('resize', onResize)
       clearTimeout(resizeTimer)
