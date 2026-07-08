@@ -243,36 +243,30 @@ export default function VenueSection() {
                 aria-hidden
               />
             </button>
-            <motion.div
-              initial={false}
-              animate={{
-                opacity: travelOpen ? 1 : 0,
-              }}
-              transition={{
-                opacity: { duration: 0.25, ease: EASE_ENTRANCE },
-              }}
-              className="overflow-hidden"
+            <div
+              className="travel-stay-content"
               style={{
                 display: 'grid',
                 gridTemplateRows: travelOpen ? '1fr' : '0fr',
-                transition: 'grid-template-rows 0.35s ease',
               }}
             >
-              <ul className="flex flex-col gap-2.5 px-6 pt-4 pb-2">
-                {venue.travelStay.items.map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-start gap-3 font-body text-sm text-muted sm:text-base"
-                  >
-                    <span
-                      className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent/50"
-                      aria-hidden
-                    />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
+              <div className="overflow-hidden">
+                <ul className="flex flex-col gap-2.5 px-6 pt-4 pb-2">
+                  {venue.travelStay.items.map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-start gap-3 font-body text-sm text-muted sm:text-base"
+                    >
+                      <span
+                        className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent/50"
+                        aria-hidden
+                      />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </motion.div>
         )}
       </div>

@@ -190,6 +190,16 @@
   border-color: var(--color-accent);
 }
 
+/* ── Travel & Stay collapsible ── */
+.travel-stay-content {
+  transition: grid-template-rows 0.35s var(--ease-entrance);
+}
+
+.travel-stay-content > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* ── Family name hover underline ── */
 .family-name {
   position: relative;
@@ -270,6 +280,11 @@ body::after {
   perspective-origin: 50% 50%;
   user-select: none;
   -webkit-user-select: none;
+  cursor: grab;
+}
+
+.gallery-stage:active {
+  cursor: grabbing;
 }
 
 /* Layer 1: rotating sphere behind */
@@ -500,6 +515,10 @@ body::after {
 
   .front-frame {
     cursor: default;
+  }
+
+  .travel-stay-content {
+    transition: none;
   }
 
   body::after {

@@ -8,23 +8,34 @@ const N = gallery.length
 const RADIUS = 130
 const ROTATION_SPEED = 0.003
 const FRONT_THRESHOLD = 0.4
+const SWIPE_SENSITIVITY = 0.008
+const MOMENTUM_FRICTION = 0.95
+const MOMENTUM_THRESHOLD = 0.0005
 
 export default function Gallery() {
   const prefersReducedMotion = useReducedMotion()
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [activeIndex, setActiveIndex] = useState(0)
-
   const sphereRef = useRef<HTMLDivElement>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
   const photoEls = useRef<(HTMLDivElement | null)[]>([])
   const frontImgRef = useRef<HTMLImageElement>(null)
   const openSoundRef = useRef<HTMLAudioElement>(null)
   const flickSoundRef = useRef<HTMLAudioElement>(null)
+  const swipeSoundRef = useRef<HTMLAudioElement>(null)
   const rotation = useRef(0)
   const raf = useRef<number | null>(null)
   const lastTime = useRef(0)
   const paused = useRef(false)
   const audioUnlocked = useRef(false)
   const renderFrameRef = useRef<() => void>(() => {})
+
+  const dragStartX = useRef(0)
+  const dragStartRotation = useRef(0)
+  const isDragging = useRef(false)
+  const velocity = useRef(0)
+  const lastDragX = useRef(0)
+  const lastDragTime = useRef(0)
 
   const playSound = useCallback((ref: React.RefObject<HTMLAudioElement | null>) => {
     const sound = ref.current
@@ -65,17 +76,67 @@ export default function Gallery() {
     }
   }, [unlockAudio])
 
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    isDragging.current = true
+    dragStartX.current = e.clientX
+    dragStartRotation.current = rotation.current
+    lastDragX.current = e.clientX
+    lastDragTime.current = performance.now()
+    velocity.current = 0
+    paused.current = true
+    if (stageRef.current) {
+      stageRef.current.setPointerCapture(e.pointerId)
+    }
+  }, [])
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDragging.current) return
+    const dx = e.clientX - dragStartX.current
+    rotation.current = dragStartRotation.current + dx * SWIPE_SENSITIVITY
+    const now = performance.now()
+    const dt = now - lastDragTime.current
+    if (dt > 0) {
+      velocity.current = (e.clientX - lastDragX.current) / dt
+    }
+    lastDragX.current = e.clientX
+    lastDragTime.current = now
+  }, [])
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (!isDragging.current) return
+    isDragging.current = false
+    if (stageRef.current) {
+      stageRef.current.releasePointerCapture(e.pointerId)
+    }
+    const flick = Math.abs(velocity.current) > 0.3
+    if (flick) {
+      playSound(swipeSoundRef)
+    }
+    paused.current = false
+    lastTime.current = 0
+  }, [playSound])
+
   const renderFrame = useCallback(() => {
-    if (paused.current) {
+    if (isDragging.current) {
       raf.current = requestAnimationFrame(renderFrameRef.current)
       return
     }
 
-    const now = performance.now()
-    const dt = lastTime.current ? (now - lastTime.current) / 16.67 : 1
-    lastTime.current = now
-
-    rotation.current += ROTATION_SPEED * dt
+    if (paused.current) {
+      if (Math.abs(velocity.current) > MOMENTUM_THRESHOLD) {
+        rotation.current += velocity.current * 0.5
+        velocity.current *= MOMENTUM_FRICTION
+      } else {
+        velocity.current = 0
+        raf.current = requestAnimationFrame(renderFrameRef.current)
+        return
+      }
+    } else {
+      const now = performance.now()
+      const dt = lastTime.current ? (now - lastTime.current) / 16.67 : 1
+      lastTime.current = now
+      rotation.current += ROTATION_SPEED * dt
+    }
 
     let bestIdx = 0
     let bestScore = -Infinity
@@ -153,10 +214,14 @@ export default function Gallery() {
     [playSound],
   )
 
-  const handleMouseEnter = useCallback(() => { paused.current = true }, [])
+  const handleMouseEnter = useCallback(() => {
+    if (!isDragging.current) paused.current = true
+  }, [])
   const handleMouseLeave = useCallback(() => {
-    paused.current = false
-    lastTime.current = 0
+    if (!isDragging.current) {
+      paused.current = false
+      lastTime.current = 0
+    }
   }, [])
 
   const activeItem = gallery[activeIndex]
@@ -208,7 +273,15 @@ export default function Gallery() {
           transition={{ duration: DURATION_CINEMATIC, ease: EASE_ENTRANCE, delay: 0.15 }}
           className="flex justify-center"
         >
-          <div className="gallery-stage">
+          <div
+            ref={stageRef}
+            className="gallery-stage"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            style={{ touchAction: 'none' }}
+          >
             {/* Layer 1: rotating sphere */}
             <div className="sphere-layer">
               <div ref={sphereRef} className="sphere">
@@ -256,6 +329,7 @@ export default function Gallery() {
 
         <audio ref={openSoundRef} src="/audio/open.mp3" preload="auto" />
         <audio ref={flickSoundRef} src="/audio/Flick.mp3" preload="auto" />
+        <audio ref={swipeSoundRef} src="/audio/Swipe.mp3" preload="auto" />
       </div>
 
       <Lightbox
