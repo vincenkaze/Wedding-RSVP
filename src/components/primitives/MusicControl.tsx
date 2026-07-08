@@ -8,9 +8,10 @@ const prefersReduced =
 
 interface MusicControlProps {
   autoPlay?: boolean
+  playTrigger?: boolean
 }
 
-export default function MusicControl({ autoPlay = false }: MusicControlProps) {
+export default function MusicControl({ autoPlay = false, playTrigger = false }: MusicControlProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [playing, setPlaying] = useState(false)
   const [visible, setVisible] = useState(false)
@@ -82,6 +83,11 @@ export default function MusicControl({ autoPlay = false }: MusicControlProps) {
     autoPlayAttempted.current = true
     tryPlay()
   }, [autoPlay, tryPlay])
+
+  useEffect(() => {
+    if (!playTrigger) return
+    tryPlay()
+  }, [playTrigger, tryPlay])
 
   useEffect(() => {
     if (audioFailed) return

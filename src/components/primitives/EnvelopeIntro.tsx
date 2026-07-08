@@ -26,7 +26,15 @@ function markVisited() {
   }
 }
 
+let userInteracted = false
+if (typeof window !== 'undefined') {
+  const markInteracted = () => { userInteracted = true }
+  window.addEventListener('click', markInteracted, { once: true, passive: true })
+  window.addEventListener('touchstart', markInteracted, { once: true, passive: true })
+}
+
 function triggerHaptic() {
+  if (!userInteracted) return
   try {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       navigator.vibrate(10)
@@ -38,9 +46,10 @@ function triggerHaptic() {
 
 interface EnvelopeIntroProps {
   onComplete: () => void
+  onReveal?: () => void
 }
 
-export default function EnvelopeIntro({ onComplete }: EnvelopeIntroProps) {
+export default function EnvelopeIntro({ onComplete, onReveal }: EnvelopeIntroProps) {
   const [show, setShow] = useState(() => {
     if (prefersReduced || hasVisited()) return false
     return true
@@ -78,8 +87,9 @@ export default function EnvelopeIntro({ onComplete }: EnvelopeIntroProps) {
     }
 
     triggerHaptic()
+    onReveal?.()
     setSealed(false)
-  }, [sealed])
+  }, [sealed, onReveal])
 
   useEffect(() => {
     if (sealed) return

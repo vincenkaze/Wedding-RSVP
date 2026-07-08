@@ -27,6 +27,7 @@ function isAdminRoute() {
 function WeddingSite() {
   const [loaded, setLoaded] = useState(false)
   const [envelopeDone, setEnvelopeDone] = useState(false)
+  const [musicTriggered, setMusicTriggered] = useState(false)
 
   const handlePreloaderComplete = useCallback(() => {
     setLoaded(true)
@@ -36,12 +37,16 @@ function WeddingSite() {
     setEnvelopeDone(true)
   }, [])
 
+  const handleReveal = useCallback(() => {
+    setMusicTriggered(true)
+  }, [])
+
   return (
     <>
       <CustomCursor />
       {!loaded && <Preloader onComplete={handlePreloaderComplete} />}
       {loaded && !envelopeDone && (
-        <EnvelopeIntro onComplete={handleEnvelopeComplete} />
+        <EnvelopeIntro onComplete={handleEnvelopeComplete} onReveal={handleReveal} />
       )}
       <main className="min-h-dvh bg-bg">
         {envelopeDone && (
@@ -59,7 +64,7 @@ function WeddingSite() {
           </Suspense>
         )}
       </main>
-      <MusicControl autoPlay={envelopeDone} />
+      <MusicControl autoPlay={envelopeDone} playTrigger={musicTriggered} />
       <ScrollProgress />
     </>
   )

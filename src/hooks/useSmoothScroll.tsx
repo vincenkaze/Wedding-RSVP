@@ -15,6 +15,12 @@ export default function SmoothScrollRoot({ children }: Props) {
     initialized.current = true
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const isMobile = window.matchMedia('(max-width: 639px)').matches
+
+    if (reduced || isMobile) {
+      document.documentElement.style.scrollBehavior = 'smooth'
+      return
+    }
 
     const l = new Lenis({
       duration: reduced ? 0 : 1.2,

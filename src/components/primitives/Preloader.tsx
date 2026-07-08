@@ -69,8 +69,8 @@ export default function Preloader({ onComplete }: PreloaderProps) {
     const timer = setTimeout(() => {
       setVisible(false)
       markSeen()
-      setTimeout(onComplete, 600)
-    }, 600)
+      setTimeout(onComplete, 800)
+    }, 2500)
     return () => clearTimeout(timer)
   }, [visible, onComplete])
 
@@ -112,9 +112,9 @@ export default function Preloader({ onComplete }: PreloaderProps) {
                   initial={{ opacity: 0, scale: 0.82, filter: 'blur(16px)' }}
                   animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
                   transition={{
-                    duration: 0.6,
+                    duration: 0.8,
                     ease: EASE_ENTRANCE,
-                    delay: 0.1 + i * 0.08,
+                    delay: 0.2 + i * 0.12,
                   }}
                   className={`preloader-card ${pos.size}`}
                 >
@@ -137,7 +137,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
             <motion.div
               initial={{ scaleX: 0, opacity: 0 }}
               animate={{ scaleX: 1, opacity: 1 }}
-              transition={{ duration: 0.5, ease: EASE_ENTRANCE, delay: 0.3 }}
+              transition={{ duration: 0.8, ease: EASE_ENTRANCE, delay: 0.6 }}
               className="h-px w-24 origin-left bg-accent sm:w-32"
             />
 
@@ -145,9 +145,9 @@ export default function Preloader({ onComplete }: PreloaderProps) {
               initial={{ opacity: 0, y: 16, filter: 'blur(10px)' }}
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               transition={{
-                duration: 0.6,
+                duration: 0.8,
                 ease: EASE_ENTRANCE,
-                delay: 0.4,
+                delay: 0.9,
               }}
               className="mt-6 font-display text-4xl tracking-tight text-text/90 sm:text-5xl"
             >
@@ -157,7 +157,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
             <motion.p
               initial={{ opacity: 0, letterSpacing: '0.1em' }}
               animate={{ opacity: 0.5, letterSpacing: '0.35em' }}
-              transition={{ duration: 0.6, ease: EASE_ENTRANCE, delay: 0.5 }}
+              transition={{ duration: 0.8, ease: EASE_ENTRANCE, delay: 1.2 }}
               className="mt-4 font-body text-xs uppercase text-text-muted"
             >
               Loading

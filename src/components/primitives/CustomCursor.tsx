@@ -7,6 +7,9 @@ const isTouch =
   typeof window !== 'undefined' &&
   (window.matchMedia('(hover: none)').matches ||
     window.matchMedia('(pointer: coarse)').matches)
+const isMobile =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(max-width: 639px)').matches
 
 export default function CustomCursor() {
   const dotRef = useRef<HTMLDivElement>(null)
@@ -18,7 +21,7 @@ export default function CustomCursor() {
   const mountedRef = useRef(false)
 
   useEffect(() => {
-    if (prefersReduced || isTouch) return
+    if (prefersReduced || isTouch || isMobile) return
 
     const dot = dotRef.current
     if (!dot) return
@@ -75,7 +78,7 @@ export default function CustomCursor() {
     }
   }, [])
 
-  if (prefersReduced || isTouch) return null
+  if (prefersReduced || isTouch || isMobile) return null
 
   return (
     <div
