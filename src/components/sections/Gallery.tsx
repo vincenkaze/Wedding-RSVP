@@ -117,25 +117,22 @@ export default function Gallery() {
   }, [playSound])
 
   const renderFrame = useCallback(() => {
-    if (isDragging.current) {
-      raf.current = requestAnimationFrame(renderFrameRef.current)
-      return
-    }
-
-    if (paused.current) {
-      if (Math.abs(velocity.current) > MOMENTUM_THRESHOLD) {
-        rotation.current += velocity.current * 0.5
-        velocity.current *= MOMENTUM_FRICTION
+    if (!isDragging.current) {
+      if (paused.current) {
+        if (Math.abs(velocity.current) > MOMENTUM_THRESHOLD) {
+          rotation.current += velocity.current * 0.5
+          velocity.current *= MOMENTUM_FRICTION
+        } else {
+          velocity.current = 0
+          raf.current = requestAnimationFrame(renderFrameRef.current)
+          return
+        }
       } else {
-        velocity.current = 0
-        raf.current = requestAnimationFrame(renderFrameRef.current)
-        return
+        const now = performance.now()
+        const dt = lastTime.current ? (now - lastTime.current) / 16.67 : 1
+        lastTime.current = now
+        rotation.current += ROTATION_SPEED * dt
       }
-    } else {
-      const now = performance.now()
-      const dt = lastTime.current ? (now - lastTime.current) / 16.67 : 1
-      lastTime.current = now
-      rotation.current += ROTATION_SPEED * dt
     }
 
     let bestIdx = 0
@@ -172,6 +169,9 @@ export default function Gallery() {
           const item = gallery[bestIdx]
           img.src = item.src.replace(/\.\w+$/, '.jpg')
           img.alt = item.alt
+        }
+        if (isDragging.current) {
+          playSound(swipeSoundRef)
         }
       }
       return bestIdx

@@ -10,6 +10,7 @@ export default function Verse() {
 
   return (
     <Section
+      id="verse"
       className="bg-white pb-24 pt-16 sm:pb-32 sm:pt-24"
     >
       <div className="mx-auto max-w-2xl px-6 text-center">

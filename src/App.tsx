@@ -3,6 +3,7 @@ import Preloader from './components/primitives/Preloader'
 import EnvelopeIntro from './components/primitives/EnvelopeIntro'
 import MusicControl from './components/primitives/MusicControl'
 import CustomCursor from './components/primitives/CustomCursor'
+import ScrollProgress from './components/primitives/ScrollProgress'
 import Hero from './components/sections/Hero'
 import Countdown from './components/sections/Countdown'
 import Verse from './components/sections/Verse'
@@ -59,6 +60,7 @@ function WeddingSite() {
         )}
       </main>
       <MusicControl autoPlay={envelopeDone} />
+      <ScrollProgress />
     </>
   )
 }

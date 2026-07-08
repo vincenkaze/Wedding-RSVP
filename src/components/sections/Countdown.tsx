@@ -43,7 +43,7 @@ export default function Countdown() {
   const units = useMemo(() => getElapsedUnits(now), [now])
 
   return (
-    <Section className="bg-white pt-20 pb-24 sm:pt-28 sm:pb-32">
+    <Section id="countdown" className="bg-white pt-20 pb-24 sm:pt-28 sm:pb-32">
       <div className="mx-auto max-w-3xl px-6 text-center">
         <motion.p
           initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}

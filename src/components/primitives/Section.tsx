@@ -8,6 +8,7 @@ import {
 
 interface SectionProps {
   children: ReactNode
+  id?: string
   className?: string
   delay?: number
 }
@@ -22,6 +23,7 @@ const sectionVariants = {
 
 export default function Section({
   children,
+  id,
   className = '',
   delay = 0,
 }: SectionProps) {
@@ -29,6 +31,7 @@ export default function Section({
 
   return (
     <section
+      id={id}
       className={className}
     >
       <motion.div
