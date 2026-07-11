@@ -5,7 +5,7 @@ import Lightbox from './Lightbox'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
 
 const N = gallery.length
-const RADIUS = 130
+const RADIUS = 155
 const ROTATION_SPEED = 0.003
 const FRONT_THRESHOLD = 0.4
 const SWIPE_SENSITIVITY = 0.008
@@ -297,8 +297,8 @@ export default function Gallery() {
                       loading="lazy"
                       decoding="async"
                       draggable={false}
-                      width={80}
-                      height={80}
+                      width={96}
+                      height={96}
                     />
                   </div>
                 ))}
@@ -320,8 +320,8 @@ export default function Gallery() {
                 alt={activeItem?.alt ?? ''}
                 className="front-frame-img"
                 draggable={false}
-                width={200}
-                height={200}
+                width={250}
+                height={250}
               />
             </button>
           </div>
