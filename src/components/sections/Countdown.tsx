@@ -67,9 +67,9 @@ export default function Countdown() {
               initial={
                 prefersReducedMotion
                   ? undefined
-                  : { opacity: 0, scale: 0.96, y: 16, filter: 'blur(4px)' }
+                  : { opacity: 0, scale: 0.96, y: 16 }
               }
-              whileInView={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{
                 duration: 0.6,

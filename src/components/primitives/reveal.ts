@@ -7,11 +7,10 @@ export const STAGGER_SIBLING = 0.08
 export const STAGGER_SECTION = 0.2
 
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 24, filter: 'blur(4px)' },
+  hidden: { opacity: 0, y: 24 },
   visible: {
     opacity: 1,
     y: 0,
-    filter: 'blur(0px)',
     transition: { duration: DURATION_CINEMATIC, ease: EASE_ENTRANCE },
   },
 }

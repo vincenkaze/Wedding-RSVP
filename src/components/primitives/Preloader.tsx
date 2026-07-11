@@ -90,7 +90,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
           className="preloader-overlay"
         >
           {/* Backdrop blur + gradient layer */}
-          <div className="absolute inset-0 bg-bg/80 backdrop-blur-2xl" />
+          <div className="absolute inset-0 bg-bg/80 backdrop-blur-md sm:backdrop-blur-2xl" />
 
           {/* Cinematic vignette overlay */}
           <div className="preloader-vignette" aria-hidden="true" />
@@ -109,8 +109,8 @@ export default function Preloader({ onComplete }: PreloaderProps) {
                     rotate: `${pos.rotate}deg`,
                     '--float-delay': `${pos.floatDelay}s`,
                   } as React.CSSProperties}
-                  initial={{ opacity: 0, scale: 0.82, filter: 'blur(16px)' }}
-                  animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                  initial={{ opacity: 0, scale: 0.82 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   transition={{
                     duration: 0.8,
                     ease: EASE_ENTRANCE,
@@ -142,8 +142,8 @@ export default function Preloader({ onComplete }: PreloaderProps) {
             />
 
             <motion.p
-              initial={{ opacity: 0, y: 16, filter: 'blur(10px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{
                 duration: 0.8,
                 ease: EASE_ENTRANCE,

@@ -59,7 +59,6 @@
 
 .ken-burns {
   animation: ken-burns 20s ease-in-out infinite alternate;
-  will-change: transform;
 }
 
 /* ── Scroll indicator bob ── */
@@ -81,10 +80,10 @@
 /* ── Gold underline draw ── */
 @keyframes underline-draw {
   from {
-    width: 0;
+    transform: scaleX(0);
   }
   to {
-    width: 100%;
+    transform: scaleX(1);
   }
 }
 
@@ -98,9 +97,11 @@
   bottom: -4px;
   left: 0;
   height: 1px;
+  width: 100%;
   background-color: var(--color-accent);
+  transform-origin: left;
   animation: underline-draw 1s var(--ease-entrance) 0.8s forwards;
-  width: 0;
+  transform: scaleX(0);
 }
 
 /* ── Letter-spacing expand ── */
@@ -315,7 +316,6 @@ body::after {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   filter: grayscale(100%) contrast(1.05) brightness(0.98);
-  will-change: transform, opacity;
 }
 
 .sphere-photo img {
@@ -570,7 +570,6 @@ body::after {
   height: 100%;
   background: var(--color-accent);
   transform-origin: left;
-  will-change: transform;
 }
 
 /* ── Reduced motion ── */

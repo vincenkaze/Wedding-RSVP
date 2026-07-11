@@ -37,9 +37,9 @@ export default function VenueSection() {
             initial={
               prefersReducedMotion
                 ? undefined
-                : { opacity: 0, y: 20, filter: 'blur(4px)' }
+                : { opacity: 0, y: 20 }
             }
-            whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{
               duration: DURATION_CINEMATIC,
@@ -55,9 +55,9 @@ export default function VenueSection() {
             initial={
               prefersReducedMotion
                 ? undefined
-                : { opacity: 0, y: 12, filter: 'blur(2px)' }
+                : { opacity: 0, y: 12 }
             }
-            whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{
               duration: DURATION_CINEMATIC,
@@ -116,9 +116,9 @@ export default function VenueSection() {
               initial={
                 prefersReducedMotion
                   ? undefined
-                  : { opacity: 0, y: 16, filter: 'blur(4px)' }
+                  : { opacity: 0, y: 16 }
               }
-              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{
                 duration: DURATION_CINEMATIC,

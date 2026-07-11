@@ -33,9 +33,9 @@ export default function Verse() {
               initial={
                 prefersReducedMotion
                   ? undefined
-                  : { opacity: 0, y: 12, filter: 'blur(2px)' }
+                  : { opacity: 0, y: 12 }
               }
-              whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{
                 duration: 0.6,
@@ -68,9 +68,9 @@ export default function Verse() {
             initial={
               prefersReducedMotion
                 ? undefined
-                : { opacity: 0, y: 8, filter: 'blur(2px)' }
+                : { opacity: 0, y: 8 }
             }
-            whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: EASE_ENTRANCE, delay: 0.5 }}
             className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-muted sm:text-sm"

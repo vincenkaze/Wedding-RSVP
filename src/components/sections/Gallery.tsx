@@ -243,9 +243,9 @@ export default function Gallery() {
             initial={
               prefersReducedMotion
                 ? undefined
-                : { opacity: 0, y: 20, filter: 'blur(4px)' }
+                : { opacity: 0, y: 20 }
             }
-            whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{
               duration: DURATION_CINEMATIC,
@@ -262,12 +262,12 @@ export default function Gallery() {
           initial={
             prefersReducedMotion
               ? { opacity: 1 }
-              : { opacity: 0, scale: 0.96, filter: 'blur(4px)' }
+              : { opacity: 0, scale: 0.96 }
           }
           whileInView={
             prefersReducedMotion
               ? { opacity: 1 }
-              : { opacity: 1, scale: 1, filter: 'blur(0px)' }
+              : { opacity: 1, scale: 1 }
           }
           viewport={{ once: true }}
           transition={{ duration: DURATION_CINEMATIC, ease: EASE_ENTRANCE, delay: 0.15 }}
@@ -299,6 +299,7 @@ export default function Gallery() {
                       draggable={false}
                       width={80}
                       height={80}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   </div>
                 ))}
@@ -327,9 +328,9 @@ export default function Gallery() {
           </div>
         </motion.div>
 
-        <audio ref={openSoundRef} src="/audio/open.mp3" preload="auto" />
-        <audio ref={flickSoundRef} src="/audio/Flick.mp3" preload="auto" />
-        <audio ref={swipeSoundRef} src="/audio/Swipe.mp3" preload="auto" />
+        <audio ref={openSoundRef} src="/audio/open.mp3" preload="none" />
+        <audio ref={flickSoundRef} src="/audio/Flick.mp3" preload="none" />
+        <audio ref={swipeSoundRef} src="/audio/Swipe.mp3" preload="none" />
       </div>
 
       <Lightbox

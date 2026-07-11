@@ -9,11 +9,10 @@ const prefersReducedMotion =
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 const lineVariants: Variants = {
-  hidden: { opacity: 0, y: 24, filter: 'blur(4px)' },
+  hidden: { opacity: 0, y: 24 },
   visible: (delay: number) => ({
     opacity: 1,
     y: 0,
-    filter: 'blur(0px)',
     transition: {
       delay,
       duration: 0.6,
@@ -23,11 +22,10 @@ const lineVariants: Variants = {
 }
 
 const nameReveal: Variants = {
-  hidden: { opacity: 0, y: 24, filter: 'blur(4px)', clipPath: 'inset(0 100% 0 0)' },
+  hidden: { opacity: 0, y: 24, clipPath: 'inset(0 100% 0 0)' },
   visible: (delay: number) => ({
     opacity: 1,
     y: 0,
-    filter: 'blur(0px)',
     clipPath: 'inset(0 0% 0 0)',
     transition: {
       delay,

@@ -343,12 +343,10 @@ function fieldVariant(delay: number) {
     hidden: {
       opacity: 0,
       y: 16,
-      filter: 'blur(4px)',
     },
     visible: {
       opacity: 1,
       y: 0,
-      filter: 'blur(0px)',
       transition: {
         duration: DURATION_CINEMATIC,
         ease: EASE_ENTRANCE,

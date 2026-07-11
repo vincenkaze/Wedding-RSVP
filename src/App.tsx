@@ -7,15 +7,15 @@ import ScrollProgress from './components/primitives/ScrollProgress'
 import Hero from './components/sections/Hero'
 import Countdown from './components/sections/Countdown'
 import Verse from './components/sections/Verse'
-import Events from './components/sections/Events'
-import Family from './components/sections/Family'
-import Footer from './components/sections/Footer'
 
 const AdminGate = lazy(() => import('./components/admin/AdminGate'))
 const Story = lazy(() => import('./components/sections/Story'))
+const Events = lazy(() => import('./components/sections/Events'))
+const Family = lazy(() => import('./components/sections/Family'))
 const Venue = lazy(() => import('./components/sections/Venue'))
 const Gallery = lazy(() => import('./components/sections/Gallery'))
 const RSVP = lazy(() => import('./components/sections/RSVP'))
+const Footer = lazy(() => import('./components/sections/Footer'))
 
 function isAdminRoute() {
   return (
@@ -50,7 +50,7 @@ function WeddingSite() {
       )}
       <main className="min-h-dvh bg-bg">
         {envelopeDone && (
-          <Suspense>
+          <Suspense fallback={<div className="min-h-dvh" />}>
             <Hero />
             <Countdown />
             <Verse />
