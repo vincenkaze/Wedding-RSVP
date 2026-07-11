@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, type Variants } from 'framer-motion'
 import { couple, wedding, hero } from '../../content/content'
 import { ChevronDown } from 'lucide-react'
+import FlowerShower from '../primitives/FlowerShower'
 
 const prefersReducedMotion =
   typeof window !== 'undefined' &&
@@ -99,6 +100,7 @@ function DateReveal({ onReveal }: { onReveal: () => void }) {
 
 export default function Hero() {
   const [imgError, setImgError] = useState(false)
+  const { fire } = FlowerShower()
   return (
     <section
       id="hero"
@@ -162,7 +164,7 @@ export default function Hero() {
           custom={STAGGER * 2}
           className="flex flex-col items-center gap-1"
         >
-          <DateReveal onReveal={() => {}} />
+          <DateReveal onReveal={fire} />
         </motion.div>
 
         {/* RSVP CTA */}
