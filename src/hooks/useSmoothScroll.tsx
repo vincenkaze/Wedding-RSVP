@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import Lenis from 'lenis'
 import { SmoothScrollContext } from './smooth-scroll-context'
 
@@ -8,12 +8,7 @@ interface Props {
 
 export default function SmoothScrollRoot({ children }: Props) {
   const [lenis, setLenis] = useState<Lenis | null>(null)
-  const initialized = useRef(false)
-
   useEffect(() => {
-    if (initialized.current) return
-    initialized.current = true
-
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const isMobile = window.matchMedia('(max-width: 639px)').matches
 
@@ -32,7 +27,7 @@ export default function SmoothScrollRoot({ children }: Props) {
     setLenis(l)
 
     let id: number
-    let idle = false
+    let idle = true
     let idleTimer: ReturnType<typeof setTimeout>
 
     function startRaf() {
