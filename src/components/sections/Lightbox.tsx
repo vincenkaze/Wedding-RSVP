@@ -275,18 +275,22 @@ export default function Lightbox({
                 className="relative max-h-full max-w-full"
                 style={{ scale }}
               >
-                <img
-                  src={item.src}
-                  alt={item.alt}
-                  draggable={false}
-                  loading="lazy"
-                  decoding="async"
-                  className="max-h-[80vh] max-w-full rounded-lg object-contain select-none"
-                  style={{
-                    transform: `translateX(${swipeX}px)`,
-                    transition: isDragging ? 'none' : 'transform 0.2s ease',
-                  }}
-                />
+                <picture>
+                  <source srcSet={item.src} type="image/avif" />
+                  <source srcSet={item.src.replace('.avif', '.webp')} type="image/webp" />
+                  <img
+                    src={item.src.replace('.avif', '.webp')}
+                    alt={item.alt}
+                    draggable={false}
+                    loading="lazy"
+                    decoding="async"
+                    className="max-h-[80vh] max-w-full rounded-lg object-contain select-none"
+                    style={{
+                      transform: `translateX(${swipeX}px)`,
+                      transition: isDragging ? 'none' : 'transform 0.2s ease',
+                    }}
+                  />
+                </picture>
               </motion.div>
             </AnimatePresence>
           </div>

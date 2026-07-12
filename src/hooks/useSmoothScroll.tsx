@@ -24,7 +24,8 @@ export default function SmoothScrollRoot({ children }: Props) {
       infinite: false,
     })
 
-    setLenis(l)
+    // Defer setState to avoid synchronous cascading renders in effect body
+    const lenisRaf = requestAnimationFrame(() => setLenis(l))
 
     let id: number
     let idle = true
@@ -72,6 +73,7 @@ export default function SmoothScrollRoot({ children }: Props) {
     window.addEventListener('resize', onResize, { passive: true })
 
     return () => {
+      cancelAnimationFrame(lenisRaf)
       cancelAnimationFrame(id)
       clearTimeout(idleTimer)
       window.removeEventListener('scroll', onScroll)

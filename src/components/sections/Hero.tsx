@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { motion, type Variants } from 'framer-motion'
 import { couple, wedding, hero } from '../../content/content'
 import { ChevronDown } from 'lucide-react'
-import FlowerShower from '../primitives/FlowerShower'
+import { fireVortex, fireMiniVortex } from '../primitives/ParticleCanvas'
 
 const prefersReducedMotion =
   typeof window !== 'undefined' &&
@@ -37,12 +37,18 @@ const nameReveal: Variants = {
 
 const STAGGER = 0.08
 
-function DateReveal({ onReveal }: { onReveal: () => void }) {
+function DateReveal({ onReveal }: { onReveal: (x: number, y: number) => void }) {
   const [revealed, setRevealed] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   const handleReveal = () => {
     setRevealed(true)
-    onReveal()
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      onReveal(rect.left + rect.width / 2, rect.top + rect.height / 2)
+    } else {
+      onReveal(window.innerWidth / 2, window.innerHeight / 2)
+    }
   }
 
   if (prefersReducedMotion) {
@@ -60,6 +66,7 @@ function DateReveal({ onReveal }: { onReveal: () => void }) {
 
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={handleReveal}
       aria-label={revealed ? `${wedding.displayDate}, ${wedding.location}` : 'Tap to reveal the wedding date'}
@@ -98,11 +105,21 @@ function DateReveal({ onReveal }: { onReveal: () => void }) {
 
 export default function Hero() {
   const [imgError, setImgError] = useState(false)
-  const { fire } = FlowerShower()
+
+  const handleBackgroundTap = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const target = e.target as HTMLElement
+      if (target.closest('button') || target.closest('a')) return
+      fireMiniVortex(e.clientX, e.clientY)
+    },
+    [],
+  )
+
   return (
     <section
       id="hero"
       className="relative min-h-dvh flex flex-col items-center justify-center px-6 py-20 overflow-hidden"
+      onClick={handleBackgroundTap}
     >
       {/* Ken Burns background image */}
       <div className="absolute inset-0 overflow-hidden" aria-hidden>
@@ -162,7 +179,7 @@ export default function Hero() {
           custom={STAGGER * 2}
           className="flex flex-col items-center gap-1"
         >
-          <DateReveal onReveal={fire} />
+          <DateReveal onReveal={(x, y) => fireVortex(x, y)} />
         </motion.div>
 
         {/* RSVP CTA */}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Music, VolumeX } from 'lucide-react'
+import { Music, Volume2 } from 'lucide-react'
 
 const AUDIO_SRC = '/audio/ambient.mp3'
 const prefersReduced =
@@ -126,11 +126,11 @@ export default function MusicControl({ autoPlay = false, playTrigger = false }: 
         type="button"
         onClick={toggle}
         disabled={audioFailed}
-        aria-label={audioFailed ? 'Audio unavailable' : playing ? 'Pause music' : 'Play music'}
+        aria-label={audioFailed ? 'Audio unavailable' : playing ? 'Pause background music' : 'Play background music'}
         className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-bg/80 text-muted backdrop-blur-sm transition-all duration-200 hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-30 disabled:hover:border-border disabled:hover:text-muted"
       >
         {playing ? (
-          <VolumeX className="h-5 w-5" />
+          <Volume2 className="h-5 w-5" />
         ) : (
           <Music className="h-5 w-5" />
         )}

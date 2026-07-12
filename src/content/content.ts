@@ -67,6 +67,7 @@ export interface RSVP {
   successMessage?: string
   events?: string[]
   dietaryOptions?: string[]
+  whatsappNumber?: string
 }
 
 export interface Verse {
@@ -262,6 +263,7 @@ export const gallery: GalleryItem[] = [
 export const rsvp: RSVP = {
   successMessage:
     'Thank you, {name}! We look forward to celebrating with you.',
+  whatsappNumber: '',
   events: [
     'Wedding Ceremony \u2014 Sept 13',
     'Marriage Reception \u2014 Sept 14',

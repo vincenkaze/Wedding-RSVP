@@ -4,6 +4,22 @@ import { rsvp } from '../../content/content'
 import { persistRsvp } from '../../lib/rsvp'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
 
+function openWhatsApp(data: FormData) {
+  const number = rsvp.whatsappNumber?.replace(/[^0-9]/g, '')
+  if (!number) return
+
+  const parts = [
+    `Hi, I'm ${data.name}.`,
+    data.guests > 1 ? `I'll be attending with ${data.guests} guests.` : "I'll be attending.",
+    data.events.length > 0 ? `Events: ${data.events.join(', ')}.` : '',
+    data.dietary ? `Dietary: ${data.dietary}.` : '',
+    data.message ? `Message: ${data.message}` : '',
+  ].filter(Boolean)
+
+  const text = encodeURIComponent(parts.join(' '))
+  window.open(`https://wa.me/${number}?text=${text}`, '_blank', 'noopener')
+}
+
 interface FormData {
   name: string
   guests: number
@@ -64,6 +80,10 @@ export default function RSVPForm() {
 
     // Fire-and-forget: persist to Supabase (don't block UI)
     void persistRsvp(data)
+
+    // Open WhatsApp with pre-filled response
+    openWhatsApp(data)
+
     setIsSubmitting(false)
   }
 

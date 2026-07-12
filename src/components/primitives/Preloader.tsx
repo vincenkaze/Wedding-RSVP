@@ -118,13 +118,17 @@ export default function Preloader({ onComplete }: PreloaderProps) {
                   }}
                   className={`preloader-card ${pos.size}`}
                 >
-                  <img
-                    src={item.src}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    className="preloader-card-img"
-                  />
+                  <picture>
+                    <source srcSet={item.src} type="image/avif" />
+                    <source srcSet={item.src.replace('.avif', '.webp')} type="image/webp" />
+                    <img
+                      src={item.src.replace('.avif', '.webp')}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      className="preloader-card-img"
+                    />
+                  </picture>
                   {/* Subtle inner glow for depth */}
                   <div className="preloader-card-glow" />
                 </motion.div>

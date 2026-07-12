@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { couple } from '../../content/content'
+import { fireVortex } from './ParticleCanvas'
 
 const STORAGE_KEY = 'wedding-envelope-seen'
 const prefersReduced =
@@ -56,6 +57,7 @@ export default function EnvelopeIntro({ onComplete, onReveal }: EnvelopeIntroPro
   })
   const [sealed, setSealed] = useState(true)
   const completedRef = useRef(false)
+  const sealRef = useRef<HTMLButtonElement>(null)
 
   const handleComplete = useCallback(() => {
     if (completedRef.current) return
@@ -87,6 +89,12 @@ export default function EnvelopeIntro({ onComplete, onReveal }: EnvelopeIntroPro
     }
 
     triggerHaptic()
+
+    if (sealRef.current) {
+      const rect = sealRef.current.getBoundingClientRect()
+      fireVortex(rect.left + rect.width / 2, rect.top + rect.height / 2)
+    }
+
     onReveal?.()
     setSealed(false)
   }, [sealed, onReveal])
@@ -181,6 +189,7 @@ export default function EnvelopeIntro({ onComplete, onReveal }: EnvelopeIntroPro
 
             {/* Wax seal — clickable trigger */}
             <button
+              ref={sealRef}
               type="button"
               onClick={handleSealClick}
               disabled={!sealed}

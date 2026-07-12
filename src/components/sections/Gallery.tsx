@@ -20,6 +20,8 @@ export default function Gallery() {
   const stageRef = useRef<HTMLDivElement>(null)
   const photoEls = useRef<(HTMLDivElement | null)[]>([])
   const frontImgRef = useRef<HTMLImageElement>(null)
+  const frontAvifRef = useRef<HTMLSourceElement>(null)
+  const frontWebpRef = useRef<HTMLSourceElement>(null)
   const openSoundRef = useRef<HTMLAudioElement>(null)
   const flickSoundRef = useRef<HTMLAudioElement>(null)
   const swipeSoundRef = useRef<HTMLAudioElement>(null)
@@ -167,8 +169,10 @@ export default function Gallery() {
           const img = frontImgRef.current
           if (img) {
             const item = gallery[bestIdx]
-            img.src = item.src
+            img.src = item.src.replace('.avif', '.webp')
             img.alt = item.alt
+            if (frontAvifRef.current) frontAvifRef.current.srcSet = item.src
+            if (frontWebpRef.current) frontWebpRef.current.srcSet = item.src.replace('.avif', '.webp')
           }
         if (isDragging.current) {
           playSound(swipeSoundRef)
@@ -178,7 +182,7 @@ export default function Gallery() {
     })
 
     raf.current = requestAnimationFrame(renderFrameRef.current)
-  }, [])
+  }, [playSound])
 
   useEffect(() => {
     renderFrameRef.current = renderFrame
@@ -196,8 +200,10 @@ export default function Gallery() {
     const img = frontImgRef.current
     if (img && gallery[activeIndex]) {
       const item = gallery[activeIndex]
-      img.src = item.src
+      img.src = item.src.replace('.avif', '.webp')
       img.alt = item.alt
+      if (frontAvifRef.current) frontAvifRef.current.srcSet = item.src
+      if (frontWebpRef.current) frontWebpRef.current.srcSet = item.src.replace('.avif', '.webp')
     }
   }, [activeIndex])
 
@@ -291,16 +297,20 @@ export default function Gallery() {
                     ref={(el) => { photoEls.current[i] = el }}
                     className="sphere-photo"
                   >
-                    <img
-                      src={item.src}
-                      alt={item.alt}
-                      loading="lazy"
-                      decoding="async"
-                      draggable={false}
-                      width={80}
-                      height={80}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
+                    <picture>
+                      <source srcSet={item.src} type="image/avif" />
+                      <source srcSet={item.src.replace('.avif', '.webp')} type="image/webp" />
+                      <img
+                        src={item.src.replace('.avif', '.webp')}
+                        alt={item.alt}
+                        loading="lazy"
+                        decoding="async"
+                        draggable={false}
+                        width={80}
+                        height={80}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </picture>
                   </div>
                 ))}
               </div>
@@ -315,15 +325,19 @@ export default function Gallery() {
               onMouseLeave={handleMouseLeave}
               aria-label={`View photo: ${activeItem?.alt ?? ''}`}
             >
-              <img
-                ref={frontImgRef}
-                src={activeItem?.src ?? ''}
-                alt={activeItem?.alt ?? ''}
-                className="front-frame-img"
-                draggable={false}
-                width={200}
-                height={200}
-              />
+              <picture>
+                <source ref={frontAvifRef} srcSet={activeItem?.src ?? ''} type="image/avif" />
+                <source ref={frontWebpRef} srcSet={activeItem?.src?.replace('.avif', '.webp') ?? ''} type="image/webp" />
+                <img
+                  ref={frontImgRef}
+                  src={activeItem?.src?.replace('.avif', '.webp') ?? ''}
+                  alt={activeItem?.alt ?? ''}
+                  className="front-frame-img"
+                  draggable={false}
+                  width={200}
+                  height={200}
+                />
+              </picture>
             </button>
           </div>
         </motion.div>
