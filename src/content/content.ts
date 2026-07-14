@@ -258,6 +258,46 @@ export const gallery: GalleryItem[] = [
     alt: 'A cherished memory',
     caption: 'A memory we hold dear',
   },
+  {
+    src: '/gallery/11.avif',
+    alt: 'A joyful moment from our celebration',
+    caption: 'Joy in every detail',
+  },
+  {
+    src: '/gallery/12.avif',
+    alt: 'Together in happiness',
+    caption: 'Happiness is being together',
+  },
+  {
+    src: '/gallery/13.avif',
+    alt: 'A beautiful shared glance',
+    caption: 'Silent words, loud love',
+  },
+  {
+    src: '/gallery/14.avif',
+    alt: 'Celebrating with loved ones',
+    caption: 'Surrounded by love',
+  },
+  {
+    src: '/gallery/15.avif',
+    alt: 'A moment of pure joy',
+    caption: 'Our hearts, full',
+  },
+  {
+    src: '/gallery/16.avif',
+    alt: 'Dancing through life together',
+    caption: 'Every step, together',
+  },
+  {
+    src: '/gallery/17.avif',
+    alt: 'A tender moment captured',
+    caption: 'Forever starts here',
+  },
+  {
+    src: '/gallery/18.avif',
+    alt: 'Love written in the stars',
+    caption: 'Written in the stars',
+  },
 ]
 
 export const rsvp: RSVP = {

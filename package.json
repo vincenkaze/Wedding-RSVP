@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/og-image.mjs && tsc -b && vite build",
+    "build": "node scripts/og-image.mjs && node scripts/optimize-gallery.mjs && tsc -b && vite build",
+    "optimize-gallery": "node scripts/optimize-gallery.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

@@ -129,11 +129,11 @@ export default function ParticleCanvas() {
       const dpr = window.devicePixelRatio || 1
       const w = window.innerWidth
       const h = window.innerHeight
-      canvas.width = w * dpr
-      canvas.height = h * dpr
-      canvas.style.width = `${w}px`
-      canvas.style.height = `${h}px`
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      canvas!.width = w * dpr
+      canvas!.height = h * dpr
+      canvas!.style.width = `${w}px`
+      canvas!.style.height = `${h}px`
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0)
       colors = getParticleColors()
     }
 
@@ -170,7 +170,7 @@ export default function ParticleCanvas() {
 
       const w = window.innerWidth
       const h = window.innerHeight
-      ctx.clearRect(0, 0, w, h)
+      ctx!.clearRect(0, 0, w, h)
 
       const now = performance.now()
 
@@ -197,10 +197,10 @@ export default function ParticleCanvas() {
         const opacityPulse = Math.sin(time * 0.001 + p.phase) * 0.02
         p.opacity = p.baseOpacity + opacityPulse
 
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
-        ctx.fillStyle = hexToRgba(p.color, p.opacity)
-        ctx.fill()
+        ctx!.beginPath()
+        ctx!.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
+        ctx!.fillStyle = hexToRgba(p.color, p.opacity)
+        ctx!.fill()
       }
 
       // ── Vortex / mini-vortex particles ──
@@ -244,10 +244,10 @@ export default function ParticleCanvas() {
         // Fade out
         p.opacity = p.maxOpacity * Math.max(0, 1 - progress * progress)
 
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
-        ctx.fillStyle = hexToRgba(p.color, p.opacity)
-        ctx.fill()
+        ctx!.beginPath()
+        ctx!.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
+        ctx!.fillStyle = hexToRgba(p.color, p.opacity)
+        ctx!.fill()
       }
 
       // RAF gating — continue if ambient particles or effects exist

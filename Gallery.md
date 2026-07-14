@@ -1,420 +1,588 @@
-Gallery — 3D Spherical Photo Globe
+# M5 — Gallery Engine Implementation
 
+Status: Planned
 
+---
 
-Reality check first. A 3D sphere needs a lot of points. With 9 images there is no mathematically even layout on a sphere — the result is always a sparse polyhedron. The options are:
+# Purpose
 
+This document defines the implementation of the Gallery Engine.
 
+Unlike `Gallery_design.md`, which describes the vision and architecture of the engine, this document defines the functionality, systems, rendering behaviour, interaction, and performance targets that the gallery must provide.
 
+This is the implementation specification.
 
+---
 
-9 images on an icosahedron's 12 vertices → 3 vertices stay empty. Visually OK.
+# Experience Goal
 
+The gallery should feel like a physical object.
 
+Users should instinctively drag it, spin it, and explore it.
 
-3×3 grid bent into a cylinder / dome → looks like a curved photo strip, not a globe.
+The interaction should resemble rotating a floating glass planet made of wedding memories.
 
+Users should never think:
 
+> "This is a carousel."
 
-3 rings of 3 (top/middle/bottom) → most "globe-like" of the cheap options.
+Instead they should feel:
 
-Pick option C (3 rings of 3). It is the only one that reads as a 3D object you can spin.
+- depth
+- weight
+- momentum
+- premium quality
+- effortless interaction
 
+---
 
+# Rendering
 
-1. Folder layout
+Rendering is performed entirely inside a GPU canvas.
 
-your-wedding-site/
-├── index.html
-├── css/
-│   └── gallery.css
-├── js/
-│   └── gallery.js
-├── assets/
-│   ├── photos/        ← 9 AVIF files: p1.avif ... p9.avif
-│   └── sounds/
-│       └── flick.mp3  ← short click (<200ms), mono, ~10–20kb
-└── ...
+The Gallery Engine does not create DOM elements for photographs.
 
+Every photograph exists as a GPU-rendered object.
 
+Image
 
-2. HTML ( — add inside <body>)
+↓
 
-<!-- Gallery section -->
-<section id="gallery" class="gallery">
-  <h2>Our Moments</h2>
+Texture
 
-  <!-- Stage: 9 photos in 3 rings of 3 -->
-  <div class="globe" id="globe">
-    <!-- Ring 1: top (tilted up) -->
-    <div class="ring ring-top">
-      <img class="photo" src="assets/photos/p1.avif" alt="" loading="lazy" decoding="async" draggable="false" />
-      <img class="photo" src="assets/photos/p2.avif" alt="" loading="lazy" decoding="async" draggable="false" />
-      <img class="photo" src="assets/photos/p3.avif" alt="" loading="lazy" decoding="async" draggable="false" />
-    </div>
-    <!-- Ring 2: middle (equator) -->
-    <div class="ring ring-mid">
-      <img class="photo" src="assets/photos/p4.avif" alt="" loading="lazy" decoding="async" draggable="false" />
-      <img class="photo" src="assets/photos/p5.avif" alt="" loading="lazy" decoding="async" draggable="false" />
-      <img class="photo" src="assets/photos/p6.avif" alt="" loading="lazy" decoding="async" draggable="false" />
-    </div>
-    <!-- Ring 3: bottom (tilted down) -->
-    <div class="ring ring-bot">
-      <img class="photo" src="assets/photos/p7.avif" alt="" loading="lazy" decoding="async" draggable="false" />
-      <img class="photo" src="assets/photos/p8.avif" alt="" loading="lazy" decoding="async" draggable="false" />
-      <img class="photo" src="assets/photos/p9.avif" alt="" loading="lazy" decoding="async" draggable="false" />
-    </div>
-  </div>
+↓
 
-  <!-- Preload the click sound. Required for iOS autoplay rules. -->
-  <audio id="flick-sound" src="assets/sounds/flick.mp3" preload="auto"></audio>
-</section>
+Rounded Plane
 
+↓
 
+Mesh
 
-3. CSS ()
+↓
 
-/* ---------- Gallery stage ---------- */
-.gallery {
-  text-align: center;
-  padding: 2rem 1rem;
-}
+Rendered by active renderer
 
-.globe {
-  position: relative;
-  width: 280px;
-  height: 280px;
-  margin: 2rem auto;
-  perspective: 900px;          /* smaller = more dramatic 3D */
-  perspective-origin: 50% 50%;
-  touch-action: none;         /* let JS own the gestures */
-  user-select: none;
-  -webkit-user-select: none;
-}
+The active renderer is automatically selected by the engine.
 
-/* The whole globe rotates as one object */
-.globe .sphere {
-  /* not used as a class — kept here as a reminder
-     that the .globe itself is what we transform */
-}
+Possible renderers
 
-/* ---------- Rings (3 rings, each is its own 3D scene) ---------- */
-.ring {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  /* JS sets transform: rotateX(..) rotateY(..) rotateZ(..) on this */
-  will-change: transform;
-}
-
-/* Tilt the top and bottom rings so the rings stack into a sphere shape */
-.ring-top { transform: rotateX( 35deg); }
-.ring-mid { transform: rotateX(  0deg); }
-.ring-bot { transform: rotateX(-35deg); }
-
-/* ---------- Photos: 3 per ring, evenly spaced on a circle ---------- */
-.photo {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 90px;
-  height: 90px;
-  margin: -45px 0 0 -45px;   /* center on its own anchor */
-  border-radius: 12px;
-  object-fit: cover;
-  backface-visibility: visible; /* show back faces faintly — adds depth */
-  -webkit-backface-visibility: visible;
-  /* JS sets transform: rotateY(N deg) translateZ(R px) on each */
-  will-change: transform;
-  pointer-events: none;        /* JS handles the drags */
-}
-
-Sizing rule (this is the only math you need):
-
-
-
-
-
-Ring radius R ≈ 110px (so 90px photos with 12px gap clear the center).
-
-
-
-3 photos per ring → angles 0deg, 120deg, 240deg.
-
-
-
-Ring tilts: +35deg (top), 0deg (mid), -35deg (bottom). Adjust 35 if the globe looks too flat or too pointy.
-
-JS builds these transforms on load — see next file.
-
-
-
-4. JavaScript ()
-
-(() => {
-  const globe = document.getElementById('globe');
-  const rings = globe.querySelectorAll('.ring');
-  const sound = document.getElementById('flick-sound');
-
-  // --- Geometry ---
-  const RADIUS = 110;        // matches the CSS value above
-  const PHOTOS_PER_RING = 3;
-
-  // Place each photo around its ring
-  rings.forEach(ring => {
-    const photos = ring.querySelectorAll('.photo');
-    photos.forEach((img, i) => {
-      const angle = (360 / PHOTOS_PER_RING) * i;
-      img.style.transform =
-        `rotateY(${angle}deg) translateZ(${RADIUS}px)`;
-    });
-  });
-
-  // --- Spherical state ---
-  // The whole .globe rotates; rings inherit that rotation.
-  let rotX = 0;
-  let rotY = 0;
-  const FLICK_VELOCITY = 600;   // deg/s — anything faster = "flick"
-  const FLICK_COOLDOWN_MS = 120;
-
-  function render() {
-    globe.style.transform =
-      `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
-  }
-  render();
-
-  // --- Pointer drag (works for mouse + touch) ---
-  let dragging = false;
-  let lastX = 0, lastY = 0;
-  let lastT = 0;
-  let velX = 0, velY = 0;          // deg per second
-  let lastFlickAt = 0;
-
-  function onDown(x, y) {
-    dragging = true;
-    lastX = x; lastY = y;
-    lastT = performance.now();
-    velX = velY = 0;
-  }
-  function onMove(x, y) {
-    if (!dragging) return;
-    const now = performance.now();
-    const dt = Math.max(now - lastT, 1) / 1000; // seconds
-    const dx = x - lastX;
-    const dy = y - lastY;
-
-    // Map pixels to degrees. 1px ≈ 0.4deg feels good on phones.
-    rotY += dx * 0.4;
-    rotX -= dy * 0.4;
-    // Clamp X so it doesn't flip past poles
-    rotX = Math.max(-80, Math.min(80, rotX));
-
-    velX = (-dy * 0.4) / dt;
-    velY = ( dx * 0.4) / dt;
-
-    render();
-    lastX = x; lastY = y; lastT = now;
-  }
-  function onUp() {
-    if (!dragging) return;
-    dragging = false;
-
-    // Flick = high angular velocity
-    const speed = Math.hypot(velX, velY);
-    const now = performance.now();
-    if (speed > FLICK_VELOCITY && now - lastFlickAt > FLICK_COOLDOWN_MS) {
-      playClick();
-      lastFlickAt = now;
-    }
-
-    // Momentum: keep rotating, decay over ~600ms
-    momentumStart();
-  }
+- WebGPU Renderer
+- WebGL2 Renderer
 
-  // --- Momentum ---
-  let raf = null;
-  function momentumStart() {
-    cancelAnimationFrame(raf);
-    const friction = 0.92;
-    const stop = 4; // deg/s
-    function step() {
-      rotY += velY * (1 / 60);
-      rotX += velX * (1 / 60);
-      rotX = Math.max(-80, Math.min(80, rotX));
-      render();
-      velX *= friction; velY *= friction;
-      if (Math.hypot(velX, velY) < stop) {
-        cancelAnimationFrame(raf); raf = null; return;
-      }
-      raf = requestAnimationFrame(step);
-    }
-    raf = requestAnimationFrame(step);
-  }
+The gallery behaves identically regardless of the renderer.
 
-  // --- Events: unify mouse + touch ---
-  globe.addEventListener('mousedown',  e => onDown(e.clientX, e.clientY));
-  window.addEventListener('mousemove',  e => onMove(e.clientX, e.clientY));
-  window.addEventListener('mouseup',    () => onUp());
-  window.addEventListener('mouseleave', () => onUp());
+---
 
-  globe.addEventListener('touchstart', e => {
-    const t = e.touches[0]; onDown(t.clientX, t.clientY);
-  }, { passive: true });
-  globe.addEventListener('touchmove', e => {
-    const t = e.touches[0]; onMove(t.clientX, t.clientY);
-  }, { passive: true });
-  globe.addEventListener('touchend',    () => onUp());
-  globe.addEventListener('touchcancel', () => onUp());
+# Scene
 
-  // --- Click sound (bypasses iOS autoplay restrictions) ---
-  function playClick() {
-    if (!sound) return;
-    try {
-      sound.currentTime = 0;   // rewind so rapid flicks still click
-      const p = sound.play();
-      if (p && typeof p.catch === 'function') p.catch(() => {});
-    } catch (_) {}
-  }
+The scene contains
 
-  // iOS Safari: audio must be unlocked by a user gesture.
-  // First tap anywhere plays once silently to unlock future plays.
-  function unlockAudio() {
-    if (!sound) return;
-    sound.volume = 0;
-    const p = sound.play();
-    if (p && typeof p.then === 'function') {
-      p.then(() => {
-        sound.pause();
-        sound.currentTime = 0;
-        sound.volume = 1;
-        window.removeEventListener('touchstart', unlockAudio);
-        window.removeEventListener('mousedown',  unlockAudio);
-      }).catch(() => {});
-    }
-  }
-  window.addEventListener('touchstart', unlockAudio, { once: true });
-  window.addEventListener('mousedown',  unlockAudio, { once: true });
-})();
+Camera
 
+↓
 
+Globe
 
-5. The  sound
+↓
 
-Generate it yourself — don't ship a random "click" from the internet:
+Photo Meshes
 
-# macOS (no install needed):
-say -v "Bells" "tk" -o /tmp/tk.aiff
-# or use a free SFX site like freesound.org, then convert:
-ffmpeg -i input.wav -c:a libmp3lame -b:a 64k -ac 1 assets/sounds/flick.mp3
+↓
 
-Hard requirements for the file:
+Particle System
 
+↓
 
+Environment
 
+The camera remains fixed.
 
+The globe rotates.
 
-Format: MP3 (universal mobile support).
+The user never rotates the camera.
 
+---
 
+# Sphere Layout
 
-Length: 80–200 ms.
+Photo positions are generated mathematically.
 
+Use
 
+Fibonacci Sphere Distribution
 
-Channels: mono.
+Generate approximately
 
+120 anchor positions.
 
+Only
 
-Bitrate: 48–64 kbps.
+17 anchors receive photographs.
 
+The remaining anchors remain available for decorative scene objects.
 
+Each anchor stores
 
-Size: < 20 KB.
+- position
+- normal
+- rotation
+- occupancy
 
-Why each rule:
+Purpose
 
+- consistent spacing
+- premium composition
+- scalable layout
 
+---
 
+# Photo Objects
 
+Each photograph is represented by a mesh.
 
-Mono + low bitrate keeps it tiny — guests are on mobile data.
+Each mesh contains
 
+Geometry
 
+Material
 
-< 200 ms is critical: anything longer feels laggy when fired on every flick.
+Texture
 
+Transform
 
+Properties
 
-The audio.play() call is wrapped in .catch(() => {}) so a failed autoplay never throws or logs.
+- position
+- rotation
+- scale
+- opacity
+- visibility
 
+Photos should eventually support
 
+- rounded corners
+- glass appearance
+- metallic border
+- Fresnel highlight
 
-6. Why the iOS "bypass" actually works
+---
 
-iOS Safari will refuse to play audio that was not triggered by a user gesture. The trick:
+# Globe Behaviour
 
+The globe is a single scene object.
 
+Every photo is attached to the globe.
 
+Only the globe rotates.
 
+Children inherit transforms automatically.
 
-A <audio preload="auto"> element with the MP3 set in src starts preloading as soon as the page loads.
+Rotation must always use quaternions.
 
+Never animate Euler angles.
 
+---
 
-The first touchstart or mousedown on window runs unlockAudio(): it plays the sound silently, then resets currentTime and volume. This is a real user gesture, so iOS marks the element as "unlocked."
+# Camera
 
+Perspective camera.
 
+Always faces the center of the globe.
 
-After that, any future sound.play() (including ones fired from inside a requestAnimationFrame loop, which is what momentum does) is allowed.
+Never rotates.
 
-currentTime = 0 before each play() lets rapid successive flicks all produce a click.
+Never orbits.
 
+Only projection changes during resize.
 
+---
 
-7. Performance notes for mobile
+# Interaction
 
+Primary interaction
 
+Horizontal drag
 
+↓
 
+Rotate globe
 
-Will-change is set on .ring and .photo so the browser promotes them to their own layers — smooth 60fps drags.
+Vertical drag
 
+↓
 
+Allow native page scrolling
 
-touch-action: none on .globe stops the browser from trying to scroll/zoom the page while the user drags the sphere.
+Gesture detection
 
+If
 
+abs(horizontal movement)
 
-decoding="async" on the <img> tags decodes off the main thread.
+>
 
+abs(vertical movement)
 
+Capture interaction.
 
-AVIF is good — but if an old Android phone chokes, fall back to WebP via <picture>.
+Otherwise
 
+Pass input directly to the browser.
 
+Scrolling should always feel native.
 
-pointer-events: none on .photo means only the globe's drag surface gets events. Saves you from accidental drag-start on a photo.
+---
 
+# Physics
 
+Interaction produces
 
-8. Known limitations (be honest with the couple)
+Angular Velocity
 
+↓
 
+Inertia
 
+↓
 
+Damping
 
-9 photos is sparse. A real globe needs dozens. The "sphere" will read as 9 tiles on a wireframe.
+↓
 
+Spring
 
+↓
 
-Pure CSS 3D = no real depth. Faces behind the center will look flipped/stretched. That's the price of skipping WebGL.
+Final Rotation
 
+The globe never stops instantly.
 
+The movement should feel heavy but responsive.
 
-Back faces show. With backface-visibility: visible (intentional, for the "wireframe globe" look) photos on the far side are visible mirrored. If you want them hidden, set it to hidden — but then half the globe is invisible at any tilt.
+---
 
+# Magnetic Snap
 
+After user release
 
-Audio on Android Chrome in silent mode still respects the ringer. There's no web-API workaround. Test on the actual device.
+Find
 
-If you want a real globe that actually looks like a globe with 9 photos, the honest next step is a small Three.js scene (one <canvas>, ~30 KB gzipped) using Sprite or InstancedMesh. Say the word and I'll write that version too.
+photo closest to camera center.
+
+Compute shortest rotational path.
+
+Spring interpolate.
+
+Finish with the selected image perfectly centered.
+
+The snap should feel magnetic rather than mechanical.
+
+---
+
+# Selection
+
+The front-most visible image becomes the active selection.
+
+Selection state is exposed to React.
+
+React controls
+
+- lightbox
+- captions
+- metadata
+
+The engine only determines which image is selected.
+
+---
+
+# Lightbox
+
+Tap selected image
+
+↓
+
+Pause engine
+
+↓
+
+Open lightbox
+
+↓
+
+Close
+
+↓
+
+Resume engine
+
+The globe resumes from its previous state.
+
+---
+
+# Materials
+
+Photos should eventually support
+
+Glass Material
+
+including
+
+- texture
+- opacity
+- roughness
+- metallic edge
+- Fresnel
+- soft reflection
+
+Material implementation depends on the renderer.
+
+The visual appearance should remain consistent.
+
+---
+
+# Environment
+
+The scene should contain subtle decorative elements.
+
+Examples
+
+- gold particles
+- glowing dust
+- petals
+- light sprites
+
+These elements should reinforce the feeling of depth without distracting from the photographs.
+
+---
+
+# Particle System
+
+Particles exist inside the same 3D scene.
+
+Preferred implementation
+
+GPU simulation
+
+Fallback implementation
+
+CPU simulation or instanced rendering
+
+Particle behaviour
+
+Idle
+
+↓
+
+Slow drifting
+
+During globe movement
+
+↓
+
+Respond to angular velocity
+
+↓
+
+Subtle orbital motion
+
+Particles should remain secondary to the photographs.
+
+---
+
+# Texture Management
+
+Textures should
+
+Decode
+
+↓
+
+Resize if necessary
+
+↓
+
+Upload once
+
+↓
+
+Cache
+
+↓
+
+Reuse
+
+Never upload textures during interaction.
+
+The renderer chooses the optimal implementation.
+
+Possible techniques include
+
+- texture arrays
+- atlases
+- bind groups
+
+---
+
+# Visibility
+
+Objects outside the camera view should not be rendered.
+
+Implement
+
+- frustum culling
+- back-face culling
+- visibility checks
+
+Reduce unnecessary GPU work.
+
+---
+
+# Performance
+
+Performance is a design requirement.
+
+Target
+
+60 FPS minimum
+
+120 Hz where supported
+
+Low CPU usage
+
+Minimal memory allocations
+
+Battery friendly
+
+Near-zero idle GPU usage
+
+---
+
+# Adaptive Quality
+
+The engine automatically selects quality.
+
+Possible adjustments
+
+- bloom
+- particle count
+- texture resolution
+- pixel ratio
+- post-processing
+
+The user should never manually select quality.
+
+---
+
+# Render Loop
+
+Each frame
+
+Input
+
+↓
+
+Physics
+
+↓
+
+Scene Update
+
+↓
+
+Visibility
+
+↓
+
+Renderer
+
+↓
+
+Post Processing
+
+↓
+
+Present
+
+Render only while necessary.
+
+Sleep when idle.
+
+---
+
+# Accessibility
+
+Respect
+
+prefers-reduced-motion
+
+Fallback
+
+Responsive photo grid
+
+Disable
+
+- globe rotation
+- inertia
+- particles
+
+Support
+
+- keyboard navigation
+- focus management
+- ARIA labels
+- screen readers
+
+Accessibility should never be sacrificed for visual effects.
+
+---
+
+# Browser Compatibility
+
+The Gallery Engine automatically selects the best available renderer.
+
+Preferred
+
+WebGPU
+
+Fallback
+
+WebGL2
+
+Final fallback
+
+Responsive CSS gallery
+
+The gallery must remain fully functional on all supported browsers.
+
+---
+
+# Future Features
+
+- Glass materials
+- HDR environment lighting
+- Gold edge highlights
+- GPU particle simulation
+- Bloom
+- Depth of Field
+- Motion blur
+- Dynamic reflections
+- Image clustering
+- Unlimited photo support
+
+These features should enhance the experience without changing the overall interaction model.
+
+---
+
+# Success Criteria
+
+The gallery should disappear behind the experience.
+
+Users should feel as though they are gently rotating a floating globe made of memories.
+
+The interaction should feel smooth, physical, responsive, and effortless.
+
+The renderer should be invisible.
+
+The technology should disappear.
+
+Only the photographs and the interaction should remain.

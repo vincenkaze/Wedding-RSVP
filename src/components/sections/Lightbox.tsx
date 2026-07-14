@@ -36,7 +36,9 @@ export default function Lightbox({
   const initialScale = useRef(1)
 
   const dragStartX = useRef(0)
+  const dragStartY = useRef(0)
   const [swipeX, setSwipeX] = useState(0)
+  const [swipeY, setSwipeY] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
 
   const [isExiting, setIsExiting] = useState(false)
@@ -44,6 +46,7 @@ export default function Lightbox({
   const resetZoom = useCallback(() => {
     scale.set(1)
     setSwipeX(0)
+    setSwipeY(0)
     setIsZoomed(false)
   }, [scale])
 
@@ -118,7 +121,7 @@ export default function Lightbox({
       if (isZoomed) {
         resetZoom()
       } else {
-        scale.set(2)
+        scale.set(2.5)
         setIsZoomed(true)
       }
     }
@@ -137,6 +140,7 @@ export default function Lightbox({
     }
     if (pointerCount.current === 1 && !isZoomed) {
       dragStartX.current = e.clientX
+      dragStartY.current = e.clientY
       setIsDragging(true)
     }
   }
@@ -156,8 +160,8 @@ export default function Lightbox({
       setIsZoomed(newScale > 1.1)
     }
     if (isDragging && !isZoomed) {
-      const delta = e.clientX - dragStartX.current
-      setSwipeX(delta)
+      setSwipeX(e.clientX - dragStartX.current)
+      setSwipeY(e.clientY - dragStartY.current)
     }
   }
 
@@ -169,13 +173,20 @@ export default function Lightbox({
 
     if (isDragging && !isZoomed) {
       const threshold = 50
-      if (swipeX < -threshold && index !== null && index < items.length - 1) {
-        onNavigate(index + 1)
-      } else if (swipeX > threshold && index !== null && index > 0) {
-        onNavigate(index - 1)
+      const swipeDownThreshold = 80
+
+      if (Math.abs(swipeX) > Math.abs(swipeY)) {
+        if (swipeX < -threshold && index !== null && index < items.length - 1) {
+          onNavigate(index + 1)
+        } else if (swipeX > threshold && index !== null && index > 0) {
+          onNavigate(index - 1)
+        }
+      } else if (swipeY > swipeDownThreshold) {
+        handleClose()
       }
     }
     setSwipeX(0)
+    setSwipeY(0)
     setIsDragging(false)
   }
 
@@ -203,7 +214,6 @@ export default function Lightbox({
             if (e.key === 'Escape') handleClose()
           }}
         >
-          {/* Close button */}
           <button
             type="button"
             onClick={handleClose}
@@ -213,7 +223,6 @@ export default function Lightbox({
             <X className="h-5 w-5" />
           </button>
 
-          {/* Prev button */}
           {hasPrev && (
             <button
               type="button"
@@ -228,7 +237,6 @@ export default function Lightbox({
             </button>
           )}
 
-          {/* Next button */}
           {hasNext && (
             <button
               type="button"
@@ -243,7 +251,6 @@ export default function Lightbox({
             </button>
           )}
 
-          {/* Image container */}
           <div
             className="relative flex h-full w-full items-center justify-center p-12 sm:p-16"
             onPointerDown={handlePointerDown}
@@ -286,7 +293,9 @@ export default function Lightbox({
                     decoding="async"
                     className="max-h-[80vh] max-w-full rounded-lg object-contain select-none"
                     style={{
-                      transform: `translateX(${swipeX}px)`,
+                      transform: isZoomed
+                        ? `translate(${swipeX}px, ${swipeY}px)`
+                        : `translate(${swipeX}px, ${swipeY}px)`,
                       transition: isDragging ? 'none' : 'transform 0.2s ease',
                     }}
                   />
@@ -295,7 +304,6 @@ export default function Lightbox({
             </AnimatePresence>
           </div>
 
-          {/* Counter */}
           <motion.p
             initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
             animate={{ opacity: 1 }}
