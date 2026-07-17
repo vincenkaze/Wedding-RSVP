@@ -59,7 +59,9 @@ export function createGlobeRenderer(
   // ─── Shaders ───
   // Vertex: MVP transform + pass UV + pass view-space depth for fading
   const VERT = `#version 300 es
-  uniform mat4 uMVP;
+  uniform mat4 uProjection;
+  uniform mat4 uView;
+  uniform mat4 uModel;
   uniform vec3 uPosition;
   uniform vec2 uScale;
   uniform float uAlpha;
@@ -67,14 +69,11 @@ export function createGlobeRenderer(
   out vec2 vUV;
   out float vAlpha;
   void main() {
-    // Billboard: extract camera-space right and up from MVP
-    vec3 right = vec3(uMVP[0][0], uMVP[1][0], uMVP[2][0]);
-    vec3 up = vec3(uMVP[0][1], uMVP[1][1], uMVP[2][1]);
-    vec3 center = (uMVP * vec4(uPosition, 1.0)).xyz;
+    vec4 viewCenter = uView * uModel * vec4(uPosition, 1.0);
     vec2 c = aCorner;
-    vec3 pos = center + right * c.x * uScale.x + up * c.y * uScale.y;
-    gl_Position = vec4(pos, 1.0);
-    vUV = c * 0.5 + 0.5;
+    viewCenter.xy += c * uScale;
+    gl_Position = uProjection * viewCenter;
+    vUV = vec2(c.x * 0.5 + 0.5, 1.0 - (c.y * 0.5 + 0.5));
     vAlpha = uAlpha;
   }`
 
@@ -127,7 +126,9 @@ export function createGlobeRenderer(
   record('program linked OK')
 
   // Uniforms
-  const uMVP = gl.getUniformLocation(prog, 'uMVP')
+  const uProjection = gl.getUniformLocation(prog, 'uProjection')
+  const uView = gl.getUniformLocation(prog, 'uView')
+  const uModel = gl.getUniformLocation(prog, 'uModel')
   const uPosition = gl.getUniformLocation(prog, 'uPosition')
   const uScale = gl.getUniformLocation(prog, 'uScale')
   const uAlpha = gl.getUniformLocation(prog, 'uAlpha')
@@ -196,6 +197,7 @@ export function createGlobeRenderer(
   const modelMatrix = mat4Identity()
   const mvMatrix = mat4Identity()
   const mvpMatrix = mat4Identity()
+  const vpMatrix = mat4Identity()
 
   // FPS tracking
   let frameCount = 0
@@ -253,6 +255,9 @@ export function createGlobeRenderer(
     // MV = View * Model
     mat4Multiply(mvMatrix, viewMatrix, modelMatrix)
 
+    // VP = Projection * View
+    mat4Multiply(vpMatrix, projMatrix, viewMatrix)
+
     // MVP = Projection * MV
     mat4Multiply(mvpMatrix, projMatrix, mvMatrix)
 
@@ -263,7 +268,7 @@ export function createGlobeRenderer(
 
     gl.bindVertexArray(vao)
 
-    const quadScale: [number, number] = [0.22, 0.22]
+    const quadScale: [number, number] = [0.18, 0.18]
     let drawCalls = 0
     let visibleCount = 0
 
@@ -296,11 +301,12 @@ export function createGlobeRenderer(
 
       // Back-face fading: dot(rotatedNormal, cameraDir)
       const dot = nx * camDir[0] + ny * camDir[1] + nz * camDir[2]
-      // dot ranges from -1 (facing away) to +1 (facing camera)
-      // Map to alpha: front (dot>0) → 1.0, back (dot<0) → 0.25
-      const alpha = 0.25 + 0.75 * Math.max(0, dot)
+      const t = Math.max(0, Math.min(1, (dot + 0.15) / 0.35))
+      const alpha = t < 0.5 ? 0 : 0.15 + 0.85 * t * t * (3 - 2 * t)
 
-      gl.uniformMatrix4fv(uMVP, false, mvpMatrix)
+      gl.uniformMatrix4fv(uProjection, false, projMatrix)
+      gl.uniformMatrix4fv(uView, false, viewMatrix)
+      gl.uniformMatrix4fv(uModel, false, modelMatrix)
       gl.uniform3fv(uPosition, pos)
       gl.uniform2fv(uScale, quadScale)
       gl.uniform1f(uAlpha, alpha)

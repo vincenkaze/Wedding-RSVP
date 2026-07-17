@@ -59,6 +59,7 @@ export default function Gallery() {
           <GallerySection
             items={gallery}
             onPhotoClick={handlePhotoClick}
+            lightboxOpen={lightboxIndex !== null}
           />
         </motion.div>
       </div>

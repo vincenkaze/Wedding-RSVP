@@ -1,62 +1,134 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import type { GalleryItem } from '../../content/content'
-import { createDebugRenderer } from '../render/DebugRenderer'
+import { GalleryEngine } from '../../engine/Engine'
+import type { FrameStats, PhotoManifest } from '../../engine/core/contract'
+
+function photoId(item: GalleryItem): string {
+  return item.id ?? item.src
+}
+
+function getMaxDpr(): number {
+  if (typeof window === 'undefined') return 1.5
+  const isMobile = window.innerWidth < 768
+  return isMobile ? 1.5 : 2
+}
 
 interface Props {
   items: GalleryItem[]
   onPhotoClick: (index: number) => void
+  lightboxOpen: boolean
 }
 
-export default function GallerySection({ items, onPhotoClick }: Props) {
+export default function GallerySection({ items, onPhotoClick, lightboxOpen }: Props) {
   const prefersReducedMotion = useReducedMotion()
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const rendererRef = useRef<ReturnType<typeof createDebugRenderer> | null>(null)
-  const [log, setLog] = useState<string[]>([])
+  const containerRef = useRef<HTMLDivElement>(null)
+  const engineRef = useRef<GalleryEngine | null>(null)
+  const [stats, setStats] = useState<FrameStats | null>(null)
+  const [engineFailed, setEngineFailed] = useState(false)
+
+  const handleSelect = useCallback(
+    (id: string | null) => {
+      if (id === null) return
+      const idx = items.findIndex((item) => photoId(item) === id)
+      if (idx !== -1) onPhotoClick(idx)
+    },
+    [items, onPhotoClick],
+  )
+
+  const handleFrame = useCallback((frameStats: FrameStats) => {
+    setStats(frameStats)
+  }, [])
+
+  const handleBackendChosen = useCallback(() => {}, [])
+  const handleHover = useCallback(() => {}, [])
+  const handleError = useCallback((err: Error) => {
+    void err
+  }, [])
 
   useEffect(() => {
-    if (prefersReducedMotion) {
-      console.log('[GallerySection] prefers-reduced-motion — skipping canvas')
-      return
-    }
+    if (prefersReducedMotion) return
 
     const canvas = canvasRef.current
-    if (!canvas) {
-      console.error('[GallerySection] canvas ref is null')
-      return
-    }
+    if (!canvas) return
 
     const rect = canvas.getBoundingClientRect()
-    if (rect.width === 0 || rect.height === 0) {
-      console.error('[GallerySection] canvas has zero dimensions')
+    if (rect.width === 0 || rect.height === 0) return
+
+    let engine: GalleryEngine
+    try {
+      engine = new GalleryEngine(canvas, {
+        onSelect: handleSelect,
+        onHover: handleHover,
+        onFrame: handleFrame,
+        onBackendChosen: handleBackendChosen,
+        onError: handleError,
+      })
+    } catch {
+      queueMicrotask(() => setEngineFailed(true))
       return
     }
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 2)
-    canvas.width = rect.width * dpr
-    canvas.height = rect.height * dpr
-    console.log('[GallerySection] canvas sized to:', canvas.width, 'x', canvas.height)
+    engine.setMaxDpr(getMaxDpr())
+    engineRef.current = engine
 
-    // Map gallery items to sized webp paths
-    const renderer = createDebugRenderer(canvas)
-    rendererRef.current = renderer
-    setLog([...renderer.log])
+    engine.mount().then(() => {
+      const manifest: PhotoManifest = {
+        photos: items.map((item) => ({
+          id: photoId(item),
+          src: item.src.replace('.avif', '.webp'),
+          alt: item.alt,
+          position: [0, 0, 0],
+          normal: [0, 0, 1],
+        })),
+        sphereRadius: 1.2,
+      }
+      return engine.loadPhotos(manifest)
+    }).catch(() => {
+      setEngineFailed(true)
+    })
 
-    let rafId = 0
-    function loop(time: number) {
-      renderer.render(time)
-      setLog([...renderer.log])
-      rafId = requestAnimationFrame(loop)
+    const handleResize = () => {
+      const r = canvas.getBoundingClientRect()
+      engine.resize(r.width, r.height)
     }
-    rafId = requestAnimationFrame(loop)
+    window.addEventListener('resize', handleResize)
 
     return () => {
-      cancelAnimationFrame(rafId)
-      rendererRef.current?.destroy()
+      window.removeEventListener('resize', handleResize)
+      engine.unmount()
+      engineRef.current = null
     }
-  }, [prefersReducedMotion, items])
+  }, [prefersReducedMotion, items, handleSelect, handleFrame, handleBackendChosen, handleHover, handleError])
 
-  if (prefersReducedMotion) {
+  useEffect(() => {
+    engineRef.current?.setLightboxOpen(lightboxOpen)
+  }, [lightboxOpen])
+
+  useEffect(() => {
+    if (prefersReducedMotion) return
+    const container = containerRef.current
+    if (!container) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const engine = engineRef.current
+        if (!engine) return
+        if (entry.isIntersecting) {
+          engine.setEnabled(true)
+        } else {
+          engine.setEnabled(false)
+        }
+      },
+      { threshold: 0.1 },
+    )
+
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [prefersReducedMotion])
+
+  if (prefersReducedMotion || engineFailed) {
     return (
       <div className="gallery-css-grid">
         {items.map((item, i) => (
@@ -86,32 +158,17 @@ export default function GallerySection({ items, onPhotoClick }: Props) {
   }
 
   return (
-    <div className="gallery-canvas-container">
+    <div ref={containerRef} className="gallery-canvas-container">
       <canvas
         ref={canvasRef}
         className="gallery-canvas"
         style={{ touchAction: 'none', cursor: 'grab' }}
       />
-      <details
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          fontSize: 10,
-          zIndex: 10,
-          background: 'rgba(255,255,255,0.9)',
-          color: '#333',
-          maxWidth: '100%',
-          overflow: 'auto',
-          borderRadius: 4,
-        }}
-        open
-      >
-        <summary>Debug</summary>
-        <pre style={{ margin: 0, padding: 4 }}>
-          {log.slice(-10).join('\n')}
-        </pre>
-      </details>
+      {!stats && (
+        <div className="gallery-loading">
+          <div className="gallery-loading-spinner" />
+        </div>
+      )}
     </div>
   )
 }

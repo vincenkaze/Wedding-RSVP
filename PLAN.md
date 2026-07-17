@@ -30,29 +30,37 @@ Definition of Done: every success criterion in the milestone is met, no console 
 
 One milestone at a time. Don't start M2 until M1 is signed off.
 
-Working Notes (per session)
+## Working Notes (per session)
 
-M5 — Gallery (in progress)
+### M5 — Gallery Engine (In Progress)
 
+The project has evolved beyond a traditional photo grid.
 
+The Gallery is now implemented as an independent rendering engine embedded inside the React application.
 
+The implementation is guided by two design documents:
 
+- `Gallery_design.md` — Vision, architecture, rendering philosophy, renderer abstraction, engine boundaries.
+- `Gallery.md` — Gallery systems, interaction, rendering behaviour, physics, materials, performance goals, implementation specification.
 
-Confirmed Gallery section belongs in Information Architecture (already listed). Detailed design + implementation is in  in this folder.
+Current implementation target:
 
+- Gallery Engine
+- Renderer abstraction
+- Automatic WebGPU/WebGL2 backend selection
+- Scene graph
+- Camera
+- Globe
+- Physics
+- Interaction
+- Selection
+- Lightbox integration
 
+The previous responsive grid implementation has been superseded by the Gallery Engine and is no longer the primary milestone target.
 
-Data contract decision: add gallery array to  with { id, src, alt, caption, span, priority } — same shape as Hero but for grid. Span values: 'wide' | 'tall' | 'square' for masonry-ish grid.
+Use this section to record engineering decisions, implementation notes, blockers and lessons learned throughout development.
 
-
-
-Lightbox stack: framer-motion AnimatePresence + useReducedMotion (static fade for reduced motion), useEffect for keyboard handlers, focus trap via a ref + tabIndex cycle, swipe via onPanEnd from framer-motion drag. No new dependencies.
-
-
-
-Build order: (1) extend  with gallery data, (2) add 5–6 placeholder images to public/gallery/ with AVIF + WebP + JPEG, (3) implement  grid + , (4) wire into , (5) test 360/768/1440 + reduced motion.
-
-Use a ## Working Notes section at the bottom of this file to capture decisions, blockers, and lessons learned during the current milestone. Once a milestone is done, move its notes into a "Lessons Learned" appendix at the bottom. Do not delete decisions — future milestones benefit from knowing why we did things.
+Once a milestone is complete, move notes into the Lessons Learned appendix rather than deleting them.
 
 Tech Stack
 
@@ -117,6 +125,53 @@ WhatsApp deep link + Web3Forms
 WhatsApp is the primary path, email is fallback
 
 No new dependencies without a written reason. If a new package is needed, add it in the relevant milestone with explicit justification.
+
+## Gallery Engine
+
+The project consists of two independent systems.
+
+### React Application
+
+Responsibilities
+
+- Layout
+- Routing
+- Content
+- Accessibility
+- Forms
+- Lightbox UI
+
+React does NOT perform rendering or animation inside the gallery.
+
+---
+
+### Gallery Engine
+
+Responsibilities
+
+- Rendering
+- Scene
+- Camera
+- Globe
+- Physics
+- Interaction
+- Materials
+- Texture Management
+- Scheduler
+- Debug Overlay
+
+The Gallery Engine is renderer-independent.
+
+Supported rendering backends
+
+- WebGPU
+- WebGL2
+
+The engine automatically selects the best available renderer.
+
+The remainder of the application should never know which renderer is active.
+
+Rendering APIs must never leak outside the renderer implementation.
 
 Design Direction
 
@@ -492,21 +547,35 @@ Travel & Stay section collapsible
 
 No layout shift when map loads
 
-M5 — Gallery
+## M5 — Gallery Engine Foundation
 
-Goal: Photo grid with lightbox.
+Goal
 
-Success criteria:
+Build the foundation of the Gallery Engine.
 
-Masonry-ish or simple 2/3 column grid (responsive)
+Success Criteria
 
-All photos grayscale by default
+- Gallery Engine initializes successfully.
+- Automatic renderer selection implemented.
+- WebGPU renderer initializes when supported.
+- Automatic fallback to WebGL2.
+- Renderer interface defined.
+- Engine boot sequence complete.
+- Scene and camera created.
+- Render scheduler implemented.
+- Resize handling works.
+- Debug overlay available.
+- Renderer sleeps when idle.
+- Stable rendering loop.
+- Mobile compatibility verified.
 
-Lightbox: open on click, keyboard nav (arrow keys, Escape), focus trap, swipe on mobile
+Definition of Done
 
-Each image:  with AVIF + WebP + JPEG, lazy-loaded
-
-Hero + gallery all in .photo-bw class
+- No rendering outside renderer implementations.
+- No React state updates during rendering.
+- Stable 60 FPS on supported devices.
+- No console errors.
+- No memory leaks.
 
 M6 — RSVP
 
