@@ -2,6 +2,7 @@ export type Vec2 = [number, number]
 export type Vec3 = [number, number, number]
 export type Vec4 = [number, number, number, number]
 export type Mat4 = Float32Array
+export type TextureHandle = number
 
 export type BackendType = 'webgpu' | 'webgl2'
 export type MotionPolicy = 'full' | 'reduced' | 'static'
