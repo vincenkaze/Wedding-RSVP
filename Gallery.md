@@ -1,38 +1,41 @@
 # M5 — Gallery Engine Implementation
 
-Status: Planned
+Status: In Progress (Phase 4)
 
 ---
 
 # Purpose
 
-This document defines the implementation of the Gallery Engine.
+This document defines the implementation of the M5B Gallery Engine.
 
-Unlike `Gallery_design.md`, which describes the vision and architecture of the engine, this document defines the functionality, systems, rendering behaviour, interaction, and performance targets that the gallery must provide.
-
-This is the implementation specification.
+`Gallery_design.md` describes the vision and architecture. This document defines functionality, systems, rendering behaviour, interaction, and performance targets.
 
 ---
 
 # Experience Goal
 
-The gallery should feel like a physical object.
+The gallery should feel like a floating glass planet made of wedding memories.
 
-Users should instinctively drag it, spin it, and explore it.
+Current state (Phase 3):
+- 17 photographs on an invisible 3D sphere.
+- Auto-rotation when idle.
+- Drag to rotate, inertia on release.
+- Backface-driven opacity and scale.
+- Camera-facing upright billboards.
 
-The interaction should resemble rotating a floating glass planet made of wedding memories.
+Current UX gaps (Phase 4 target):
+- No stable focal image.
+- No visible interaction hint.
+- No obvious control for opening a photo.
+- All images compete for attention.
 
-Users should never think:
-
-> "This is a carousel."
-
-Instead they should feel:
-
-- depth
-- weight
-- momentum
-- premium quality
-- effortless interaction
+Remediation direction:
+- Fixed center frame.
+- Three depth layers.
+- Snap selection.
+- Depth styling with care.
+- Temporary interaction guide.
+- Explicit open affordance.
 
 ---
 
@@ -40,66 +43,31 @@ Instead they should feel:
 
 Rendering is performed entirely inside a GPU canvas.
 
-The Gallery Engine does not create DOM elements for photographs.
-
-Every photograph exists as a GPU-rendered object.
-
 Image
-
 ↓
-
 Texture
-
 ↓
-
-Rounded Plane
-
+Rounded Plane Mesh
 ↓
+Renderer
 
-Mesh
-
-↓
-
-Rendered by active renderer
-
-The active renderer is automatically selected by the engine.
-
-Possible renderers
-
-- WebGPU Renderer
-- WebGL2 Renderer
-
-The gallery behaves identically regardless of the renderer.
+Backends:
+- WebGL2 Renderer (active default)
+- WebGPU Renderer (stub; skipped at runtime)
 
 ---
 
 # Scene
 
-The scene contains
-
-Camera
-
-↓
+Scene owns objects and visibility.
 
 Globe
-
 ↓
-
 Photo Meshes
-
 ↓
+Particle System (future)
 
-Particle System
-
-↓
-
-Environment
-
-The camera remains fixed.
-
-The globe rotates.
-
-The user never rotates the camera.
+Camera remains fixed. Globe rotates.
 
 ---
 
@@ -107,29 +75,12 @@ The user never rotates the camera.
 
 Photo positions are generated mathematically.
 
-Use
+1. Generate ~120 Fibonacci sphere candidates.
+2. Select 17 occupied anchors via max-min angular separation.
+3. Minimum angular separation target: ≥ 32°.
+4. Each anchor stores: position, normal, tangent, bitangent.
 
-Fibonacci Sphere Distribution
-
-Generate approximately
-
-120 anchor positions.
-
-Only
-
-17 anchors receive photographs.
-
-The remaining anchors remain available for decorative scene objects.
-
-Each anchor stores
-
-- position
-- normal
-- rotation
-- occupancy
-
-Purpose
-
+Purpose:
 - consistent spacing
 - premium composition
 - scalable layout
@@ -138,32 +89,30 @@ Purpose
 
 # Photo Objects
 
-Each photograph is represented by a mesh.
-
-Each mesh contains
+Each photograph is a PhotoMesh.
 
 Geometry
+- Shared unit quad (-1,-1) to (1,1)
+- Rounded corners via SDF in fragment shader
 
 Material
-
-Texture
+- Texture handle
+- Opacity
+- Roughness
+- Metallic
+- Fresnel
+- Rounded corners with corner radius
 
 Transform
+- Position (world-space, scaled by globeScale)
+- Tangent + bitangent (billboard basis)
+- Scale (uniform, responsive to globeScale)
 
-Properties
-
-- position
-- rotation
-- scale
-- opacity
-- visibility
-
-Photos should eventually support
-
-- rounded corners
-- glass appearance
-- metallic border
-- Fresnel highlight
+Runtime properties
+- Normal (anchor normal)
+- Alpha (backface-driven)
+- Color amount (grayscale ↔ color transition)
+- Visible (scene culling flag)
 
 ---
 
@@ -171,15 +120,16 @@ Photos should eventually support
 
 The globe is a single scene object.
 
-Every photo is attached to the globe.
+- Only the globe rotates (rotX + rotY).
+- Photos inherit position from globe.
+- Photos remain camera-facing and upright.
+- Globe does not inherit roll onto the photo basis.
 
-Only the globe rotates.
-
-Children inherit transforms automatically.
-
-Rotation must always use quaternions.
-
-Never animate Euler angles.
+Auto-rotation
+- Idle yaw blended slowly.
+- Damping on release.
+- Velocity clamped.
+- Spring snap on double-tap / snap-to-front (future).
 
 ---
 
@@ -187,109 +137,69 @@ Never animate Euler angles.
 
 Perspective camera.
 
-Always faces the center of the globe.
+- Fixed eye, fixed target, fixed up.
+- Never rotates.
+- Never orbits.
+- Responsive framing via `computeCameraDistance()` based on aspect ratio.
+- DPR capped at 2.
 
-Never rotates.
-
-Never orbits.
-
-Only projection changes during resize.
+Resize updates aspect and camera distance. World-space sphere radius stays constant.
 
 ---
 
 # Interaction
 
-Primary interaction
+Primary interaction: horizontal drag → rotate globe.
+Vertical drag: native page scroll when on mobile and gesture intent is vertical.
 
-Horizontal drag
+Gesture detection:
+- Threshold: 5px before intent declared.
+- Mobile: if `abs(vertical) > abs(horizontal) * 1.2` and vertical > 12px, intent = scroll. Otherwise globe.
+- Desktop: all drags = globe.
 
-↓
+States:
+- idle
+- engaged (pointer down)
+- photoActive (pointer over photo)
+- photoOpen (long press)
 
-Rotate globe
+Pick/hover:
+- Engine projects transformed quad corners to NDC.
+- Returns closest `photoId` under pointer or null.
 
-Vertical drag
-
-↓
-
-Allow native page scrolling
-
-Gesture detection
-
-If
-
-abs(horizontal movement)
-
->
-
-abs(vertical movement)
-
-Capture interaction.
-
-Otherwise
-
-Pass input directly to the browser.
-
-Scrolling should always feel native.
+Long press:
+- ~500ms timer.
+- Cancelled if pointer moves > 10px.
+- Fires `onSelect(photoId)`.
 
 ---
 
 # Physics
 
-Interaction produces
-
+Interaction produces:
 Angular Velocity
-
 ↓
-
 Inertia
-
 ↓
-
 Damping
-
 ↓
-
-Spring
-
+Spring Snap
 ↓
-
 Final Rotation
 
-The globe never stops instantly.
-
-The movement should feel heavy but responsive.
-
----
-
-# Magnetic Snap
-
-After user release
-
-Find
-
-photo closest to camera center.
-
-Compute shortest rotational path.
-
-Spring interpolate.
-
-Finish with the selected image perfectly centered.
-
-The snap should feel magnetic rather than mechanical.
+The globe never stops instantly. Movement feels heavy but responsive.
 
 ---
 
 # Selection
 
-The front-most visible image becomes the active selection.
+Front-most visible image becomes active selection.
+Selection state exposed to React via `onSelect(photoId)`.
 
-Selection state is exposed to React.
-
-React controls
-
-- lightbox
-- captions
-- metadata
+React controls:
+- Lightbox
+- Captions
+- Metadata
 
 The engine only determines which image is selected.
 
@@ -297,292 +207,141 @@ The engine only determines which image is selected.
 
 # Lightbox
 
-Tap selected image
+Current flow:
+- Engine `onSelect` → React callback.
+- React opens Lightbox with matching index.
 
-↓
+Current gap:
+- Engine emits `photoId`.
+- Lightbox expects an index.
+- Adapter is missing.
 
-Pause engine
-
-↓
-
-Open lightbox
-
-↓
-
-Close
-
-↓
-
-Resume engine
-
-The globe resumes from its previous state.
+Required adapter:
+- Map `photoId → index` using manifest order.
+- Call `engine.setLightboxOpen(true)` on open.
+- Call `engine.setLightboxOpen(false)` on close.
 
 ---
 
 # Materials
 
-Photos should eventually support
-
-Glass Material
-
-including
-
-- texture
-- opacity
-- roughness
-- metallic edge
+Current material spec supports:
+- Texture
+- Opacity
+- Roughness
+- Metallic
 - Fresnel
-- soft reflection
+- Rounded corners
 
-Material implementation depends on the renderer.
-
-The visual appearance should remain consistent.
-
----
-
-# Environment
-
-The scene should contain subtle decorative elements.
-
-Examples
-
-- gold particles
-- glowing dust
-- petals
-- light sprites
-
-These elements should reinforce the feeling of depth without distracting from the photographs.
-
----
-
-# Particle System
-
-Particles exist inside the same 3D scene.
-
-Preferred implementation
-
-GPU simulation
-
-Fallback implementation
-
-CPU simulation or instanced rendering
-
-Particle behaviour
-
-Idle
-
-↓
-
-Slow drifting
-
-During globe movement
-
-↓
-
-Respond to angular velocity
-
-↓
-
-Subtle orbital motion
-
-Particles should remain secondary to the photographs.
+Future:
+- Glass material
+- Metallic border
+- Soft reflection
 
 ---
 
 # Texture Management
 
-Textures should
+Flow:
+1. Load source → ImageBitmap
+2. Renderer uploads to GPU
+3. Handle returned
+4. Cached in TextureManager and renderer
 
-Decode
-
-↓
-
-Resize if necessary
-
-↓
-
-Upload once
-
-↓
-
-Cache
-
-↓
-
-Reuse
-
-Never upload textures during interaction.
-
-The renderer chooses the optimal implementation.
-
-Possible techniques include
-
-- texture arrays
-- atlases
-- bind groups
+Never upload textures during dragging or interaction.
 
 ---
 
 # Visibility
 
-Objects outside the camera view should not be rendered.
+Backface culling driven by `computeBackfaceAlpha()`.
 
-Implement
+Front-facing photos: alpha ~1.
+Side photos: alpha fades.
+Back-facing photos: alpha → 0, hidden.
 
-- frustum culling
-- back-face culling
-- visibility checks
+Frontness tracking:
+- `frontnessTracker`: remembers highest alpha reached per photo.
+- `rawFrontnessTracker`: remembers highest raw dot product.
 
-Reduce unnecessary GPU work.
+Logged periodically for tuning. Logging should move to debug-only path.
 
 ---
 
 # Performance
 
-Performance is a design requirement.
+Target:
+- 60 FPS minimum
+- 120 Hz where supported
+- Low CPU usage
+- Minimal memory allocations
+- Battery friendly
+- Near-zero idle GPU usage
 
-Target
+Current bottlenecks:
+- `meshes.find()` inside render loop (O(N²)).
+- Per-frame allocations in `buildModelMatrix()` and `pickPhoto()`.
+- Frame-rate-dependent smoothing constants.
 
-60 FPS minimum
-
-120 Hz where supported
-
-Low CPU usage
-
-Minimal memory allocations
-
-Battery friendly
-
-Near-zero idle GPU usage
-
----
-
-# Adaptive Quality
-
-The engine automatically selects quality.
-
-Possible adjustments
-
-- bloom
-- particle count
-- texture resolution
-- pixel ratio
-- post-processing
-
-The user should never manually select quality.
+Texture memory + overdraw + post-processing are future concerns.
 
 ---
 
-# Render Loop
+# Debug
 
-Each frame
+- `window.__GALLERY_DEBUG__ = true` enables periodic stats logging.
+- `?debug=engine` query param preserves legacy standalone renderers.
+- Debug anchor dots renderer available when `setDebugAnchors` is called.
 
-Input
-
-↓
-
-Physics
-
-↓
-
-Scene Update
-
-↓
-
-Visibility
-
-↓
-
-Renderer
-
-↓
-
-Post Processing
-
-↓
-
-Present
-
-Render only while necessary.
-
-Sleep when idle.
+Target: zero `console.log` in engine code. Some remain during Phase 4 cleanup.
 
 ---
 
-# Accessibility
+# File Structure (current)
 
-Respect
-
-prefers-reduced-motion
-
-Fallback
-
-Responsive photo grid
-
-Disable
-
-- globe rotation
-- inertia
-- particles
-
-Support
-
-- keyboard navigation
-- focus management
-- ARIA labels
-- screen readers
-
-Accessibility should never be sacrificed for visual effects.
-
----
-
-# Browser Compatibility
-
-The Gallery Engine automatically selects the best available renderer.
-
-Preferred
-
-WebGPU
-
-Fallback
-
-WebGL2
-
-Final fallback
-
-Responsive CSS gallery
-
-The gallery must remain fully functional on all supported browsers.
-
----
-
-# Future Features
-
-- Glass materials
-- HDR environment lighting
-- Gold edge highlights
-- GPU particle simulation
-- Bloom
-- Depth of Field
-- Motion blur
-- Dynamic reflections
-- Image clustering
-- Unlimited photo support
-
-These features should enhance the experience without changing the overall interaction model.
-
----
-
-# Success Criteria
-
-The gallery should disappear behind the experience.
-
-Users should feel as though they are gently rotating a floating globe made of memories.
-
-The interaction should feel smooth, physical, responsive, and effortless.
-
-The renderer should be invisible.
-
-The technology should disappear.
-
-Only the photographs and the interaction should remain.
+```
+src/
+  engine/
+    Engine.ts
+    core/
+      contract.ts
+      Scheduler.ts
+      RendererFactory.ts
+      RendererCapabilities.ts
+    scene/
+      Scene.ts
+      Camera.ts
+    objects/
+      Globe.ts
+      PhotoMesh.ts
+    physics/
+      Physics.ts
+    interaction/
+      index.ts
+    textures/
+      TextureManager.ts
+    materials/
+      index.ts
+    math/
+      mat4.ts
+    debug/
+      Profiler.ts
+      archive/
+    renderers/
+      interface.ts
+      webgl2/
+        WebGL2Renderer.ts
+      webgpu/
+        WebGPURenderer.ts
+  gallery/
+    ui/
+      GallerySection.tsx
+    render/
+      GlobeRenderer.ts
+      ...
+  components/
+    sections/
+      Gallery.tsx
+      Lightbox.tsx
+      ...
+```

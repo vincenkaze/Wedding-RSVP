@@ -1,4 +1,4 @@
-Wedding Invitation Project — Plan
+# Wedding Invitation Project — Plan
 
 Mission
 
@@ -8,35 +8,26 @@ Working Rules
 
 These are the rules for this project. Follow them every milestone. If a rule needs to change, update this file — don't silently ignore it.
 
-All copy lives in . No copy in JSX, components, or anywhere else. This is the only file non-developers should edit.
+- All copy lives in `src/content/content.ts`. No copy in JSX, components, or anywhere else. This is the only file non-developers should edit.
+- Tokenize before styling. Use the design tokens in `src/styles/tokens.css` (`--color-accent`, `--font-display`, `--ease-entrance`, etc.). No hardcoded colors, fonts, or magic numbers in components.
+- No new dependencies without an explicit reason written in the milestone. If unsure, ask.
+- No speculative code. Don't add props, state, or abstractions "just in case." Build what's needed now.
+- Animations must respect prefers-reduced-motion. Every Framer Motion entrance and every CSS animation needs a reduced-motion fallback.
+- Mobile-first. Test at 360px, 768px, 1440px before claiming a milestone is done.
+- All images need alt text. Hero image needs preload and AVIF/WebP sources. Gallery images lazy-loaded.
+- WhatsApp in-app browser is the real test environment. If it doesn't work there, the milestone isn't done.
+- Definition of Done: every success criterion is met, no console errors, no `any`, no commented-out code, Lighthouse mobile ≥ 90, reviewed with the user.
+- One milestone at a time. Don't start the next until current is signed off.
 
-Tokenize before styling. Use the design tokens in  (--color-accent, --font-display, --ease-entrance, etc.). No hardcoded colors, fonts, or magic numbers in components.
+---
 
-No new dependencies without an explicit reason written in the milestone. If unsure, ask.
+# Working Notes (per session)
 
-No speculative code. Don't add props, state, or abstractions "just in case." Build what's needed now.
-
-Animations must respect prefers-reduced-motion. Every Framer Motion entrance and every CSS animation needs a reduced-motion fallback.
-
-Mobile-first. Test at 360px, 768px, 1440px before claiming a milestone is done.
-
-All images need alt text. Hero image needs fetchpriority="high" and AVIF/WebP sources.
-
-Gallery images live in  as the gallery array — never hardcode image paths in components. Alt text, caption, span class, and priority flag all come from the content contract (see ).
-
-WhatsApp in-app browser is the real test environment. If it doesn't work there, the milestone isn't done.
-
-Definition of Done: every success criterion in the milestone is met, no console errors, no any, no commented-out code, lighthouse mobile ≥ 90, reviewed with the user.
-
-One milestone at a time. Don't start M2 until M1 is signed off.
-
-## Working Notes (per session)
-
-### M5 — Gallery Engine (In Progress)
-
-The project has evolved beyond a traditional photo grid.
+## M5 — Gallery Engine
 
 The Gallery is now implemented as an independent rendering engine embedded inside the React application.
+
+This document is the high-level plan. For current milestone status and immediate next steps, see `Current_PLAN.md`.
 
 The implementation is guided by two design documents:
 
@@ -45,101 +36,55 @@ The implementation is guided by two design documents:
 
 Current implementation target:
 
-- Gallery Engine
-- Renderer abstraction
-- Automatic WebGPU/WebGL2 backend selection
-- Scene graph
-- Camera
-- Globe
-- Physics
-- Interaction
-- Selection
-- Lightbox integration
+- Gallery Engine in `src/engine/`
+- Renderer abstraction (`src/engine/renderers/`)
+- Scene graph (`src/engine/scene/`)
+- Camera (`src/engine/scene/`)
+- Globe + Fibonacci anchor distribution (`src/engine/objects/`)
+- Physics (`src/engine/physics/`)
+- Interaction (`src/engine/interaction/`)
+- Texture Management (`src/engine/textures/`)
+- Lightbox integration via selection contract
 
-The previous responsive grid implementation has been superseded by the Gallery Engine and is no longer the primary milestone target.
+The previous responsive grid implementation from M5A is superseded by the Gallery Engine for the public experience. M5A remains the reduced-motion / fallback / kill-switch path.
 
 Use this section to record engineering decisions, implementation notes, blockers and lessons learned throughout development.
 
-Once a milestone is complete, move notes into the Lessons Learned appendix rather than deleting them.
+Once a milestone is complete, move notes into Lessons Learned rather than deleting them.
 
-Tech Stack
+---
 
-Layer
+# Tech Stack
 
-Technology
+## Layer | Technology | Notes
+---|---|---
+Runtime / Package Manager | Bun or npm | Project builds with npm; Bun is supported
+Build | Vite | zero-config React + TS
+UI Framework | React 19 + TypeScript 6 | strict mode, no any
+Styling | Tailwind CSS 4 | `@tailwindcss/vite` plugin, design tokens in `@theme`
+Animation | Framer Motion 12 | entrance, scroll-reveal, stagger
+Smooth Scroll | Lenis | tuned touchMultiplier for WhatsApp in-app
+Icons | lucide-react | tree-shaken
+Gestures | @use-gesture/react + native Pointer Events | engine uses native Pointer Events
+Admin / Backend | Supabase | Postgres + Edge Function for RSVP + admin
 
-Notes
+No new dependencies without a written reason.
 
-Runtime + Package Manager
+---
 
-Bun
-
-faster than npm, drop-in
-
-Build
-
-Vite 8
-
-zero-config React + TS
-
-UI Framework
-
-React 19 + TypeScript 6
-
-strict mode, no any
-
-Styling
-
-Tailwind CSS 4
-
-@tailwindcss/vite plugin, design tokens in @theme
-
-Animation
-
-Framer Motion 12
-
-entrance, stagger, scroll-reveal only
-
-Smooth Scroll
-
-Lenis
-
-tuned touchMultiplier for WhatsApp in-app
-
-Icons
-
-lucide-react
-
-tree-shaken
-
-Calendar
-
-Custom
-
-generates valid RFC 5545 VCALENDAR
-
-Form Delivery
-
-WhatsApp deep link + Web3Forms
-
-WhatsApp is the primary path, email is fallback
-
-No new dependencies without a written reason. If a new package is needed, add it in the relevant milestone with explicit justification.
-
-## Gallery Engine
+# Gallery Engine Architecture
 
 The project consists of two independent systems.
 
 ### React Application
-
-Responsibilities
-
+Responsibilities:
 - Layout
 - Routing
 - Content
 - Accessibility
 - Forms
 - Lightbox UI
+- Canvas mount / unmount
 
 React does NOT perform rendering or animation inside the gallery.
 
@@ -147,8 +92,7 @@ React does NOT perform rendering or animation inside the gallery.
 
 ### Gallery Engine
 
-Responsibilities
-
+Responsibilities:
 - Rendering
 - Scene
 - Camera
@@ -158,557 +102,220 @@ Responsibilities
 - Materials
 - Texture Management
 - Scheduler
-- Debug Overlay
+- Selection
+- Debug
 
 The Gallery Engine is renderer-independent.
 
-Supported rendering backends
-
-- WebGPU
+Supported rendering backends:
 - WebGL2
+- WebGPU (stub; auto-skips)
 
-The engine automatically selects the best available renderer.
+The engine selects the best available renderer at mount time. The remainder of the application never knows which renderer is active.
 
-The remainder of the application should never know which renderer is active.
+---
 
-Rendering APIs must never leak outside the renderer implementation.
+# Design Direction
 
-Design Direction
+Theme: Warm monochrome with muted copper accent. Monochrome for timelessness, copper for emotional highlights.
 
-Theme: Black-and-white with single accent color. Monochrome for timelessness, accent for emotional highlights.
+Hero: Couple photo with warm B&W treatment. Couples names in elegant display serif. Date and venue in tracked-out caps.
 
-Hero: Couple photo with b&w treatment. Couples names in elegant display serif. Date and venue in tracked-out caps.
+Aesthetic: Kerala traditional invitation influence — Ganesha ornament, ornate dividers, serif typography. Modern, not nostalgic.
 
-Aesthetic: Kerala traditional invitation influence — Ganesha icon ornament, ornate dividers, serif typography. Modern, not nostalgic.
-
-Photography: All photos in monochrome (CSS filter: grayscale(100%)) to match the black-and-white invitation print.
+Photography: Gallery photos are rendered on a 3D sphere. Depth, opacity, and scale communicate the invisible globe.
 
 Mood: Sacred, elegant, intimate. Not festive. Not a SaaS landing page.
 
-Content
+---
 
-All copy is locked in . Update there, not in components. The values below are the final copy for this wedding.
+# Content
+
+All copy is locked in `src/content/content.ts`. Update there, not in components. The values below are the final copy for this wedding.
 
 Couple
-
-export const couple = {
-bride: {
-firstName: 'Anjana',
-displayName: 'Anjana',
-fullName: 'Anjana Sivanandan',
-},
-groom: {
-firstName: 'Krishnaprasad',
-displayName: 'Krishnaprasad',
-fullName: 'Krishnaprasad Thulasidas',
-},
-displayName: 'Anjana & Krishnaprasad',
-monogram: 'A & K', // for envelope intro
-}
+- Bride: Anjana Sivanandan
+- Groom: Krishnaprasad Thulasidas
+- Display: Anjana & Krishnaprasad
 
 Wedding
-
-export const wedding = {
-date: 'Sunday, September 13, 2026',
-dateShort: 'September 13, 2026',
-time: '10:00 AM – 10:30 AM (Muhurtham)',
-timeShort: '10:00 AM',
-timezone: 'IST (UTC+5:30)',
-iso: '2026-09-13T10:00:00+05:30', // used by Countdown
-malayalamDate: '1202 Chingam 28',
-weekday: 'Sunday',
-day: 13,
-month: 'September',
-year: 2026,
-location: 'Cherthala, Alappuzha, Kerala',
-}
+- Date: Sunday, September 13, 2026
+- Time: 10:00 AM – 10:30 AM (Muhurtham)
+- Timezone: IST (UTC+5:30)
+- Location: Cherthala, Alappuzha, Kerala
 
 Venue
-
-export const venue = {
-name: 'Akhilanjali Convention Centre',
-region: 'Cherthala, Alappuzha, Kerala',
-address: 'Akhilanjali Convention Centre, Cherthala, Alappuzha, Kerala',
-mapsQuery: 'Akhilanjali Convention Centre, Cherthala',
-mapsEmbedUrl: '',
-website: '',
-}
+- Name: Akhilanjali Convention Centre
+- Address: Akhilanjali Convention Centre, Varanad Rd, near Sastham kavala, Cherthala, Nedumprakkad, Kerala 688539
 
 Family
-
-export const family = {
-bride: {
-label: "The Bride's Family",
-parents: ['Mr. Sivannandan K.K', 'Mrs. Usha Sivanandan'],
-address: 'Kaniyamparambil House, Pallippuram P.O, Cherthala, Alappuzha',
-phone: ['+91 96567 48405', '+91 88480 38744'],
-},
-groom: {
-label: "The Groom's Family",
-parents: ['Late Mr. Thulasidas', 'Mrs. Ushakumari'],
-address: 'Villadath House, Chelakkara (PO), Kolathur, Thrissur',
-},
-}
+- Bride's parents: Mr. Sivannandan K.K, Mrs. Usha Sivanandan
+- Groom's parents: Late Mr. Thulasidas, Mrs. Ushakumari
 
 RSVP
+- Deadline: August 30, 2026
+- Contact: +918XXXX8744
 
-export const rsvp = {
-deadline: 'August 30, 2026',
-contactNumber: '+919876543210', // TBD — confirm with user
-contactEmail: '',               // TBD
-successMessage: 'Thank you, {name}! We look forward to celebrating with you.',
-events: ['Wedding Ceremony — Sept 13'],
-dietaryOptions: [
-'No dietary restrictions',
-'Vegetarian',
-'Vegan',
-'Other (please specify in message)',
-],
-}
+---
 
-Verse (optional)
+# Information Architecture
 
-TBD with user. Common options: Sanskrit shloka, Bhagavad Gita verse, Bible verse, or a family quote. If user provides, use it. Otherwise omit the section.
+Single-page vertical scroll.
 
-Information Architecture (Final)
-
-Single-page vertical scroll, in order. The "Our Story" section has been removed at user's request — wedding site jumps from Countdown to Events.
-
-Hero — full-bleed b&w photo, Ganesha ornament, couple names, date, RSVP CTA, scroll indicator
-
+Hero — full-bleed photo, Ganesha ornament, couple names, date, RSVP CTA
 Countdown — days/hours/minutes/seconds
+Verse — quote blockquote
+Story — YouTube live stream embed
+Events — ceremony + reception cards
+Family — bride + groom family side-by-side
+Venue — map embed, directions, calendar
+Gallery — 3D sphere of wedding photos + lightbox
+RSVP — form with WhatsApp + Supabase persistence
+Footer — couple names, date, location
 
-Family — bride's family + groom's family, side-by-side with ornate divider (no Our Story)
+---
 
-Events — single Wedding Ceremony card (Muhurtham 10:00–10:30 AM, Sept 13)
+# Animation System
 
-Venue — Akhilanjali Convention Centre, embedded Google Map, address, directions, add to calendar
-
-Gallery — b&w photos with lightbox
-
-RSVP — name, guest count, dietary, message → WhatsApp + Web3Forms
-
-Footer — couple names, date, location, small credit
-
-Removed (per user): Our Story section. The timeline and prose about how they met is dropped.
-
-Gallery section reference: see  in this folder for the full data contract (gallery field in ), component design (masonry-ish grid, <picture> AVIF/WebP/JPEG, grayscale), lightbox implementation (framer-motion + useReducedMotion, keyboard nav, focus trap, swipe gestures, portal), and a build checklist against M5 success criteria.
-
-Animation System
-
-Motion split (non-negotiable)
-
+## Motion split (non-negotiable)
 Framer Motion for: entrance, scroll-reveal, stagger, layout transitions
-
 CSS for: hover, focus, micro-interactions, loading shimmer, photo grayscale, button fills
 
 Animating hovers in JS causes re-render thrash. Keep motion in CSS unless it needs orchestration.
 
-Photo treatment
+## Preferred motion types
+fade, blur, scale (0.96 → 1), parallax, stagger, clip-path reveal, underline draw
 
-All gallery and hero photos apply filter: grayscale(100%) contrast(1.05) brightness(0.98) in CSS. On hover/focus, the grayscale reduces slightly (grayscale(80%)) for a subtle color reveal — optional, can be omitted.
+## Avoid
+bouncing, spinning, particle effects, anything that competes with the photo
 
-.photo-bw {
-filter: grayscale(100%) contrast(1.05);
-transition: filter 600ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-.photo-bw:hover {
-filter: grayscale(85%) contrast(1.05);
-}
-
-Preferred motion types
-
-fade-in
-
-blur-to-clear
-
-scale (0.96 → 1)
-
-clip-path reveal
-
-underline draw
-
-stagger (60–100ms siblings, 150–250ms sections)
-
-Avoid
-
-bouncing
-
-spinning
-
-particle effects
-
-anything that competes with the photo
-
-Easing
-
-Default entrance: [0.22, 1, 0.36, 1] (ease-out-quart)
-
-State changes: [0.4, 0, 0.2, 1] (ease-in-out)
-
+## Easing
+Default entrance: `[0.22, 1, 0.36, 1]` (ease-out-quart)
+State changes: `[0.4, 0, 0.2, 1]` (ease-in-out)
 Never linear for UI motion
 
-Duration
-
+## Duration
 Micro: 150–200ms
-
 Standard: 300–500ms
-
 Cinematic: 600–1200ms
-
 Anything over 400ms must respect prefers-reduced-motion
 
-Performance Budget
+## Stagger
+60–100ms between siblings
+150–250ms between sections
 
-Lighthouse mobile: ≥ 90 (all four categories)
+---
 
-LCP: < 2.5s on 4G throttled
+# Performance Budget
 
-CLS: < 0.1
-
-INP: < 200ms
-
-60fps on mid-range Android (Moto G Power class)
-
-No animation longer than 1.2s
-
-All animations gated by prefers-reduced-motion
-
- with AVIF → WebP → JPEG fallback for all photos
-
-Hero image: AVIF, preloaded, 1600px max
-
-Gallery: AVIF, lazy-loaded, 1200px max
-
-Total JS bundle target: < 200KB gzipped
+- Lighthouse mobile: ≥ 90
+- LCP: < 2.5s on 4G throttled
+- CLS: < 0.1
+- INP: < 200ms
+- 60fps on mid-range Android (Moto G Power class)
+- No animation longer than 1.2s
+- All animations gated by prefers-reduced-motion
 
 Image specs
 
-Slot
+Slot          | Size            | Format                    | Notes
+Hero          | 1600×1067       | AVIF + WebP + JPEG        | preloaded
+Gallery       | 1200×1500       | AVIF + WebP + JPEG        | lazy-loaded via TextureManager
+Favicon       | 32×32           | SVG                       | Ganesha glyph
+OG image      | 1200×630        | AVIF + JPEG               | < 300KB, social sharing
 
-Size
+---
 
-Format
-
-Notes
-
-Hero
-
-1600×1067
-
-AVIF + WebP + JPEG
-
-preloaded, ken-burns subtle
-
-Gallery
-
-1200×1500
-
-AVIF + WebP + JPEG
-
-grayscale, lazy
-
-Favicon
-
-32×32
-
-SVG
-
-Ganesha glyph
-
-OG image
-
-1200×630
-
-AVIF + JPEG
-
-social sharing
-
-File Structure
+# File Structure (current)
 
 src/
-components/
-primitives/
-Section.tsx          # generic section wrapper, scroll-reveal
-FadeUp.tsx           # child reveal variant
-Preloader.tsx        # 2-second initial loader
-EnvelopeIntro.tsx    # 1-time envelope animation
-MusicControl.tsx     # bottom-right audio toggle
-CustomCursor.tsx     # desktop-only, disabled on touch
-sections/
-Hero.tsx
-Countdown.tsx
-Family.tsx
-Events.tsx
-Venue.tsx
-Gallery.tsx
-RSVP.tsx
-Footer.tsx
-hooks/
-useSmoothScroll.tsx    # Lenis context + provider
-lib/
-ics.ts                 # calendar file generation
-wa.ts                  # WhatsApp deep link helpers
-content/
-content.ts             # ALL copy — single source of truth
-styles/
-tokens.css             # @theme + animation tokens
-base.css               # reset + body + photo-bw
-App.tsx                  # composition
-main.tsx                 # root + providers
+  components/
+    admin/           # /admin login/dashboard
+    ui/              # shadcn primitives (if added)
+    sections/        # Hero, Countdown, Verse, Story, Events, Family, Venue, Gallery, Lightbox, RSVP, Footer
+    primitives/      # Section, Reveal, Preloader, EnvelopeIntro, MusicControl, CustomCursor, ScrollProgress, ParticleCanvas
+  engine/            # M5B Gallery Engine
+    core/            # Engine entry, Scheduler, contract, RendererFactory, RendererCapabilities
+    renderers/       # interface + webgl2 + webgpu stub
+    scene/           # Scene graph, Camera
+    objects/         # Globe, PhotoMesh
+    physics/         # Angular velocity, spring snap
+    interaction/     # Unified Pointer Events
+    textures/        # TextureManager
+    materials/       # Material spec
+    math/            # mat4 utilities
+    debug/           # Profiler, archived debug renderers
+  gallery/
+    ui/              # GallerySection (engine mount)
+    render/          # Legacy standalone renderers
+  hooks/             # Lenis smooth scroll
+  lib/               # ics, maps, supabase, rsvp, admin
+  content/
+    content.ts       # ALL copy — single source of truth
+  styles/
+    tokens.css       # @theme + animation tokens
+    base.css         # Global styles, .photo-bw, reduced-motion
+  App.tsx            # Composition
+  main.tsx           # Root + providers
 
-Milestones
+---
+
+# Milestones
 
 Each milestone ships when all success criteria are met AND you've reviewed the demo. Don't move on until you have.
 
-M0 — Project setup
-
-Goal: A Vite app that builds, lints, and runs.
-
-Success criteria:
-
-bun install && bun run dev boots in < 1s
-
-bun run build passes
-
-TypeScript strict, no any
-
-Tailwind tokens + base CSS work
-
-Lenis smooth scroll active
-
-Dev server reachable from mobile on same network
-
-M1 — Content layer + tokens
-
-Goal: All copy and design tokens locked in code.
-
-Success criteria:
-
-exports typed content matching the Content section above
-
-has full theme palette + animation tokens
-
-has reset, body, .photo-bw utility
-
-App renders all sections as empty placeholders with correct vertical order
-
-Hero shows "Anjana weds Krishnaprasad" with Sept 13, 2026 + Cherthala
-
-Countdown shows live ticker to Sept 13, 2026 10:00 IST
-
-M2 — Hero, Countdown, Footer
-
-Goal: Top of page feels complete and cinematic.
-
-Success criteria:
-
-Hero: pre-title, names (clip-path reveal), date, RSVP CTA, ken-burns background, scroll indicator
-
-Countdown: four cards (days/hours/minutes/seconds), tabular-nums, updates every 1s
-
-Footer: names, date, copyright
-
-All entrance animations respect prefers-reduced-motion
-
-Mobile (360px), tablet (768px), desktop (1440px) all look correct
-
-Lighthouse: Performance ≥ 90, Accessibility ≥ 90
-
-M3 — Family + Events
-
-Goal: Family and event timeline are visually balanced with the rest.
-
-Success criteria:
-
-Family: bride side and groom side, gold flourish divider between
-
-Events: vertical timeline with dots, four event cards (or just two for the engagement+reception)
-
-All cards have map links and event descriptions
-
-Stagger animations between cards
-
-Tested at 360 / 768 / 1440px
-
-M4 — Venue + Maps
-
-Goal: Venue section is functional and informative.
-
-Success criteria:
-
-Map embed loads only when in view (lazy iframe)
-
-"Open in Maps" + "Directions" + "Add to Calendar" + "Visit Website" buttons work
-
-.ics file generates and downloads on "Add to Calendar" click
-
-Travel & Stay section collapsible
-
-No layout shift when map loads
-
-## M5 — Gallery Engine Foundation
-
-Goal
-
-Build the foundation of the Gallery Engine.
-
-Success Criteria
-
-- Gallery Engine initializes successfully.
-- Automatic renderer selection implemented.
-- WebGPU renderer initializes when supported.
-- Automatic fallback to WebGL2.
-- Renderer interface defined.
-- Engine boot sequence complete.
-- Scene and camera created.
-- Render scheduler implemented.
-- Resize handling works.
-- Debug overlay available.
-- Renderer sleeps when idle.
-- Stable rendering loop.
-- Mobile compatibility verified.
-
-Definition of Done
-
-- No rendering outside renderer implementations.
-- No React state updates during rendering.
-- Stable 60 FPS on supported devices.
-- No console errors.
-- No memory leaks.
-
-M6 — RSVP
-
-Goal: RSVP form works end-to-end.
-
-Success criteria:
-
-Form fields: name, guests (number), events (checkboxes), dietary, message
-
-Validation: name required, guests 1–10
-
-Submit opens WhatsApp deep link (pre-filled) AND posts to webhook (if configured)
-
-Success state with checkmark animation
-
-Webhook URL in  for future backend (currently optional)
-
-Works with keyboard only
-
-M7 — Interactions & polish
-
-Goal: Every interaction feels premium.
-
-Success criteria:
-
-All buttons have hover fill, focus ring, active state
-
-All links have underline-on-hover (gold, draw animation)
-
-Smooth scroll from RSVP CTA → RSVP section works
-
-Music control persists, volume is 30%, has play/pause with correct icon
-
-Custom cursor on desktop, disabled on touch ((hover: none))
-
-Reduced-motion users get static layout, no auto-playing audio, no parallax
-
-M8 — Pre-flight & deploy
-
-Goal: Production-ready.
-
-Success criteria:
-
-Test on iPhone Safari, Android Chrome, WhatsApp in-app browser, Instagram in-app browser
-
-Lighthouse mobile ≥ 90 on all four categories
-
-No console errors or warnings
-
-Bundle size < 200KB gzipped
-
-All images optimized to AVIF (with WebP + JPEG fallbacks)
-
-.env keys for RSVP webhook set
-
-Deployed to Vercel/Netlify, custom domain pointed
-
-Open Graph image renders correctly when shared to WhatsApp/Instagram
-
-Definition of Done (every milestone)
-
-A milestone is not done when the code is written. It's done when:
-
-All success criteria in the milestone are met
-
-Tested on iPhone Safari, Android Chrome, WhatsApp in-app browser
-
-Lighthouse mobile score ≥ 90
-
-No console errors or warnings
-
-No any, no console.log, no commented-out code
-
-Animations respect prefers-reduced-motion
-
-Review pass: responsiveness (360 / 768 / 1440), accessibility, animation smoothness, code readability, performance
-
-User has reviewed the demo before moving on
-
-The WhatsApp Test
-
-Most guests will open this site from inside WhatsApp's in-app browser. This is the real test environment.
-
-Before considering any milestone done:
-
-Test in WhatsApp in-app browser on iOS
-
-Test in WhatsApp in-app browser on Android
-
-Test in Instagram in-app browser
-
-Test in Safari iOS
-
-Test in Chrome Android
-
-Common things that break in these browsers:
-
-100vh (use 100svh or 100dvh)
-
-Custom cursors (disable on (hover: none))
-
-CSS gradients and some filters
-
-Audio autoplay (always require user interaction)
-
-Smooth scroll libraries (Lenis needs touchMultiplier tuned)
-
-Fixed positioning with dynamic keyboards
-
-If it doesn't work in WhatsApp, it doesn't work.
-
-Risks & Open Questions
-
-Risk
-
-Mitigation
-
-The actual photos aren't in black & white in source
-
-The .photo-bw CSS filter applies regardless of source. Originals should still be color (easier to repurpose), the filter creates the look on-site.
-
-WhatsApp blocks autoplay audio
-
-Music control requires user tap to start, no autoplay.
-
-Custom fonts fail to load in low-bandwidth
-
-font-display: swap on all Google Fonts. Body and display fonts have system fallbacks.
-
-RSVP webhook not ready at launch
-
-WhatsApp deep link is the primary submission path. Webhook is optional.
-
-Date math errors in countdown
-
-Use ISO string in , new Date(wedding.iso).getTime() for target. Test with mocked clock.
+## M0 — Project setup
+- Vite app builds, lints, and runs
+- TypeScript strict, no any
+- Tailwind tokens + base CSS work
+- Lenis smooth scroll active
+
+## M1 — Content layer + tokens
+- Typed `content.ts` exports
+- Full theme palette + animation tokens
+- Reset, body, `.photo-bw` utility
+- App renders all sections as empty placeholders
+
+## M2 — Hero, Countdown, Footer
+- Hero: pre-title, names reveal, date reveal, RSVP CTA
+- Countdown: live ticker
+- Footer: names, date, copyright
+
+## M3 — Family + Events
+- Bride/groom family side-by-side
+- Events timeline with cards
+- Map links and descriptions
+
+## M4 — Venue + Maps
+- Lazy map embed
+- Directions, calendar, travel info
+
+## M5A — Gallery Grid + Lightbox
+- Responsive grid, grayscale photos, lightbox
+- Selection contract: `onSelect(photoId: string)`
+- Reduced-motion fallback path
+
+## M5B — Gallery Engine
+- See `Current_PLAN.md` for phase-by-phase status.
+- Success criteria: engine boots, WebGL2 renders, scene graph drives traversal, 17 photos sit on a stable sphere, interaction is smooth and discoverable, snaps to center, lightbox opens from center.
+
+## M6 — RSVP
+- Form fields, validation, success state
+- WhatsApp deep link + Supabase persistence
+
+## M7 — Admin Dashboard
+- `/admin` route, password gate
+- Table, stats, CSV export
+
+## M8 — Polish
+- Hover, focus, active states
+- Music control
+- Custom cursor desktop-only
+- Reduced-motion static layout
+
+## M9 — Pre-flight & deploy
+- iPhone Safari, Android Chrome, WhatsApp/Instagram in-app tested
+- Lighthouse mobile ≥ 90
+- Bundle size < 200KB gzipped for guest site
+- All images optimized
+- No console errors

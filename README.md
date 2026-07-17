@@ -1,33 +1,29 @@
 # Anjana & Krishnaprasad — Wedding Invitation
 
-A premium one-page wedding invitation website built with React, Tailwind CSS, and Framer Motion. Designed to deliver an emotional, cinematic experience optimized for sharing via WhatsApp, Instagram, and direct links.
+A premium one-page wedding invitation website built with React, Tailwind CSS, Framer Motion, and a custom WebGL2 gallery engine.
+
+Designed to deliver an emotional, cinematic experience optimized for sharing via WhatsApp, Instagram, and direct links.
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Runtime | npm (or Bun) |
-| Build | Vite 8 |
+| Runtime | Node / npm (Bun supported) |
+| Build | Vite |
 | UI | React 19 + TypeScript 6 (strict) |
 | Styling | Tailwind CSS 4 |
-| Animation | Framer Motion 12 |
+| Animation | Framer Motion 12 + CSS |
 | Smooth Scroll | Lenis |
-| Icons | Lucide React |
-| Gestures | @use-gesture/react |
+| Icons | lucide-react |
+| Gestures | @use-gesture/react, native Pointer Events |
+| Backend | Supabase (RSVP storage + admin) |
 
 ## Getting Started
 
 ```bash
-# Install dependencies
 npm install
-
-# Start dev server
 npm run dev
-
-# Build for production
 npm run build
-
-# Preview production build
 npm run preview
 ```
 
@@ -36,57 +32,45 @@ npm run preview
 ```
 src/
 ├── components/
-│   ├── primitives/
-│   │   ├── Section.tsx          # Scroll-triggered section wrapper
-│   │   ├── reveal.ts            # Shared animation constants & variants
-│   │   ├── Preloader.tsx        # Initial "A & K" splash (2s, localStorage-cached)
-│   │   ├── EnvelopeIntro.tsx    # Wax-seal envelope animation (sessionStorage-cached)
-│   │   ├── MusicControl.tsx     # Floating audio toggle
-│   │   └── CustomCursor.tsx     # Desktop-only dot cursor
-│   └── sections/
-│       ├── Hero.tsx             # Full-viewport hero with Ken Burns, date-reveal
-│       ├── Countdown.tsx        # Live countdown to Sept 13, 2026
-│       ├── Verse.tsx            # Quote blockquote
-│       ├── Story.tsx            # YouTube live stream embed (pre/live/post states)
-│       ├── Events.tsx           # Timeline with EventCard components
-│       ├── EventCard.tsx        # Individual event card
-│       ├── Family.tsx           # Bride + groom family side-by-side
-│       ├── FamilyGroup.tsx      # Single family group renderer
-│       ├── Venue.tsx            # Maps embed, directions, ICS download
-│       ├── FloatingGallery.tsx  # Gallery wrapper (carousel + lightbox)
-│       ├── CylinderCarousel.tsx # 3D CSS perspective carousel
-│       ├── Lightbox.tsx         # Full-screen image viewer
-│       ├── RSVP.tsx             # RSVP section wrapper
-│       ├── RSVPForm.tsx         # Form with WhatsApp + Web3Forms submission
-│       └── Footer.tsx           # Minimal footer
+│   ├── admin/           # /admin login + dashboard
+│   ├── primitives/      # Preloader, EnvelopeIntro, MusicControl, CustomCursor, ScrollProgress, ParticleCanvas, Section, Reveal
+│   └── sections/        # Hero, Countdown, Verse, Story, Events, Family, Venue, Gallery, Lightbox, RSVP, Footer
+├── engine/              # M5B Gallery Engine
+│   ├── core/            # Engine entry, Scheduler, contract, RendererFactory, capabilities
+│   ├── renderers/       # interface + webgl2 + webgpu stub
+│   ├── scene/           # Scene graph, Camera
+│   ├── objects/         # Globe, PhotoMesh
+│   ├── physics/         # Angular velocity, spring snap
+│   ├── interaction/     # Unified Pointer Events
+│   ├── textures/        # TextureManager
+│   ├── materials/       # Material spec
+│   ├── math/            # mat4 utilities
+│   └── debug/           # Profiler, archive
+├── gallery/
+│   └── ui/              # GallerySection (engine mount)
+├── hooks/               # Lenis smooth scroll
+├── lib/                 # ics, maps, supabase, rsvp, admin
 ├── content/
-│   └── content.ts               # ALL copy — single source of truth
-├── hooks/
-│   ├── useSmoothScroll.tsx      # Lenis initialization
-│   └── smooth-scroll-context.ts # Lenis React context
-├── lib/
-│   ├── ics.ts                   # ICS calendar file generation
-│   └── maps.ts                  # Google Maps URL builders
+│   └── content.ts       # ALL copy — single source of truth
 ├── styles/
-│   ├── tokens.css               # Design tokens (@theme block)
-│   └── base.css                 # Global styles, animations, reduced-motion
-├── App.tsx                      # Main composition
-└── main.tsx                     # Root render
+│   ├── tokens.css       # @theme + design tokens
+│   └── base.css         # Global styles, .photo-bw, reduced-motion
+├── App.tsx
+└── main.tsx
 ```
 
 ## Customization
 
 All content lives in `src/content/content.ts`. Edit this single file to change:
 
-- **Couple names** — `couple.bride.firstName`, `couple.groom.firstName`, `couple.displayName`
+- **Couple names** — `couple.firstName`, `couple.secondName`, `couple.displayName`
 - **Wedding date** — `wedding.date`, `wedding.iso`, `wedding.time`
-- **Events** — `events[]` array (title, date, time, location, maps query)
+- **Events** — `events[]` array (title, date, time, location)
 - **Venue** — `venue.name`, `venue.address`, `venue.mapsEmbedUrl`
 - **Family** — `family.bride`, `family.groom` (parents, siblings)
 - **Gallery** — `gallery[]` array (image paths, alt text, captions)
 - **Live stream** — `liveStream` (YouTube video ID, channel info)
 - **RSVP** — `rsvp.deadline`, `rsvp.contactNumber`, `rsvp.events`
-- **Verse** — `verse.text`, `verse.reference`
 
 No copy lives in component files. Ever.
 
@@ -97,12 +81,15 @@ Place images in `public/` and reference them in `content.ts`:
 ```
 public/
 ├── hero/
-│   ├── couple.jpg
+│   ├── couple.avif
 │   ├── couple.webp
-│   └── couple.avif
+│   └── couple.jpg
 ├── gallery/
-│   ├── 1.jpeg through 10.jpeg
-└── og-image.jpg          # 1200×630px, <300KB — for WhatsApp/social previews
+│   ├── 1.avif / 1.webp / 1.jpg
+│   └── ...
+├── audio/
+│   └── ambient.mp3
+└── og-image.jpg
 ```
 
 Images should be optimized to WebP with AVIF where supported.
@@ -115,7 +102,7 @@ Place an ambient audio file at `public/audio/ambient.mp3`. The music control wil
 
 ```bash
 # Force envelope intro on refresh (bypasses sessionStorage)
-open "http://localhost:5173/?intro=1"
+npm run dev -- -- ?intro=1
 
 # Clear preloader/envelope state manually
 localStorage.removeItem('wedding-preloader-seen')
@@ -141,8 +128,12 @@ Tested in:
 Key in-app browser considerations:
 - Uses `min-h-dvh` instead of `100vh`
 - RSVP inputs sized at 16px to prevent iOS auto-zoom
-- Lenis handles all smooth scrolling (no `scroll-behavior: smooth`)
+- Lenis handles all smooth scrolling
 - Custom cursor hidden on touch devices
+
+## Gallery Notes
+
+The public gallery uses a custom 3D sphere engine (`src/engine/`) built on raw WebGL2. It renders 17 wedding photographs as camera-facing billboards arranged on a Fibonacci sphere. Interaction uses unified Pointer Events. The legacy CSS grid remains available as a reduced-motion fallback.
 
 ## Accessibility
 

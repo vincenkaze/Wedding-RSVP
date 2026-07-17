@@ -1,37 +1,32 @@
 # Problems to Fix
 
 Living list of design/UX/behavior issues for the wedding site.
+
 Status legend: 🔴 Open  🟡 In Progress  🟢 Resolved
 
 ---
 
 ## 🟢 P-001 — Story → Events gap feels empty
 
-**Location:** `src/components/sections/Story.tsx`
-
-**Symptom:** `storyTimeline` was empty, causing a visible whitespace void between Story and Events.
-
-**Resolution:** Story section was replaced entirely with a YouTube live stream embed (per user decision). The gap issue no longer exists — the live stream fills the visual space.
-
-**Status:** Resolved — section replaced.
+**Resolution:** Story section replaced with YouTube live stream embed. Gap no longer exists.
 
 ---
 
 ## 🟢 P-002 — Gallery needs a kinetic canvas, not a static grid
 
-**Status:** Superseded by P-003/P-006. The gallery now uses a 3D cylinder carousel instead of a static grid.
+**Resolution:** M5A grid stays as fallback. M5B Gallery Engine is the primary experience.
 
 ---
 
 ## 🟢 P-003 — Gallery: true interactivity (drag, rotate, scale)
 
-**Status:** Implemented. `FloatingGallery.tsx` wraps a `CylinderCarousel` with `Lightbox`. The original floating/scatter implementation was replaced by the cylinder carousel approach. `@use-gesture/react` is installed and used for carousel drag physics.
+**Resolution:** M5B engine implements drag, inertia, and pinch via unified Pointer Events.
 
 ---
 
 ## 🟢 P-006 — Gallery canvas sizing and photo transforms
 
-**Status:** Resolved. The gallery was rewritten as a 3D CSS perspective cylinder carousel (`CylinderCarousel.tsx`), eliminating the original scatter-positioning bugs.
+**Resolution:** Gallery rewritten as 3D sphere billboard engine in `src/engine/`.
 
 ---
 
@@ -39,24 +34,17 @@ Status legend: 🔴 Open  🟡 In Progress  🟢 Resolved
 
 **Location:** `src/components/sections/Story.tsx`
 
-**Status:** The Story component has been rewritten as a YouTube live stream embed with pre/live/post states. However, the **live stream is not yet configured**.
+**Status:** Component implemented with pre/live/post states. Live stream is not yet configured.
 
-**What's implemented:**
-- `Story.tsx` renders a YouTube iframe embed
-- Pre-event state shows a countdown timer
-- During-event state shows the live player
-- Post-event state shows the recording (YouTube handles automatically)
-- "LIVE" badge overlay when stream is active
-
-**What's missing (blocks this from being 🟢):**
-- `liveStream.youtubeVideoId` in `content.ts` is empty — user needs to provide the YouTube video ID
-- `liveStream.channelName` and `liveStream.channelUrl` are empty
-- `liveStream.liveStartIso` needs to be set (can default to `wedding.iso`)
+**What's missing:**
+- `liveStream.youtubeVideoId` in `content.ts` is empty
+- `liveStream.channelName` / `liveStream.channelUrl` are empty
+- `liveStream.liveStartIso` not set
 
 **Action needed from user:**
-1. Provide YouTube video ID (11-character string from the live stream URL)
-2. Confirm channel name
-3. Confirm live start time (or reuse wedding ISO)
+1. Provide YouTube video ID for the live stream
+2. Confirm channel name and URL
+3. Confirm live start time (default to wedding ISO)
 
 ---
 
@@ -64,40 +52,68 @@ Status legend: 🔴 Open  🟡 In Progress  🟢 Resolved
 
 **Location:** `public/hero/`
 
-**Symptom:** `content.ts` references `/hero/couple.jpg`, `/hero/couple.webp`, `/hero/couple.avif` but the `public/hero/` directory does not exist. The hero renders with a gradient fallback instead of the couple photo.
+**Symptom:** Hero references `/hero/couple.{avif,webp,jpg}` but files are missing. Hero renders with gradient fallback.
 
-**Action needed from user:** Upload hero couple photos to `public/hero/` in multiple formats (AVIF, WebP, JPEG).
+**Action:** Upload hero couple photos in AVIF, WebP, and JPEG.
 
 ---
 
 ## 🟡 P-009 — Missing `wa.ts` helper file
 
-**Location:** `lib/` directory
+**Symptom:** WhatsApp URL building is inline in components. Not centralized as planned.
 
-**Symptom:** `AGENTS.md` and `PLAN.md` reference `lib/wa.ts` for WhatsApp deep link helpers, but this file does not exist. WhatsApp URL building is done inline in `RSVPForm.tsx`.
-
-**Impact:** Low — functionality works, but the helper isn't centralized as planned.
-
-**Fix:** Either extract WhatsApp URL helpers to `lib/wa.ts` or update documentation to reflect current implementation.
+**Impact:** Low. Functionality works.
 
 ---
 
 ## 🟡 P-010 — `assets/` directory is empty
 
-**Location:** `src/assets/`
+**Symptom:** `src/assets/` exists but contains no files.
 
-**Symptom:** The `src/assets/` directory exists but contains no files. If no local assets are needed, the directory can be removed.
-
-**Impact:** Cosmetic only — no functional impact.
+**Impact:** Cosmetic.
 
 ---
 
 ## 🟡 P-011 — Color token inconsistency
 
-**Location:** Various components
+**Symptom:** Some components reference `text-muted` / `text-text-muted`; tokens define `--color-text-muted`.
 
-**Symptom:** Tailwind classes reference `text-muted` and `text-text-muted`, but `tokens.css` defines `--color-text-muted`. The utility `text-muted` may not resolve correctly via Tailwind's `@theme`.
+**Impact:** Low.
 
-**Impact:** Low — visual styling may fall back to defaults.
+---
 
-**Fix:** Audit all `text-muted` / `text-text-muted` usage and ensure they match the token defined in `tokens.css`.
+## 🔴 P-012 — Gallery: Phase 4 UX gaps (interaction model)
+
+**Symptom:** 17 photos render on a 3D sphere, but the UX reads as a floating cluster:
+- No stable focal image / center frame
+- No visible interaction hint
+- No obvious control for opening a photo
+- All images compete for attention
+
+**Current code issues:**
+- `console.log` statements remain in `src/engine/Engine.ts`
+- Lightbox not wired to engine pause/resume (`setLightboxOpen` never called from React)
+- Pinch zoom moves camera instead of globe scale
+- Canvas uses `touchAction: 'none'`, which can block page scroll on mobile
+- Engine emits `onSelect(photoId)` but Lightbox expects index — no adapter exists
+- Smoothing constants are frame-rate dependent
+- `meshes.find()` inside render loop is O(N²)
+- Long-press state doesn't affect visuals (no center frame yet)
+
+**Remediation direction (approved):**
+1. Fix center frame + active selection in React overlay
+2. Add depth layers (center / front orbit / back orbit)
+3. Snap-to-nearest on release
+4. Depth styling: opacity, scale, grayscale, subtle blur
+5. Temporary interaction guide + chevrons
+6. Fix lightbox-engine wiring
+7. Fix pinch/touch scroll safety
+8. Remove console.log
+
+---
+
+## 🟡 P-013 — Admin auth architecture drift
+
+**Symptom:** Local admin code expects random token auth. Deployed Supabase edge function expects JWT auth. Mismatch blocks `/admin` in deployed builds.
+
+**See:** `fix-db.md` and `DB.md` for diagnosis and options.

@@ -1,5 +1,5 @@
 # Gallery Engine Architecture
-Version: 3.0
+Version: 3.1
 
 ---
 
@@ -8,57 +8,42 @@ Version: 3.0
 Gallery Engine is a rendering engine that powers an interactive wedding gallery.
 
 It is NOT a WebGL engine.
-
 It is NOT a WebGPU engine.
-
 It is NOT a React component.
 
 Gallery Engine is a graphics engine.
-
 Rendering APIs are implementation details.
 
----
-
-# Design Goals
-
-- Rendering backend independent
-- Mobile-first
-- Battery efficient
-- High FPS
-- Future-proof
-- Easy to extend
-- Engine-first architecture
+The engine describes WHAT should be rendered. The renderer decides HOW.
 
 ---
 
 # Core Principle
 
 The engine should never care HOW pixels reach the screen.
-
 The engine only describes WHAT should be rendered.
-
 The rendering backend decides HOW.
 
 ---
 
 # High-Level Architecture
 
-                        React
-                          │
-                          │
-                 Gallery Engine
-                          │
-        ┌─────────────────┼─────────────────┐
-        │                 │                 │
-      Scene            Physics        Interaction
-        │                 │                 │
-        └─────────────────┼─────────────────┘
-                          │
-                    Render API
-                          │
-          ┌───────────────┴───────────────┐
-          │                               │
-    WebGL2 Renderer                 WebGPU Renderer
+                    React
+                      │
+                      │
+             Gallery Engine
+                      │
+      ┌───────────────┼───────────────┐
+      │               │               │
+    Scene         Physics       Interaction
+      │               │               │
+      └───────────────┼───────────────┘
+                      │
+                Render API
+                      │
+        ┌─────────────┴─────────────┐
+        │                           │
+   WebGL2 Renderer           WebGPU Renderer (stub)
 
 Everything above Render API is platform independent.
 
@@ -67,23 +52,16 @@ Everything above Render API is platform independent.
 # Responsibilities
 
 React
-
-Owns
-
 - UI
 - Routing
 - Lightbox
 - Accessibility
 - Loading
+- Canvas mount / unmount
 
-React NEVER performs rendering.
-
----
+React NEVER performs gallery rendering.
 
 Gallery Engine
-
-Owns
-
 - Scene
 - Camera
 - Globe
@@ -93,15 +71,11 @@ Owns
 - Meshes
 - Selection
 - Input
+- Texture management
 
-Gallery Engine NEVER calls WebGL directly.
-
----
+Gallery Engine NEVER calls WebGL/WebGPU directly.
 
 Renderer
-
-Owns
-
 - GPU initialization
 - Buffers
 - Textures
@@ -115,13 +89,11 @@ Renderer NEVER contains gallery logic.
 
 # Rendering Backends
 
-Supported
-
-- WebGPU
+Supported:
 - WebGL2
+- WebGPU (stub; not selected at runtime)
 
-Future
-
+Future:
 - WebXR
 - Headless Renderer
 - Offline Screenshot Renderer
@@ -132,610 +104,196 @@ All backends implement the same interface.
 
 # Renderer Interface
 
-Every renderer MUST implement
+Every renderer MUST implement:
 
-initialize()
+```ts
+interface Renderer {
+  initialize(canvas: HTMLCanvasElement): RendererCapabilities
+  beginFrame(): void
+  endFrame(): void
+  resize(width: number, height: number): void
+  drawMesh(mesh: PhotoMesh): void
+  setCamera(camera: Camera): void
+  setModelRotation(rotX: number, rotY: number): void
+  uploadTexture(bitmap: ImageBitmap): TextureHandle
+  destroyTexture(handle: TextureHandle): void
+  dispose(): void
+}
+```
 
-beginFrame()
+Optional:
+```ts
+setDebugAnchors?(allAnchors: Vec3[], photoPositions: Vec3[], frontFacingFlags: boolean[]): void
+renderDebugDots?(): void
+```
 
-endFrame()
-
-resize()
-
-createMesh()
-
-destroyMesh()
-
-uploadTexture()
-
-destroyTexture()
-
-drawMesh()
-
-setCamera()
-
-dispose()
-
-No renderer may expose API-specific objects.
+No renderer may expose API-specific objects outside this boundary.
 
 ---
 
 # Startup Sequence
 
-Application Starts
+GalleryEngine.mount()
+  ↓
+detectBackend() → webgl2
+  ↓
+createRendererForCanvas(canvas, backend)
+  ↓
+setCamera(camera)
+  ↓
+interaction.attach(canvas)
+  ↓
+scheduler.transitionTo('loading')
 
-↓
-
-Create Gallery Engine
-
-↓
-
-Detect Browser Capabilities
-
-↓
-
-Is WebGPU Supported?
-
-↓
-
-YES
-
-↓
-
-Attempt WebGPU Initialization
-
-↓
-
-Success?
-
-↓
-
-YES
-
-↓
-
-Use WebGPU Renderer
-
-↓
-
-NO
-
-↓
-
-Fallback
-
-↓
-
-Create WebGL2 Renderer
-
-↓
-
-Continue
-
-The user should never notice.
-
----
-
-# Renderer Selection
-
-Priority
-
-1. WebGPU
-2. WebGL2
-
-Never fail unless neither renderer exists.
-
----
-
-# Engine Startup
-
-Initialize Engine
-
-↓
-
-Create Renderer
-
-↓
-
-Create Scene
-
-↓
-
-Create Camera
-
-↓
-
-Create Globe
-
-↓
-
-Generate Sphere
-
-↓
-
-Load Textures
-
-↓
-
-Upload GPU Resources
-
-↓
-
-Begin Rendering
-
----
-
-# Scene Graph
-
-Scene
-
-└── Globe
-
-     ├── Photo
-     ├── Photo
-     ├── Photo
-     ├── Particle System
-     └── Future Objects
-
-Only Globe rotates.
-
-Everything else follows automatically.
+loadPhotos(manifest)
+  ↓
+Promise.allSettled(texture loads)
+  ↓
+createPhotoMesh for each photo
+  ↓
+scene.addNode() for each mesh
+  ↓
+lifecycle.transitionTo('run')
+  ↓
+scheduler.transitionTo('active')
+  ↓
+First frame renders automatically
 
 ---
 
 # Render Loop
 
-Frame
+tick()
+  ↓
+Physics: idle yaw blend / drag velocity / snap
+  ↓
+globeScale smoothing
+  ↓
+setModelRotation(rotX, rotY)
+  ↓
+beginFrame()
+  ↓
+for each scene.getVisibleNodes():
+    lookup mesh by id
+    update mesh.transform.position from globe.positions * globeScale
+    update mesh.alpha via computeBackfaceAlpha()
+    update mesh.colorAmount toward target
+    drawMesh(mesh)
+  ↓
+endFrame()
 
-↓
-
-Input
-
-↓
-
-Physics
-
-↓
-
-Update Scene
-
-↓
-
-Visibility
-
-↓
-
-Renderer.beginFrame()
-
-↓
-
-Renderer.draw()
-
-↓
-
-Renderer.endFrame()
-
-↓
-
-Sleep if Idle
-
-Every frame follows this order.
+Sleep/wake controlled by scheduler and interaction.
 
 ---
 
-# Sleep System
+# Scene Graph
 
-Renderer sleeps when
+SceneNode:
+- id
+- position
+- rotationY (reserved)
+- rotationX (reserved)
+- visible
 
-- no dragging
-- no inertia
-- no snapping
-- no animations
-- no particles
+Scene owns node visibility culling. Engine maintains mesh↔node identity by id.
 
-Renderer wakes when
-
-- pointer moves
-- resize
-- texture upload
-- lightbox closes
-
-Goal
-
-Near-zero idle GPU usage.
-
----
-
-# Engine Modules
-
-Engine
-
-├── Scene
-├── Camera
-├── Renderer
-├── Scheduler
-├── Globe
-├── Texture Manager
-├── Material System
-├── Physics
-├── Interaction
-├── Debug
-└── Post Processing
-
-Each module should be replaceable.
-
----
-
-# Scene
-
-Owns
-
-- Objects
-- Hierarchy
-- Visibility
-
-Scene knows nothing about WebGL.
+Currently only PhotoMesh-backed scene nodes are rendered. Future objects can coexist as long as renderer traversal is id-driven.
 
 ---
 
 # Camera
 
-Owns
+Fixed perspective camera. Never rotates.
 
-- Projection Matrix
-- View Matrix
-- Frustum
+Responsive framing:
+- `createDefaultCamera(aspect)` → fov, aspect, near, far, eye, target, up
+- `computeCameraDistance(sphereRadius, fov, aspect, desiredFill)` → eye.z
+- DPR capped at 2
 
-Camera never rotates.
-
-The Globe rotates.
+Resize updates aspect + camera distance. Does not change world-space sphere radius.
 
 ---
 
 # Globe
 
-Owns
+Produces:
+- `positions[]` — rotated anchor world positions
+- `normals[]` — anchor normals
+- `tangents[]` / `bitangents[]` — billboard basis vectors
+- `rotX`, `rotY` — current rotation state
+- `autoRotateSpeed`
 
-- Sphere Layout
-- Rotation
-- Selection
-- Photo Anchors
+Anchor generation:
+1. Generate ~120 Fibonacci candidates.
+2. Select 17 occupied anchors via max-min angular separation.
+3. Normalize to unit sphere, scale by `sphereRadius`.
 
-Globe contains no rendering code.
+Orient globe so front hemisphere faces camera by default.
 
 ---
 
 # Physics
 
-Owns
-
-- Angular Velocity
-- Inertia
+Owns:
+- Angular velocity
 - Damping
-- Spring Snap
+- Velocity smoothing
+- Spring snap
 
-Physics only produces transforms.
-
-Never render.
+Does not own absolute rotation. Produces incremental rotation changes only.
 
 ---
 
 # Interaction
 
-Owns
+Owns:
+- Pointer Events binding
+- Pointer capture
+- Drag detection threshold
+- Gesture intent arbitration (mobile)
+- Pinch tracking
+- Velocity sampling
 
-- Pointer Input
-- Drag Detection
-- Gesture Recognition
-
-Interaction never modifies GPU resources.
+Does not own scene state. Calls engine callbacks only.
 
 ---
 
 # Texture Manager
 
-Responsibilities
+Responsibilities:
+- Decode source → ImageBitmap
+- Upload to GPU via renderer
+- Cache by handle
+- Reuse
 
-Decode
-
-↓
-
-Resize
-
-↓
-
-Upload
-
-↓
-
-Cache
-
-↓
-
-Reuse
-
-Never upload textures during dragging.
+Never uploads during dragging.
 
 ---
 
-# Material System
+# Sleep System
 
-Every material contains
+Scheduler sleeps when:
+- `motionPolicy === 'static'`
+- engine disabled
+- lightbox open
 
-- Texture
-- Opacity
-- Roughness
-- Metalness
-- Fresnel
-- Border
+Scheduler wakes when:
+- interaction drag start
+- resize
+- texture load completes
+- lightbox closes
+- explicit wake()
 
-Renderer decides how these are implemented.
-
----
-
-# Mesh
-
-A Mesh consists of
-
-Geometry
-
-+
-
-Material
-
-+
-
-Transform
-
-Mesh contains no renderer-specific code.
+Goal: near-zero idle GPU usage.
 
 ---
 
 # Memory Philosophy
 
-Allocate once.
-
-Reuse forever.
-
-Never allocate inside the render loop.
-
-Reuse
-
-- vectors
-- matrices
-- quaternions
-- arrays
-- buffers
-
-Avoid garbage collection.
-
----
-
-# Quality System
-
-Detect
-
-↓
-
-GPU
-
-↓
-
-Memory
-
-↓
-
-Refresh Rate
-
-↓
-
-Select Quality
-
-Never ask the user.
-
----
-
-# Quality Levels
-
-Ultra
-
-- WebGPU
-- HDR
-- Bloom
-- Glass Materials
-- High Particle Count
-
-High
-
-- WebGPU
-- Bloom
-- Standard Particles
-
-Medium
-
-- WebGL2
-- Reduced Bloom
-- Fewer Particles
-
-Low
-
-- WebGL2
-- Minimal Effects
-- Lower DPR
-
-Experience remains identical.
-
-Only visual fidelity changes.
-
----
-
-# Future Renderer Features
-
-WebGPU
-
-- Compute Shaders
-- GPU Particle Simulation
-- HDR Pipeline
-- Advanced PBR
-- Better Bloom
-- GPU Culling
-
-WebGL2
-
-- Standard Rendering
-- CPU Particle Simulation
-- Simplified Effects
-
-Feature parity should remain as close as possible.
-
----
-
-# Folder Structure
-
-src/
-
-gallery/
-
-engine/
-
-    Engine.ts
-
-    Scene.ts
-
-    Camera.ts
-
-    Scheduler.ts
-
-    Renderer.ts        (Interface)
-
-renderers/
-
-    WebGL2Renderer.ts
-
-    WebGPURenderer.ts
-
-objects/
-
-    Globe.ts
-
-    Photo.ts
-
-    ParticleSystem.ts
-
-materials/
-
-    Material.ts
-
-    GlassMaterial.ts
-
-geometry/
-
-    RoundedPlane.ts
-
-    SphereDistribution.ts
-
-physics/
-
-    Inertia.ts
-
-    Spring.ts
-
-interaction/
-
-    PointerController.ts
-
-textures/
-
-    TextureManager.ts
-
-math/
-
-    Vector2.ts
-
-    Vector3.ts
-
-    Matrix4.ts
-
-    Quaternion.ts
-
-debug/
-
-    DebugOverlay.ts
-
-shaders/
-
-    webgl/
-
-    webgpu/
-
----
-
-# Guiding Rule
-
-If a module imports
-
-WebGLRenderingContext
-
-or
-
-GPUDevice
-
-outside the renderer,
-
-the architecture has been violated.
-
-Only renderers may speak directly to the graphics API.
-
----
-
-# Long-Term Vision
-
-The engine should eventually support
-
-React
-      │
-      ▼
-Gallery Engine
-      │
-      ▼
-Renderer Interface
-      │
- ┌────┴───────────────┐
- │                    │
-WebGL2          WebGPU
- │                    │
- └──────Same Experience──────┘
-
-Changing the renderer should never require changes to
-
-- Physics
-- Globe
-- Scene
-- Camera
-- Interaction
-- Materials
-
-Only the renderer changes.
-
----
-
-# Success Criteria
-
-A user opens the website.
-
-The engine silently chooses the best renderer.
-
-If WebGPU is available,
-it uses WebGPU.
-
-If not,
-it automatically falls back to WebGL2.
-
-The experience remains smooth,
-beautiful,
-responsive,
-and visually consistent.
-
-The user never knows which renderer was chosen.
-
-That is the hallmark of a well-designed rendering engine.
+Allocate reusable buffers once.
+Avoid allocations inside tick().
+Dispose all GPU resources on unmount.
+
+Allocations inside render loop (to refactor):
+- `buildModelMatrix()` allocates new Float32Array each frame.
+- `pickPhoto()` allocates proj/view/pv/model matrices per call.

@@ -24,7 +24,7 @@ Lenis (smooth scroll)
 
 lucide-react (icons)
 
-@use-gesture/react (gallery drag/pinch/rotate)
+@use-gesture/react (legacy grid only; engine uses native Pointer Events)
 
 No new dependencies without a written reason. If a new package is needed, add it with explicit justification.
 
@@ -86,12 +86,20 @@ File structure
 
 src/
   components/
+    admin/         # /admin login/dashboard
     ui/           # shadcn primitives (if added)
-    sections/     # Hero, Countdown, Events, Family, Venue, Gallery, RSVP, Footer
-    primitives/   # Section, Reveal, Preloader, EnvelopeIntro, MusicControl, CustomCursor
+    sections/     # Hero, Countdown, Verse, Story, Events, Family, Venue, Gallery, Lightbox, RSVP, Footer
+    primitives/   # Section, Reveal, Preloader, EnvelopeIntro, MusicControl, CustomCursor, ScrollProgress, ParticleCanvas
+  engine/         # M5B Gallery Engine (core, scene, objects, physics, interaction, textures, renderers, debug)
+  gallery/
+    ui/           # GallerySection (engine mount)
+    render/       # Legacy standalone renderers
   lib/
     ics.ts        # calendar file generation
     maps.ts       # Google Maps URL builders
+    supabase.ts   # Supabase client
+    rsvp.ts       # RSVP persistence
+    admin.ts      # Admin auth helpers
   hooks/
     useSmoothScroll.tsx    # Lenis initialization
     smooth-scroll-context.ts # Lenis React context
@@ -247,7 +255,7 @@ Test with a screen reader at least once per section
 
 Content
 
-All copy lives in  as a single typed object. This is the only file non-developers should need to edit.
+All copy lives in src/content/content.ts as a single typed object. This is the only file non-developers should need to edit.
 
 
 

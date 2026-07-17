@@ -1,15 +1,14 @@
-# Wedding Details — Single Source of Truth
+# Wedding Details
 
-All wedding details for Anjana & Krishnaprasad. Update here first, then sync `content.ts`.
+Source of truth: `src/content/content.ts`. Update there first, then sync this file.
 
 ---
 
 ## Couple
 
-- **Bride:** Anjana Sivanandan (Anju)
-- **Groom:** Krishnaprasad Thulasidas (Krishna)
+- **Bride:** Anjana Sivanandan
+- **Groom:** Krishnaprasad Thulasidas
 - **Display name:** Anjana & Krishnaprasad
-- **Full name:** Anjana Sivanandan & Krishnaprasad Thulasidas
 - **Monogram:** A & K
 
 ---
@@ -20,7 +19,7 @@ All wedding details for Anjana & Krishnaprasad. Update here first, then sync `co
 - **Mother:** Mrs. Usha Sivanandan
 - **Siblings:** Vaishnav
 - **Address:** Kaniyamparambil House, Pallippuram P.O, Cherthala, Alappuzha
-- **Phone:** +91 96567 48405 (Contact for bride's side)
+- **Phone:** +91 96567 48405
 
 ---
 
@@ -30,7 +29,7 @@ All wedding details for Anjana & Krishnaprasad. Update here first, then sync `co
 - **Mother:** Mrs. Ushakumari
 - **Siblings:** Krishnapriya, Praveen, Avanthika, Advay Krishna
 - **Address:** Villadath House, Chelakkara (PO), Kolathur, Thrissur 680586
-- **Phone:** +91 90487 38625 (Contact for groom's side)
+- **Phone:** +91 90487 38625
 
 ---
 
@@ -38,28 +37,22 @@ All wedding details for Anjana & Krishnaprasad. Update here first, then sync `co
 
 ### Event 1 — Thalikettu (Wedding Ceremony)
 
-| Field | Value |
-|-------|-------|
-| Date | Sunday, September 13, 2026 |
-| Malayalam date | 1202 Chingam 28 |
-| Muhurtham | 10:00 AM – 10:30 AM |
-| Venue | Akhilanjali Convention Centre, Cherthala |
-| Address | Akhilanjali Convention Centre, Varanad Rd, near Sastham kavala, Cherthala, Nedumprakkad, Kerala 688539 |
-| Maps query | Akhilanjali Convention Centre, Varanad Rd, near Sastham kavala, Cherthala, Nedumprakkad, Kerala 688539 |
-| ISO | 2026-09-13T10:00:00+05:30 |
+- Sunday, September 13, 2026
+- 10:00 AM – 10:30 AM (Muhurtham)
+- Venue: Akhilanjali Convention Centre, Cherthala
+- Address: Akhilanjali Convention Centre, Varanad Rd, near Sastham kavala, Cherthala, Nedumprakkad, Kerala 688539
+- Maps query: Akhilanjali Convention Centre, Varanad Rd, near Sastham kavala, Cherthala, Nedumprakkad, Kerala 688539
+- Malayalam date: 1202 Chingam 28
 
 ### Event 2 — Marriage Reception
 
-| Field | Value |
-|-------|-------|
-| Date | Monday, September 14, 2026 |
-| Malayalam date | 1202 Chingam 29 |
-| Time | 4:00 PM – 8:00 PM |
-| Venue | Janakiram Auditorium, Chelakkara |
-| Region | Chelakkara, Thrissur, Kerala |
-| Hosted by | Krishnapriya, Praveen, Avanthika & Advay Krishna (groom's siblings) |
-| Maps query | Janakiram Auditorium, Chelakkara, Thrissur, Kerala |
-| ISO | 2026-09-14T16:00:00+05:30 |
+- Monday, September 14, 2026
+- 4:00 PM – 8:00 PM
+- Venue: Janakiram Auditorium, Chelakkara
+- Region: Chelakkara, Thrissur, Kerala
+- Hosted by: Krishnapriya, Praveen, Avanthika & Advay Krishna (groom's siblings)
+- Maps query: Janakiram Auditorium, Chelakkara, Thrissur, Kerala
+- Malayalam date: 1202 Chingam 29
 
 ---
 
@@ -67,14 +60,14 @@ All wedding details for Anjana & Krishnaprasad. Update here first, then sync `co
 
 - **Name:** Akhilanjali Convention Centre
 - **Region:** Cherthala, Alappuzha, Kerala
-- **Address:** Akhilanjali Convention Centre, Cherthala, Alappuzha, Kerala
+- **Address:** Akhilanjali Convention Centre, Varanad Rd, near Sastham kavala, Cherthala, Nedumprakkad, Kerala 688539
 
 ---
 
 ## RSVP
 
 - **Deadline:** August 30, 2026
-- **WhatsApp contact:** +918848038744
+- **WhatsApp contact:** +918XXXX8744
 - **Web3Forms:** Not configured (optional — WhatsApp is primary path)
 
 ---
@@ -88,17 +81,25 @@ All wedding details for Anjana & Krishnaprasad. Update here first, then sync `co
 
 ---
 
-## Current Content Status in content.ts
+## Current Content Status
 
 | Field | Status |
 |-------|--------|
 | Couple names | ✅ Correct |
-| Wedding date | ✅ Sept 13, 2026 |
-| Events (2) | ✅ Both events in array |
+| Wedding date/time | ✅ Sept 13, 2026 |
+| Events | ✅ Both events in array |
 | Venue | ✅ Akhilanjali Convention Centre |
-| Family (bride + groom) | ✅ Parents + siblings included |
-| Gallery | ✅ 10 images |
+| Family | ✅ Parents + siblings included |
+| Gallery | ✅ 18 images in `content.ts` |
 | Live stream | ⚠️ Placeholder — no YouTube video ID configured |
-| RSVP WhatsApp number | ✅ +918848038744 |
-| RSVP Web3Forms | ❌ Not configured |
+| RSVP WhatsApp number | ⚠️ Empty in `content.ts` |
 | Hero images | ❌ `public/hero/` directory missing — couple.* files not uploaded |
+
+---
+
+## Obys "Moments" Reference
+
+The gallery is being adapted to match an Obys-style "Moments" 3D spherical image field aesthetic:
+- Centered muted gold/tan header
+- Floating wedding photos spread evenly across a 3D sphere
+- Clean minimalist elegant wedding aesthetic
