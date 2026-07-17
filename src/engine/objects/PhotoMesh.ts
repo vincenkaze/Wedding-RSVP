@@ -23,6 +23,8 @@ export interface PhotoMesh {
   alpha: number
   colorAmount: number
   visible: boolean
+  /** @debug Temporary field to verify texture↔mesh identity during picking investigation. Remove after diagnosis. */
+  textureSource: string
 }
 
 const QUAD_CORNERS = new Float32Array([
@@ -43,6 +45,8 @@ export function createPhotoMesh(
   tangent: Vec3,
   bitangent: Vec3,
   texture: TextureHandle,
+  /** @debug Temporary parameter for texture↔mesh identity verification. Remove after diagnosis. */
+  textureSource: string = '',
 ): PhotoMesh {
   return {
     id,
@@ -70,5 +74,6 @@ export function createPhotoMesh(
     alpha: 1,
     colorAmount: 0,
     visible: true,
+    textureSource,
   }
 }

@@ -32,7 +32,7 @@ export interface FrameStats {
 export interface PreviewStartData {
   photoId: string
   photoSrc: string
-  screenRect: { x: number; y: number; width: number; height: number }
+  origin: { x: number; y: number; width: number; height: number }
 }
 
 export interface EngineCallbacks {

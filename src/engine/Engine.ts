@@ -33,8 +33,6 @@ const MAX_SPEED_MULTIPLIER = 1.5
 const VELOCITY_SMOOTHING = 0.20
 const MAX_THROW_VELOCITY = 0.012
 
-type PreviewState = 'idle' | 'pressing' | 'preview' | 'collapse'
-
 export class GalleryEngine {
   private renderer: Renderer | null = null
   private scheduler: Scheduler
@@ -65,17 +63,17 @@ export class GalleryEngine {
   private currentYawVelocity = 0
   private globeScale = 1.0
   private targetGlobeScale = 1.0
-  private hoveredPhotoId: string | null = null
-  private selectedPhotoId: string | null = null
-  private longPressFired = false
   private isMobile = false
   private smoothedYawVelocity = 0
   private lastDragTime = 0
   private maxDpr = 2
-  private previewState: PreviewState = 'idle'
-  private previewTimer: ReturnType<typeof setTimeout> | null = null
-  private previewRect: PreviewStartData['screenRect'] | null = null
+
+  private pressedPhotoId: string | null = null
   private previewPhotoSrc: string | null = null
+  private previewOrigin: PreviewStartData['origin'] | null = null
+  private isPreviewActive = false
+  private previewTimer: ReturnType<typeof setTimeout> | null = null
+  private userControlling = false
 
   constructor(canvas: HTMLCanvasElement, callbacks: EngineCallbacks) {
     this.canvas = canvas
@@ -186,6 +184,7 @@ export class GalleryEngine {
         this.globe.tangents[index],
         this.globe.bitangents[index],
         handle,
+        photo.src,
       )
       this.meshes[index] = mesh
       this.meshById.set(mesh.id, mesh)
@@ -221,8 +220,12 @@ export class GalleryEngine {
   setLightboxOpen(open: boolean): void {
     this.isLightboxOpen = open
     if (open) {
-      this.hoveredPhotoId = null
-      this.selectedPhotoId = null
+      this.userControlling = false
+      this.pressedPhotoId = null
+      this.previewPhotoSrc = null
+      this.previewOrigin = null
+      this.isPreviewActive = false
+      this.cancelPreviewTimer()
       this.targetGlobeScale = 1.0
       this.scheduler.sleep()
     } else {
@@ -248,7 +251,7 @@ export class GalleryEngine {
     if (!this.enabled || !this.renderer || this.isLightboxOpen) return
     if (this.motionPolicy === 'static') return
 
-    if (this.previewState !== 'preview') {
+    if (!this.userControlling && !this.isPreviewActive) {
       if (!this.physics.isDragging) {
         const blend = 1 - Math.pow(0.98, dt / 16.667)
         this.currentYawVelocity += (this.IDLE_YAW_SPEED - this.currentYawVelocity) * blend
@@ -298,8 +301,7 @@ export class GalleryEngine {
       mesh.alpha = computeBackfaceAlpha(mesh.normal, this.globe.rotX, this.globe.rotY)
       mesh.transform.scale = [0.26 * this.globeScale, 0.26 * this.globeScale]
 
-      const isActive = this.hoveredPhotoId === mesh.id || this.selectedPhotoId === mesh.id
-      const targetColor = (isActive && mesh.alpha > 0.15) ? 1 : 0
+      const targetColor = (this.pressedPhotoId === mesh.id && mesh.alpha > 0.15) ? 1 : 0
       const colorBlend = 1 - Math.pow(COLOR_DECAY, dt / 16.667)
       mesh.colorAmount += (targetColor - mesh.colorAmount) * colorBlend
 
@@ -331,11 +333,15 @@ export class GalleryEngine {
   }
 
   private handleDragStart(): void {
-    if (this.previewState === 'pressing') {
-      this.cancelPreviewTimer()
-      this.previewState = 'idle'
+    if (this.isPreviewActive) {
+      this.isPreviewActive = false
+      this.callbacks.onPreviewEnd()
     }
-    if (this.longPressFired || this.previewState !== 'idle') return
+    this.cancelPreviewTimer()
+    this.pressedPhotoId = null
+    this.previewPhotoSrc = null
+    this.previewOrigin = null
+
     this.physics.isDragging = true
     this.physics.velocityX = 0
     this.physics.velocityY = 0
@@ -369,6 +375,7 @@ export class GalleryEngine {
     void velocityX
     void velocityY
     this.physics.isDragging = false
+    this.userControlling = false
     const clampedVelocity = Math.max(-MAX_THROW_VELOCITY, Math.min(MAX_THROW_VELOCITY, this.smoothedYawVelocity))
     this.currentYawVelocity = clampedVelocity
 
@@ -381,74 +388,68 @@ export class GalleryEngine {
   }
 
   private handlePointerDown(x: number, y: number): void {
-    this.targetGlobeScale = this.isMobile ? 1.06 : 1.10
+    this.userControlling = true
+    this.currentYawVelocity = 0
     this.scheduler.wake()
 
     const picked = this.pickPhoto(x, y)
-    this.selectedPhotoId = picked
-
     if (picked !== null) {
-      this.hoveredPhotoId = picked
-
+      this.pressedPhotoId = picked
       const mesh = this.meshById.get(picked)
       if (mesh) {
-        this.previewRect = this.projectMeshToScreen(mesh)
         this.previewPhotoSrc = this.manifest?.photos[mesh.index]?.src ?? null
-      }
-    } else {
-      this.previewRect = null
-      this.previewPhotoSrc = null
-    }
+        this.previewOrigin = this.projectMeshToViewport(mesh)
 
-    if (picked !== null && this.isMobile) {
-      this.previewState = 'pressing'
-      this.startPreviewTimer(picked)
+        // @debug Temporary identity diagnostic — remove after diagnosis
+        console.log(
+          `PICK CHECK: pickedId=${picked}, meshTextureSource=${mesh.textureSource}, previewSource=${this.previewPhotoSrc}`,
+        )
+      }
+      if (this.isMobile) {
+        this.startPreviewTimer(picked)
+      }
     }
   }
 
-  private handlePointerMove(x: number, y: number): void {
-    const picked = this.pickPhoto(x, y)
-
-    if (picked !== null) {
-      this.hoveredPhotoId = picked
-      this.selectedPhotoId = picked
-
-      const mesh = this.meshById.get(picked)
-      if (mesh) {
-        this.previewRect = this.projectMeshToScreen(mesh)
-        this.previewPhotoSrc = this.manifest?.photos[mesh.index]?.src ?? null
-      }
-    } else {
-      this.hoveredPhotoId = null
-      this.selectedPhotoId = null
-      this.previewRect = null
-      this.previewPhotoSrc = null
-    }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- callback signature required by Interaction
+  private handlePointerMove(_x: number, _y: number): void {
+    // No re-picking. The pressed photo ID is retained from pointerdown.
+    // Drag detection is handled by the Interaction class.
   }
 
   private handlePointerUp(): void {
-    if (this.isLightboxOpen) return
+    if (this.isLightboxOpen) {
+      return
+    }
 
-    const wasPreview = this.previewState === 'preview'
-    const photoId = this.selectedPhotoId
+    const wasPreview = this.isPreviewActive
+    const photoId = this.pressedPhotoId
+    const wasDragging = this.physics.isDragging
 
     this.cancelPreviewTimer()
-    this.previewState = 'idle'
-    this.hoveredPhotoId = null
-    this.selectedPhotoId = null
-    this.targetGlobeScale = 1.0
+    this.isPreviewActive = false
+    this.pressedPhotoId = null
+    this.previewPhotoSrc = null
+    this.previewOrigin = null
+
+    if (!wasDragging) {
+      this.userControlling = false
+      this.currentYawVelocity = 0
+    }
 
     if (wasPreview) {
       this.callbacks.onPreviewEnd()
-    } else if (photoId && !this.physics.isDragging) {
+    } else if (photoId && !wasDragging) {
       this.callbacks.onSelect(photoId)
     }
-
-    this.longPressFired = false
   }
 
-  private projectMeshToScreen(mesh: PhotoMesh): { x: number; y: number; width: number; height: number } | null {
+  private projectMeshToViewport(mesh: PhotoMesh): PreviewStartData['origin'] | null {
     if (!this.canvas || !this.renderer) return null
+
+    const canvasRect = this.canvas.getBoundingClientRect()
+    const scaleX = this.canvas.width / canvasRect.width
+    const scaleY = this.canvas.height / canvasRect.height
 
     const proj = new Float32Array(16)
     mat4Perspective(proj, this.camera.fov, this.camera.aspect, this.camera.near, this.camera.far)
@@ -458,71 +459,34 @@ export class GalleryEngine {
     mat4Multiply(pv, proj, view)
     const model = this.buildModelMatrix()
 
-    const corners = [[-1, -1], [1, -1], [-1, 1], [1, 1]]
+    const result = this.computeCardWorldCorners(mesh, model, pv)
+    if (!result) return null
+
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
-
-    for (const [cx, cy] of corners) {
-      const rotatedCenter = this.transformPoint(mesh.transform.position, model)
-      const rotatedTangent = this.transformDirection(mesh.transform.tangent, model)
-      const rotatedBitangent = this.transformDirection(mesh.transform.bitangent, model)
-      const rotatedNormal = this.transformDirection(
-        [
-          mesh.transform.tangent[1] * mesh.transform.bitangent[2] - mesh.transform.tangent[2] * mesh.transform.bitangent[1],
-          mesh.transform.tangent[2] * mesh.transform.bitangent[0] - mesh.transform.tangent[0] * mesh.transform.bitangent[2],
-          mesh.transform.tangent[0] * mesh.transform.bitangent[1] - mesh.transform.tangent[1] * mesh.transform.bitangent[0],
-        ],
-        model,
-      )
-
-      const viewDir = this.normalize([-rotatedCenter[0], -rotatedCenter[1], -rotatedCenter[2]])
-      const nLen = Math.sqrt(rotatedNormal[0] ** 2 + rotatedNormal[1] ** 2 + rotatedNormal[2] ** 2) || 1
-      const facing = Math.abs(
-        (rotatedNormal[0] / nLen) * viewDir[0] +
-        (rotatedNormal[1] / nLen) * viewDir[1] +
-        (rotatedNormal[2] / nLen) * viewDir[2],
-      )
-      const tangentBlend = Math.min(0.7, this.smoothstep(0.3, 0.7, 1.0 - facing))
-
-      const billboardRight = this.normalize(this.cross(viewDir, [0, 1, 0]))
-      const billboardUp = this.normalize(this.cross(billboardRight, viewDir))
-      const blendedRight = this.normalize(this.lerpVec3(billboardRight, rotatedTangent, tangentBlend))
-      const blendedUp = this.normalize(this.lerpVec3(billboardUp, rotatedBitangent, tangentBlend))
-
-      const sx = mesh.transform.scale[0] * this.globeScale
-      const sy = mesh.transform.scale[1] * this.globeScale
-      const worldVertex = [
-        rotatedCenter[0] + blendedRight[0] * cx * sx + blendedUp[0] * cy * sy,
-        rotatedCenter[1] + blendedRight[1] * cx * sx + blendedUp[1] * cy * sy,
-        rotatedCenter[2] + blendedRight[2] * cx * sx + blendedUp[2] * cy * sy,
-      ]
-
-      const clip = this.transformPoint4(worldVertex, pv)
-      if (clip[3] <= 0) return null
-
-      const ndcX = (clip[0] / clip[3]) * 0.5 + 0.5
-      const ndcY = (clip[1] / clip[3]) * 0.5 + 0.5
-      const screenX = ndcX * this.canvas.width
-      const screenY = (1.0 - ndcY) * this.canvas.height
-
-      minX = Math.min(minX, screenX); maxX = Math.max(maxX, screenX)
-      minY = Math.min(minY, screenY); maxY = Math.max(maxY, screenY)
+    for (const [sx, sy] of result.screenCorners) {
+      minX = Math.min(minX, sx); maxX = Math.max(maxX, sx)
+      minY = Math.min(minY, sy); maxY = Math.max(maxY, sy)
     }
 
     if (minX > maxX) return null
 
-    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+    return {
+      x: canvasRect.left + minX / scaleX,
+      y: canvasRect.top + minY / scaleY,
+      width: (maxX - minX) / scaleX,
+      height: (maxY - minY) / scaleY,
+    }
   }
 
   private startPreviewTimer(photoId: string): void {
     this.cancelPreviewTimer()
     this.previewTimer = setTimeout(() => {
-      if (this.previewState === 'pressing' && this.selectedPhotoId === photoId && this.previewRect) {
-        this.previewState = 'preview'
-        this.longPressFired = true
+      if (this.pressedPhotoId === photoId && !this.physics.isDragging && this.previewOrigin) {
+        this.isPreviewActive = true
         this.callbacks.onPreviewStart({
           photoId,
           photoSrc: this.previewPhotoSrc ?? '',
-          screenRect: this.previewRect,
+          origin: this.previewOrigin,
         })
       }
     }, PREVIEW_DELAY_MS)
@@ -535,119 +499,161 @@ export class GalleryEngine {
     }
   }
 
+  private computeCardWorldCorners(
+    mesh: PhotoMesh,
+    model: Float32Array,
+    pv: Float32Array,
+  ): { screenCorners: [number, number][]; depth: number } | null {
+    if (!this.canvas) return null
+
+    const rotatedCenter = this.transformPoint(mesh.transform.position, model)
+    const rotatedTangent = this.transformDirection(mesh.transform.tangent, model)
+    const rotatedBitangent = this.transformDirection(mesh.transform.bitangent, model)
+    const rotatedNormal = this.transformDirection(
+      [
+        mesh.transform.tangent[1] * mesh.transform.bitangent[2] - mesh.transform.tangent[2] * mesh.transform.bitangent[1],
+        mesh.transform.tangent[2] * mesh.transform.bitangent[0] - mesh.transform.tangent[0] * mesh.transform.bitangent[2],
+        mesh.transform.tangent[0] * mesh.transform.bitangent[1] - mesh.transform.tangent[1] * mesh.transform.bitangent[0],
+      ],
+      model,
+    )
+
+    const viewDir = this.normalize([-rotatedCenter[0], -rotatedCenter[1], -rotatedCenter[2]])
+    const nLen = Math.sqrt(rotatedNormal[0] ** 2 + rotatedNormal[1] ** 2 + rotatedNormal[2] ** 2) || 1
+    const facing = Math.abs(
+      (rotatedNormal[0] / nLen) * viewDir[0] +
+      (rotatedNormal[1] / nLen) * viewDir[1] +
+      (rotatedNormal[2] / nLen) * viewDir[2],
+    )
+    const tangentBlend = Math.min(0.7, this.smoothstep(0.3, 0.7, 1.0 - facing))
+
+    const billboardRight = this.normalize(this.cross(viewDir, [0, 1, 0]))
+    const billboardUp = this.normalize(this.cross(billboardRight, viewDir))
+    const blendedRight = this.normalize(this.lerpVec3(billboardRight, rotatedTangent, tangentBlend))
+    const blendedUp = this.normalize(this.lerpVec3(billboardUp, rotatedBitangent, tangentBlend))
+
+    const sx = mesh.transform.scale[0]
+    const sy = mesh.transform.scale[1]
+
+    const screenCorners: [number, number][] = []
+    let allInFront = true
+
+    for (const [cx, cy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const worldVertex = [
+        rotatedCenter[0] + blendedRight[0] * cx * sx + blendedUp[0] * cy * sy,
+        rotatedCenter[1] + blendedRight[1] * cx * sx + blendedUp[1] * cy * sy,
+        rotatedCenter[2] + blendedRight[2] * cx * sx + blendedUp[2] * cy * sy,
+      ]
+
+      const clip = this.transformPoint4(worldVertex, pv)
+      if (clip[3] <= 0) { allInFront = false; break }
+
+      const ndcX = (clip[0] / clip[3]) * 0.5 + 0.5
+      const ndcY = (clip[1] / clip[3]) * 0.5 + 0.5
+      screenCorners.push([ndcX * this.canvas.width, (1.0 - ndcY) * this.canvas.height])
+    }
+
+    if (!allInFront || screenCorners.length !== 4) return null
+
+    const dx = rotatedCenter[0] - this.camera.eye[0]
+    const dy = rotatedCenter[1] - this.camera.eye[1]
+    const dz = rotatedCenter[2] - this.camera.eye[2]
+    const depth = dx * dx + dy * dy + dz * dz
+
+    return { screenCorners, depth }
+  }
+
   private pickPhoto(x: number, y: number): string | null {
     if (!this.canvas || !this.renderer) return null
 
     const rect = this.canvas.getBoundingClientRect()
-    const dpr = Math.min(window.devicePixelRatio || 1, 2)
-    const canvasX = (x - rect.left) * dpr
-    const canvasY = (y - rect.top) * dpr
+    const scaleX = this.canvas.width / rect.width
+    const scaleY = this.canvas.height / rect.height
+    const canvasX = (x - rect.left) * scaleX
+    const canvasY = (y - rect.top) * scaleY
 
     const proj = new Float32Array(16)
-    mat4Perspective(
-      proj,
-      this.camera.fov,
-      this.camera.aspect,
-      this.camera.near,
-      this.camera.far,
-    )
+    mat4Perspective(proj, this.camera.fov, this.camera.aspect, this.camera.near, this.camera.far)
     const view = new Float32Array(16)
-    mat4LookAt(
-      view,
-      this.camera.eye,
-      this.camera.target,
-      this.camera.up,
-    )
+    mat4LookAt(view, this.camera.eye, this.camera.target, this.camera.up)
     const pv = new Float32Array(16)
     mat4Multiply(pv, proj, view)
-
     const model = this.buildModelMatrix()
 
-    let bestScore = -Infinity
-    let closestId: string | null = null
+    interface Candidate {
+      id: string
+      depth: number
+      alpha: number
+      centerDist: number
+      screenCorners: [number, number][]
+    }
+
+    const candidates: Candidate[] = []
 
     for (const mesh of this.meshes) {
       if (mesh.alpha < 0.15) continue
 
-      const corners = [
-        [-1, -1], [1, -1], [-1, 1],
-        [-1, 1], [1, -1], [1, 1],
-      ]
+      const result = this.computeCardWorldCorners(mesh, model, pv)
+      if (!result) continue
 
-      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
-      let allInFront = true
-      let avgClipZ = 0
+      if (!this.pointInQuad(canvasX, canvasY, result.screenCorners)) continue
 
-      for (const [cx, cy] of corners) {
-        const rotatedCenter = this.transformPoint(mesh.transform.position, model)
-        const rotatedTangent = this.transformDirection(mesh.transform.tangent, model)
-        const rotatedBitangent = this.transformDirection(mesh.transform.bitangent, model)
-        const rotatedNormal = this.transformDirection(
-          [mesh.transform.tangent[1] * mesh.transform.bitangent[2] - mesh.transform.tangent[2] * mesh.transform.bitangent[1],
-           mesh.transform.tangent[2] * mesh.transform.bitangent[0] - mesh.transform.tangent[0] * mesh.transform.bitangent[2],
-           mesh.transform.tangent[0] * mesh.transform.bitangent[1] - mesh.transform.tangent[1] * mesh.transform.bitangent[0]],
-          model,
-        )
+      const centerScreenX = (result.screenCorners[0][0] + result.screenCorners[2][0]) / 2
+      const centerScreenY = (result.screenCorners[0][1] + result.screenCorners[2][1]) / 2
+      const centerDist = (canvasX - centerScreenX) ** 2 + (canvasY - centerScreenY) ** 2
 
-        const viewDir = [0, 0, 0]
-        viewDir[0] = -rotatedCenter[0]
-        viewDir[1] = -rotatedCenter[1]
-        viewDir[2] = -rotatedCenter[2]
-        const viewLen = Math.sqrt(viewDir[0] ** 2 + viewDir[1] ** 2 + viewDir[2] ** 2) || 1
-        viewDir[0] /= viewLen; viewDir[1] /= viewLen; viewDir[2] /= viewLen
-
-        const nLen = Math.sqrt(rotatedNormal[0] ** 2 + rotatedNormal[1] ** 2 + rotatedNormal[2] ** 2) || 1
-        const facing = Math.abs(
-          (rotatedNormal[0] / nLen) * viewDir[0] +
-          (rotatedNormal[1] / nLen) * viewDir[1] +
-          (rotatedNormal[2] / nLen) * viewDir[2],
-        )
-        const tangentBlend = Math.min(0.7, this.smoothstep(0.3, 0.7, 1.0 - facing))
-
-        const billboardRight = this.normalize(this.cross(viewDir, [0, 1, 0]))
-        const billboardUp = this.normalize(this.cross(billboardRight, viewDir))
-
-        const blendedRight = this.normalize(this.lerpVec3(billboardRight, rotatedTangent, tangentBlend))
-        const blendedUp = this.normalize(this.lerpVec3(billboardUp, rotatedBitangent, tangentBlend))
-
-        const sx = mesh.transform.scale[0] * this.globeScale
-        const sy = mesh.transform.scale[1] * this.globeScale
-        const worldVertex = [
-          rotatedCenter[0] + blendedRight[0] * cx * sx + blendedUp[0] * cy * sy,
-          rotatedCenter[1] + blendedRight[1] * cx * sx + blendedUp[1] * cy * sy,
-          rotatedCenter[2] + blendedRight[2] * cx * sx + blendedUp[2] * cy * sy,
-        ]
-
-        const clip = this.transformPoint4(worldVertex, pv)
-        if (clip[3] <= 0) { allInFront = false; break }
-
-        const ndcX = (clip[0] / clip[3]) * 0.5 + 0.5
-        const ndcY = (clip[1] / clip[3]) * 0.5 + 0.5
-        const screenX = ndcX * this.canvas.width
-        const screenY = (1.0 - ndcY) * this.canvas.height
-
-        minX = Math.min(minX, screenX); maxX = Math.max(maxX, screenX)
-        minY = Math.min(minY, screenY); maxY = Math.max(maxY, screenY)
-        avgClipZ += clip[2] / clip[3]
-      }
-
-      if (!allInFront || minX > maxX) continue
-
-      const PAD = 16
-      if (canvasX >= minX - PAD && canvasX <= maxX + PAD && canvasY >= minY - PAD && canvasY <= maxY + PAD) {
-        const centerScreenX = (minX + maxX) / 2
-        const centerScreenY = (minY + maxY) / 2
-        const screenDist = (canvasX - centerScreenX) ** 2 + (canvasY - centerScreenY) ** 2
-        const avgZ = avgClipZ / 6
-        const score = mesh.alpha * 1000 - screenDist + avgZ * 100
-        if (score > bestScore) {
-          bestScore = score
-          closestId = mesh.id
-        }
-      }
+      candidates.push({ id: mesh.id, depth: result.depth, alpha: mesh.alpha, centerDist, screenCorners: result.screenCorners })
     }
 
-    return closestId
+    if (candidates.length === 0) return null
+
+    candidates.sort((a, b) => {
+      if (a.depth !== b.depth) return a.depth - b.depth
+      if (a.alpha !== b.alpha) return b.alpha - a.alpha
+      return a.centerDist - b.centerDist
+    })
+
+    const winner = candidates[0]
+
+    // @debug Temporary coordinate diagnostic — remove after diagnosis
+    console.log(
+      `POINTER: client=(${x.toFixed(1)},${y.toFixed(1)}) canvas=(${canvasX.toFixed(1)},${canvasY.toFixed(1)}) scaleX=${scaleX.toFixed(3)} scaleY=${scaleY.toFixed(3)}\n` +
+      `HIT: id=${winner.id}\n` +
+      `QUAD: [${winner.screenCorners.map(([cx, cy]) => `(${cx.toFixed(1)},${cy.toFixed(1)})`).join(',')}]`,
+    )
+
+    return winner.id
+  }
+
+  private pointInQuad(px: number, py: number, corners: [number, number][]): boolean {
+    if (corners.length !== 4) return false
+    return (
+      this.pointInTriangle(px, py, corners[0], corners[1], corners[2]) ||
+      this.pointInTriangle(px, py, corners[0], corners[2], corners[3])
+    )
+  }
+
+  private pointInTriangle(
+    px: number, py: number,
+    a: [number, number], b: [number, number], c: [number, number],
+  ): boolean {
+    const v0x = c[0] - a[0], v0y = c[1] - a[1]
+    const v1x = b[0] - a[0], v1y = b[1] - a[1]
+    const v2x = px - a[0], v2y = py - a[1]
+
+    const dot00 = v0x * v0x + v0y * v0y
+    const dot01 = v0x * v1x + v0y * v1y
+    const dot02 = v0x * v2x + v0y * v2y
+    const dot11 = v1x * v1x + v1y * v1y
+    const dot12 = v1x * v2x + v1y * v2y
+
+    const denom = dot00 * dot11 - dot01 * dot01
+    if (Math.abs(denom) < 1e-10) return false
+    const inv = 1 / denom
+    const u = (dot11 * dot02 - dot01 * dot12) * inv
+    const v = (dot00 * dot12 - dot01 * dot02) * inv
+
+    return u >= 0 && v >= 0 && u + v <= 1
   }
 
   private buildModelMatrix(): Float32Array {
