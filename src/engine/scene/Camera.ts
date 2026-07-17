@@ -12,15 +12,20 @@ export function createDefaultCamera(aspect: number): Camera {
   }
 }
 
-const CARD_EXTENT = 0.26
+export function getDesiredFill(width: number): number {
+  if (width <= 480) return 0.85
+  if (width <= 768) return 0.78
+  return 0.68
+}
 
 export function computeCameraDistance(
   sphereRadius: number,
   fovY: number,
   aspect: number,
   desiredFill: number,
+  cardExtent: number,
 ): number {
-  const effectiveRadius = sphereRadius + CARD_EXTENT
+  const effectiveRadius = sphereRadius + cardExtent
 
   const halfFovY = fovY / 2
   const halfFovX = Math.atan(Math.tan(halfFovY) * aspect)

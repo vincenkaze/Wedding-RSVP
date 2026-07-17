@@ -15,7 +15,7 @@ import { createGlobe, computeBackfaceAlpha } from './objects/Globe'
 import { createPhysics, updateSnap } from './physics/Physics'
 import { Interaction } from './interaction'
 import { TextureManager } from './textures/TextureManager'
-import { createDefaultCamera, computeCameraDistance } from './scene/Camera'
+import { createDefaultCamera, computeCameraDistance, getDesiredFill } from './scene/Camera'
 import { Scene } from './scene/Scene'
 import { ResourceLifecycle } from './lifecycle/ResourceLifecycle'
 import { createPhotoMesh } from './objects/PhotoMesh'
@@ -62,7 +62,9 @@ export class GalleryEngine {
   private readonly IDLE_YAW_SPEED = (2 * Math.PI) / (25 * 1000)
   private currentYawVelocity = 0
   private globeScale = 1.0
-  private targetGlobeScale = 1.0
+  private engagementScale = 1.0
+  private pinchScale = 1.0
+  private cardScale = 0.28
   private isMobile = false
   private smoothedYawVelocity = 0
   private lastDragTime = 0
@@ -109,8 +111,9 @@ export class GalleryEngine {
     this.canvas!.width = rect.width * dpr
     this.canvas!.height = rect.height * dpr
     this.camera.aspect = this.canvas!.width / this.canvas!.height
-    const desiredFill = this.camera.aspect < 0.75 ? 0.86 : 0.76
-    this.camera.eye[2] = computeCameraDistance(1.2, this.camera.fov, this.camera.aspect, desiredFill)
+    this.cardScale = rect.width <= 480 ? 0.31 : rect.width <= 768 ? 0.29 : 0.28
+    const desiredFill = getDesiredFill(rect.width)
+    this.camera.eye[2] = computeCameraDistance(1.2, this.camera.fov, this.camera.aspect, desiredFill, this.cardScale)
     this.isMobile = rect.width < 768
 
     this.backend = await detectBackend()
@@ -226,7 +229,8 @@ export class GalleryEngine {
       this.previewOrigin = null
       this.isPreviewActive = false
       this.cancelPreviewTimer()
-      this.targetGlobeScale = 1.0
+      this.engagementScale = 1.0
+      this.pinchScale = 1.0
       this.scheduler.sleep()
     } else {
       this.scheduler.wake()
@@ -242,8 +246,9 @@ export class GalleryEngine {
     const dpr = Math.min(window.devicePixelRatio || 1, this.maxDpr)
     this.renderer?.resize(width * dpr, height * dpr)
     this.camera.aspect = (width * dpr) / (height * dpr)
-    const desiredFill = this.camera.aspect < 0.75 ? 0.86 : 0.76
-    this.camera.eye[2] = computeCameraDistance(1.2, this.camera.fov, this.camera.aspect, desiredFill)
+    this.cardScale = width <= 480 ? 0.31 : width <= 768 ? 0.29 : 0.28
+    const desiredFill = getDesiredFill(width)
+    this.camera.eye[2] = computeCameraDistance(1.2, this.camera.fov, this.camera.aspect, desiredFill, this.cardScale)
     this.renderer?.setCamera(this.camera)
   }
 
@@ -277,8 +282,9 @@ export class GalleryEngine {
   private render(time: number, dt: number): void {
     if (!this.renderer) return
 
+    const targetGlobeScale = this.engagementScale * this.pinchScale
     const scaleBlend = 1 - Math.pow(SCALE_DECAY, dt / 16.667)
-    this.globeScale += (this.targetGlobeScale - this.globeScale) * scaleBlend
+    this.globeScale += (targetGlobeScale - this.globeScale) * scaleBlend
 
     this.renderer.setModelRotation(this.globe.rotX, this.globe.rotY)
     this.renderer.beginFrame()
@@ -299,7 +305,7 @@ export class GalleryEngine {
       mesh.transform.tangent = this.globe.tangents[mesh.index] ?? mesh.transform.tangent
       mesh.transform.bitangent = this.globe.bitangents[mesh.index] ?? mesh.transform.bitangent
       mesh.alpha = computeBackfaceAlpha(mesh.normal, this.globe.rotX, this.globe.rotY)
-      mesh.transform.scale = [0.26 * this.globeScale, 0.26 * this.globeScale]
+      mesh.transform.scale = [this.cardScale * this.globeScale, this.cardScale * this.globeScale]
 
       const targetColor = (this.pressedPhotoId === mesh.id && mesh.alpha > 0.15) ? 1 : 0
       const colorBlend = 1 - Math.pow(COLOR_DECAY, dt / 16.667)
@@ -384,7 +390,7 @@ export class GalleryEngine {
 
   private handlePinch(scale: number): void {
     this.scheduler.wake()
-    this.targetGlobeScale = Math.max(0.5, Math.min(2.0, this.targetGlobeScale * scale))
+    this.pinchScale = Math.max(0.5, Math.min(2.0, this.pinchScale * scale))
   }
 
   private handlePointerDown(x: number, y: number): void {
@@ -409,6 +415,8 @@ export class GalleryEngine {
         this.startPreviewTimer(picked)
       }
     }
+
+    this.engagementScale = 1.04
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- callback signature required by Interaction
@@ -431,6 +439,7 @@ export class GalleryEngine {
     this.pressedPhotoId = null
     this.previewPhotoSrc = null
     this.previewOrigin = null
+    this.engagementScale = 1.0
 
     if (!wasDragging) {
       this.userControlling = false
@@ -447,10 +456,6 @@ export class GalleryEngine {
   private projectMeshToViewport(mesh: PhotoMesh): PreviewStartData['origin'] | null {
     if (!this.canvas || !this.renderer) return null
 
-    const canvasRect = this.canvas.getBoundingClientRect()
-    const scaleX = this.canvas.width / canvasRect.width
-    const scaleY = this.canvas.height / canvasRect.height
-
     const proj = new Float32Array(16)
     mat4Perspective(proj, this.camera.fov, this.camera.aspect, this.camera.near, this.camera.far)
     const view = new Float32Array(16)
@@ -463,7 +468,7 @@ export class GalleryEngine {
     if (!result) return null
 
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
-    for (const [sx, sy] of result.screenCorners) {
+    for (const [sx, sy] of result.viewportCorners) {
       minX = Math.min(minX, sx); maxX = Math.max(maxX, sx)
       minY = Math.min(minY, sy); maxY = Math.max(maxY, sy)
     }
@@ -471,10 +476,10 @@ export class GalleryEngine {
     if (minX > maxX) return null
 
     return {
-      x: canvasRect.left + minX / scaleX,
-      y: canvasRect.top + minY / scaleY,
-      width: (maxX - minX) / scaleX,
-      height: (maxY - minY) / scaleY,
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY,
     }
   }
 
@@ -483,6 +488,7 @@ export class GalleryEngine {
     this.previewTimer = setTimeout(() => {
       if (this.pressedPhotoId === photoId && !this.physics.isDragging && this.previewOrigin) {
         this.isPreviewActive = true
+        this.engagementScale = 1.0
         this.callbacks.onPreviewStart({
           photoId,
           photoSrc: this.previewPhotoSrc ?? '',
@@ -503,9 +509,10 @@ export class GalleryEngine {
     mesh: PhotoMesh,
     model: Float32Array,
     pv: Float32Array,
-  ): { screenCorners: [number, number][]; depth: number } | null {
+  ): { viewportCorners: [number, number][]; depth: number } | null {
     if (!this.canvas) return null
 
+    const rect = this.canvas.getBoundingClientRect()
     const rotatedCenter = this.transformPoint(mesh.transform.position, model)
     const rotatedTangent = this.transformDirection(mesh.transform.tangent, model)
     const rotatedBitangent = this.transformDirection(mesh.transform.bitangent, model)
@@ -535,7 +542,7 @@ export class GalleryEngine {
     const sx = mesh.transform.scale[0]
     const sy = mesh.transform.scale[1]
 
-    const screenCorners: [number, number][] = []
+    const viewportCorners: [number, number][] = []
     let allInFront = true
 
     for (const [cx, cy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
@@ -550,27 +557,24 @@ export class GalleryEngine {
 
       const ndcX = (clip[0] / clip[3]) * 0.5 + 0.5
       const ndcY = (clip[1] / clip[3]) * 0.5 + 0.5
-      screenCorners.push([ndcX * this.canvas.width, (1.0 - ndcY) * this.canvas.height])
+      viewportCorners.push([
+        rect.left + ndcX * rect.width,
+        rect.top + (1.0 - ndcY) * rect.height,
+      ])
     }
 
-    if (!allInFront || screenCorners.length !== 4) return null
+    if (!allInFront || viewportCorners.length !== 4) return null
 
     const dx = rotatedCenter[0] - this.camera.eye[0]
     const dy = rotatedCenter[1] - this.camera.eye[1]
     const dz = rotatedCenter[2] - this.camera.eye[2]
     const depth = dx * dx + dy * dy + dz * dz
 
-    return { screenCorners, depth }
+    return { viewportCorners, depth }
   }
 
   private pickPhoto(x: number, y: number): string | null {
     if (!this.canvas || !this.renderer) return null
-
-    const rect = this.canvas.getBoundingClientRect()
-    const scaleX = this.canvas.width / rect.width
-    const scaleY = this.canvas.height / rect.height
-    const canvasX = (x - rect.left) * scaleX
-    const canvasY = (y - rect.top) * scaleY
 
     const proj = new Float32Array(16)
     mat4Perspective(proj, this.camera.fov, this.camera.aspect, this.camera.near, this.camera.far)
@@ -585,7 +589,7 @@ export class GalleryEngine {
       depth: number
       alpha: number
       centerDist: number
-      screenCorners: [number, number][]
+      viewportCorners: [number, number][]
     }
 
     const candidates: Candidate[] = []
@@ -596,13 +600,13 @@ export class GalleryEngine {
       const result = this.computeCardWorldCorners(mesh, model, pv)
       if (!result) continue
 
-      if (!this.pointInQuad(canvasX, canvasY, result.screenCorners)) continue
+      if (!this.pointInQuad(x, y, result.viewportCorners)) continue
 
-      const centerScreenX = (result.screenCorners[0][0] + result.screenCorners[2][0]) / 2
-      const centerScreenY = (result.screenCorners[0][1] + result.screenCorners[2][1]) / 2
-      const centerDist = (canvasX - centerScreenX) ** 2 + (canvasY - centerScreenY) ** 2
+      const centerScreenX = (result.viewportCorners[0][0] + result.viewportCorners[2][0]) / 2
+      const centerScreenY = (result.viewportCorners[0][1] + result.viewportCorners[2][1]) / 2
+      const centerDist = (x - centerScreenX) ** 2 + (y - centerScreenY) ** 2
 
-      candidates.push({ id: mesh.id, depth: result.depth, alpha: mesh.alpha, centerDist, screenCorners: result.screenCorners })
+      candidates.push({ id: mesh.id, depth: result.depth, alpha: mesh.alpha, centerDist, viewportCorners: result.viewportCorners })
     }
 
     if (candidates.length === 0) return null
@@ -617,9 +621,10 @@ export class GalleryEngine {
 
     // @debug Temporary coordinate diagnostic — remove after diagnosis
     console.log(
-      `POINTER: client=(${x.toFixed(1)},${y.toFixed(1)}) canvas=(${canvasX.toFixed(1)},${canvasY.toFixed(1)}) scaleX=${scaleX.toFixed(3)} scaleY=${scaleY.toFixed(3)}\n` +
-      `HIT: id=${winner.id}\n` +
-      `QUAD: [${winner.screenCorners.map(([cx, cy]) => `(${cx.toFixed(1)},${cy.toFixed(1)})`).join(',')}]`,
+      `POINTER VIEWPORT: (${x.toFixed(1)},${y.toFixed(1)})\n` +
+      `QUAD VIEWPORT: [${winner.viewportCorners.map(([cx, cy]) => `(${cx.toFixed(1)},${cy.toFixed(1)})`).join(',')}]\n` +
+      `INSIDE: ${this.pointInQuad(x, y, winner.viewportCorners)}\n` +
+      `HIT: id=${winner.id}`,
     )
 
     return winner.id
