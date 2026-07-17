@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import type { GalleryItem } from '../../content/content'
 import { GalleryEngine } from '../../engine/Engine'
-import type { FrameStats, PhotoManifest } from '../../engine/core/contract'
+import type { FrameStats, PhotoManifest, PreviewStartData } from '../../engine/core/contract'
+import PreviewOverlay from './PreviewOverlay'
 
 function photoId(item: GalleryItem): string {
   return item.id ?? item.src
@@ -27,6 +28,8 @@ export default function GallerySection({ items, onPhotoClick, lightboxOpen }: Pr
   const engineRef = useRef<GalleryEngine | null>(null)
   const [stats, setStats] = useState<FrameStats | null>(null)
   const [engineFailed, setEngineFailed] = useState(false)
+  const [previewData, setPreviewData] = useState<PreviewStartData | null>(null)
+  const [isClosing, setIsClosing] = useState(false)
 
   const handleSelect = useCallback(
     (id: string | null) => {
@@ -47,6 +50,20 @@ export default function GallerySection({ items, onPhotoClick, lightboxOpen }: Pr
     void err
   }, [])
 
+  const handlePreviewStart = useCallback((data: PreviewStartData) => {
+    setPreviewData(data)
+    setIsClosing(false)
+  }, [])
+
+  const handlePreviewEnd = useCallback(() => {
+    setIsClosing(true)
+  }, [])
+
+  const handleCollapseComplete = useCallback(() => {
+    setPreviewData(null)
+    setIsClosing(false)
+  }, [])
+
   useEffect(() => {
     if (prefersReducedMotion) return
 
@@ -62,6 +79,8 @@ export default function GallerySection({ items, onPhotoClick, lightboxOpen }: Pr
         onSelect: handleSelect,
         onHover: handleHover,
         onFrame: handleFrame,
+        onPreviewStart: handlePreviewStart,
+        onPreviewEnd: handlePreviewEnd,
         onBackendChosen: handleBackendChosen,
         onError: handleError,
       })
@@ -100,7 +119,7 @@ export default function GallerySection({ items, onPhotoClick, lightboxOpen }: Pr
       engine.unmount()
       engineRef.current = null
     }
-  }, [prefersReducedMotion, items, handleSelect, handleFrame, handleBackendChosen, handleHover, handleError])
+  }, [prefersReducedMotion, items, handleSelect, handleFrame, handleBackendChosen, handleHover, handleError, handlePreviewStart, handlePreviewEnd])
 
   useEffect(() => {
     engineRef.current?.setLightboxOpen(lightboxOpen)
@@ -169,6 +188,11 @@ export default function GallerySection({ items, onPhotoClick, lightboxOpen }: Pr
           <div className="gallery-loading-spinner" />
         </div>
       )}
+      <PreviewOverlay
+        data={previewData}
+        closing={isClosing}
+        onCollapseComplete={handleCollapseComplete}
+      />
     </div>
   )
 }

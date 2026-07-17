@@ -29,9 +29,17 @@ export interface FrameStats {
   totalCount: number
 }
 
+export interface PreviewStartData {
+  photoId: string
+  photoSrc: string
+  screenRect: { x: number; y: number; width: number; height: number }
+}
+
 export interface EngineCallbacks {
   onSelect: (photoId: string | null) => void
   onHover: (photoId: string | null) => void
+  onPreviewStart: (data: PreviewStartData) => void
+  onPreviewEnd: () => void
   onFrame: (stats: FrameStats) => void
   onBackendChosen: (backend: BackendType) => void
   onError: (error: Error) => void

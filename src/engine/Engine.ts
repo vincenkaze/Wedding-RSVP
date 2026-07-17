@@ -5,6 +5,7 @@ import type {
   PhotoManifest,
   SchedulerState,
   BackendType,
+  PreviewStartData,
 } from './core/contract'
 import type { Renderer } from './renderers/interface'
 import type { PhotoMesh } from './objects/PhotoMesh'
@@ -20,9 +21,8 @@ import { ResourceLifecycle } from './lifecycle/ResourceLifecycle'
 import { createPhotoMesh } from './objects/PhotoMesh'
 import { mat4Perspective, mat4LookAt, mat4Multiply, mat4Identity } from './math/mat4'
 
-const LONG_PRESS_MS = 500
-const DRAG_CANCEL_PX = 10
-const COLOR_DECAY = 0.88
+const PREVIEW_DELAY_MS = 450
+const COLOR_DECAY = 0.85
 const SCALE_DECAY = 0.92
 const MAX_PITCH = 0.30
 const PITCH_SENSITIVITY = 0.003
@@ -32,6 +32,8 @@ const MIN_SPEED_MULTIPLIER = 0.9
 const MAX_SPEED_MULTIPLIER = 1.5
 const VELOCITY_SMOOTHING = 0.20
 const MAX_THROW_VELOCITY = 0.012
+
+type PreviewState = 'idle' | 'pressing' | 'preview' | 'collapse'
 
 export class GalleryEngine {
   private renderer: Renderer | null = null
@@ -65,15 +67,15 @@ export class GalleryEngine {
   private targetGlobeScale = 1.0
   private hoveredPhotoId: string | null = null
   private selectedPhotoId: string | null = null
-  private longPressTimer: ReturnType<typeof setTimeout> | null = null
-  private pointerDownX = 0
-  private pointerDownY = 0
-  private isPointerDown = false
   private longPressFired = false
   private isMobile = false
   private smoothedYawVelocity = 0
   private lastDragTime = 0
   private maxDpr = 2
+  private previewState: PreviewState = 'idle'
+  private previewTimer: ReturnType<typeof setTimeout> | null = null
+  private previewRect: PreviewStartData['screenRect'] | null = null
+  private previewPhotoSrc: string | null = null
 
   constructor(canvas: HTMLCanvasElement, callbacks: EngineCallbacks) {
     this.canvas = canvas
@@ -131,7 +133,7 @@ export class GalleryEngine {
   }
 
   unmount(): void {
-    this.cancelLongPress()
+    this.cancelPreviewTimer()
     this.interaction.detach()
     this.scheduler.dispose()
     if (this.renderer) {
@@ -246,11 +248,13 @@ export class GalleryEngine {
     if (!this.enabled || !this.renderer || this.isLightboxOpen) return
     if (this.motionPolicy === 'static') return
 
-    if (!this.physics.isDragging) {
-      const blend = 1 - Math.pow(0.98, dt / 16.667)
-      this.currentYawVelocity += (this.IDLE_YAW_SPEED - this.currentYawVelocity) * blend
+    if (this.previewState !== 'preview') {
+      if (!this.physics.isDragging) {
+        const blend = 1 - Math.pow(0.98, dt / 16.667)
+        this.currentYawVelocity += (this.IDLE_YAW_SPEED - this.currentYawVelocity) * blend
+      }
+      this.globe.rotY += this.currentYawVelocity * dt
     }
-    this.globe.rotY += this.currentYawVelocity * dt
 
     const pitchBlend = 1 - Math.pow(PITCH_DECAY, dt / 16.667)
     this.globe.rotX += (this.targetPitch - this.globe.rotX) * pitchBlend
@@ -292,9 +296,10 @@ export class GalleryEngine {
       mesh.transform.tangent = this.globe.tangents[mesh.index] ?? mesh.transform.tangent
       mesh.transform.bitangent = this.globe.bitangents[mesh.index] ?? mesh.transform.bitangent
       mesh.alpha = computeBackfaceAlpha(mesh.normal, this.globe.rotX, this.globe.rotY)
-      mesh.transform.scale = [0.22 * this.globeScale, 0.22 * this.globeScale]
+      mesh.transform.scale = [0.26 * this.globeScale, 0.26 * this.globeScale]
 
-      const targetColor = (this.hoveredPhotoId === mesh.id && mesh.alpha > 0.3) ? 1 : 0
+      const isActive = this.hoveredPhotoId === mesh.id || this.selectedPhotoId === mesh.id
+      const targetColor = (isActive && mesh.alpha > 0.15) ? 1 : 0
       const colorBlend = 1 - Math.pow(COLOR_DECAY, dt / 16.667)
       mesh.colorAmount += (targetColor - mesh.colorAmount) * colorBlend
 
@@ -326,7 +331,11 @@ export class GalleryEngine {
   }
 
   private handleDragStart(): void {
-    if (this.longPressFired) return
+    if (this.previewState === 'pressing') {
+      this.cancelPreviewTimer()
+      this.previewState = 'idle'
+    }
+    if (this.longPressFired || this.previewState !== 'idle') return
     this.physics.isDragging = true
     this.physics.velocityX = 0
     this.physics.velocityY = 0
@@ -372,57 +381,158 @@ export class GalleryEngine {
   }
 
   private handlePointerDown(x: number, y: number): void {
-    this.isPointerDown = true
-    this.pointerDownX = x
-    this.pointerDownY = y
     this.targetGlobeScale = this.isMobile ? 1.06 : 1.10
+    this.scheduler.wake()
 
     const picked = this.pickPhoto(x, y)
-    this.hoveredPhotoId = picked
     this.selectedPhotoId = picked
 
+    if (picked !== null) {
+      this.hoveredPhotoId = picked
+
+      const mesh = this.meshById.get(picked)
+      if (mesh) {
+        this.previewRect = this.projectMeshToScreen(mesh)
+        this.previewPhotoSrc = this.manifest?.photos[mesh.index]?.src ?? null
+      }
+    } else {
+      this.previewRect = null
+      this.previewPhotoSrc = null
+    }
+
     if (picked !== null && this.isMobile) {
-      this.startLongPress(picked)
+      this.previewState = 'pressing'
+      this.startPreviewTimer(picked)
     }
   }
 
   private handlePointerMove(x: number, y: number): void {
-    if (!this.isPointerDown) return
-
-    const dx = x - this.pointerDownX
-    const dy = y - this.pointerDownY
-    const dist = Math.sqrt(dx * dx + dy * dy)
-
-    if (dist > DRAG_CANCEL_PX) {
-      this.cancelLongPress()
-    }
-
     const picked = this.pickPhoto(x, y)
-    this.hoveredPhotoId = picked
-    this.selectedPhotoId = picked
 
-    if (picked !== null && this.isMobile && dist <= DRAG_CANCEL_PX) {
-      this.startLongPress(picked)
+    if (picked !== null) {
+      this.hoveredPhotoId = picked
+      this.selectedPhotoId = picked
+
+      const mesh = this.meshById.get(picked)
+      if (mesh) {
+        this.previewRect = this.projectMeshToScreen(mesh)
+        this.previewPhotoSrc = this.manifest?.photos[mesh.index]?.src ?? null
+      }
+    } else {
+      this.hoveredPhotoId = null
+      this.selectedPhotoId = null
+      this.previewRect = null
+      this.previewPhotoSrc = null
     }
   }
 
   private handlePointerUp(): void {
-    if (this.isLightboxOpen) {
-      this.isPointerDown = false
-      return
-    }
+    if (this.isLightboxOpen) return
 
-    if (!this.isMobile && !this.longPressFired && this.selectedPhotoId !== null && !this.physics.isDragging) {
-      this.longPressFired = true
-      this.callbacks.onSelect(this.selectedPhotoId)
-    }
+    const wasPreview = this.previewState === 'preview'
+    const photoId = this.selectedPhotoId
 
-    this.isPointerDown = false
-    this.longPressFired = false
-    this.cancelLongPress()
-    this.targetGlobeScale = 1.0
+    this.cancelPreviewTimer()
+    this.previewState = 'idle'
     this.hoveredPhotoId = null
     this.selectedPhotoId = null
+    this.targetGlobeScale = 1.0
+
+    if (wasPreview) {
+      this.callbacks.onPreviewEnd()
+    } else if (photoId && !this.physics.isDragging) {
+      this.callbacks.onSelect(photoId)
+    }
+
+    this.longPressFired = false
+  }
+
+  private projectMeshToScreen(mesh: PhotoMesh): { x: number; y: number; width: number; height: number } | null {
+    if (!this.canvas || !this.renderer) return null
+
+    const proj = new Float32Array(16)
+    mat4Perspective(proj, this.camera.fov, this.camera.aspect, this.camera.near, this.camera.far)
+    const view = new Float32Array(16)
+    mat4LookAt(view, this.camera.eye, this.camera.target, this.camera.up)
+    const pv = new Float32Array(16)
+    mat4Multiply(pv, proj, view)
+    const model = this.buildModelMatrix()
+
+    const corners = [[-1, -1], [1, -1], [-1, 1], [1, 1]]
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
+
+    for (const [cx, cy] of corners) {
+      const rotatedCenter = this.transformPoint(mesh.transform.position, model)
+      const rotatedTangent = this.transformDirection(mesh.transform.tangent, model)
+      const rotatedBitangent = this.transformDirection(mesh.transform.bitangent, model)
+      const rotatedNormal = this.transformDirection(
+        [
+          mesh.transform.tangent[1] * mesh.transform.bitangent[2] - mesh.transform.tangent[2] * mesh.transform.bitangent[1],
+          mesh.transform.tangent[2] * mesh.transform.bitangent[0] - mesh.transform.tangent[0] * mesh.transform.bitangent[2],
+          mesh.transform.tangent[0] * mesh.transform.bitangent[1] - mesh.transform.tangent[1] * mesh.transform.bitangent[0],
+        ],
+        model,
+      )
+
+      const viewDir = this.normalize([-rotatedCenter[0], -rotatedCenter[1], -rotatedCenter[2]])
+      const nLen = Math.sqrt(rotatedNormal[0] ** 2 + rotatedNormal[1] ** 2 + rotatedNormal[2] ** 2) || 1
+      const facing = Math.abs(
+        (rotatedNormal[0] / nLen) * viewDir[0] +
+        (rotatedNormal[1] / nLen) * viewDir[1] +
+        (rotatedNormal[2] / nLen) * viewDir[2],
+      )
+      const tangentBlend = Math.min(0.7, this.smoothstep(0.3, 0.7, 1.0 - facing))
+
+      const billboardRight = this.normalize(this.cross(viewDir, [0, 1, 0]))
+      const billboardUp = this.normalize(this.cross(billboardRight, viewDir))
+      const blendedRight = this.normalize(this.lerpVec3(billboardRight, rotatedTangent, tangentBlend))
+      const blendedUp = this.normalize(this.lerpVec3(billboardUp, rotatedBitangent, tangentBlend))
+
+      const sx = mesh.transform.scale[0] * this.globeScale
+      const sy = mesh.transform.scale[1] * this.globeScale
+      const worldVertex = [
+        rotatedCenter[0] + blendedRight[0] * cx * sx + blendedUp[0] * cy * sy,
+        rotatedCenter[1] + blendedRight[1] * cx * sx + blendedUp[1] * cy * sy,
+        rotatedCenter[2] + blendedRight[2] * cx * sx + blendedUp[2] * cy * sy,
+      ]
+
+      const clip = this.transformPoint4(worldVertex, pv)
+      if (clip[3] <= 0) return null
+
+      const ndcX = (clip[0] / clip[3]) * 0.5 + 0.5
+      const ndcY = (clip[1] / clip[3]) * 0.5 + 0.5
+      const screenX = ndcX * this.canvas.width
+      const screenY = (1.0 - ndcY) * this.canvas.height
+
+      minX = Math.min(minX, screenX); maxX = Math.max(maxX, screenX)
+      minY = Math.min(minY, screenY); maxY = Math.max(maxY, screenY)
+    }
+
+    if (minX > maxX) return null
+
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+  }
+
+  private startPreviewTimer(photoId: string): void {
+    this.cancelPreviewTimer()
+    this.previewTimer = setTimeout(() => {
+      if (this.previewState === 'pressing' && this.selectedPhotoId === photoId && this.previewRect) {
+        this.previewState = 'preview'
+        this.longPressFired = true
+        this.callbacks.onPreviewStart({
+          photoId,
+          photoSrc: this.previewPhotoSrc ?? '',
+          screenRect: this.previewRect,
+        })
+      }
+    }, PREVIEW_DELAY_MS)
+  }
+
+  private cancelPreviewTimer(): void {
+    if (this.previewTimer) {
+      clearTimeout(this.previewTimer)
+      this.previewTimer = null
+    }
   }
 
   private pickPhoto(x: number, y: number): string | null {
@@ -523,7 +633,8 @@ export class GalleryEngine {
 
       if (!allInFront || minX > maxX) continue
 
-      if (canvasX >= minX && canvasX <= maxX && canvasY >= minY && canvasY <= maxY) {
+      const PAD = 16
+      if (canvasX >= minX - PAD && canvasX <= maxX + PAD && canvasY >= minY - PAD && canvasY <= maxY + PAD) {
         const centerScreenX = (minX + maxX) / 2
         const centerScreenY = (minY + maxY) / 2
         const screenDist = (canvasX - centerScreenX) ** 2 + (canvasY - centerScreenY) ** 2
@@ -537,23 +648,6 @@ export class GalleryEngine {
     }
 
     return closestId
-  }
-
-  private startLongPress(photoId: string): void {
-    this.cancelLongPress()
-    this.longPressTimer = setTimeout(() => {
-      if (this.isPointerDown && this.selectedPhotoId === photoId) {
-        this.longPressFired = true
-        this.callbacks.onSelect(photoId)
-      }
-    }, LONG_PRESS_MS)
-  }
-
-  private cancelLongPress(): void {
-    if (this.longPressTimer) {
-      clearTimeout(this.longPressTimer)
-      this.longPressTimer = null
-    }
   }
 
   private buildModelMatrix(): Float32Array {

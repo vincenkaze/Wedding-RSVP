@@ -292,6 +292,14 @@ body::after {
   touch-action: none;
 }
 
+.gallery-preview-overlay {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 8px 40px rgba(0, 0, 0, 0.25),
+    0 2px 12px rgba(0, 0, 0, 0.1);
+  background: var(--color-bg);
+}
+
 .gallery-front-frame {
   position: absolute;
   top: 50%;

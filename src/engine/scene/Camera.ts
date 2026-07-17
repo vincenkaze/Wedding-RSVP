@@ -12,7 +12,7 @@ export function createDefaultCamera(aspect: number): Camera {
   }
 }
 
-const CARD_EXTENT = 0.22
+const CARD_EXTENT = 0.26
 
 export function computeCameraDistance(
   sphereRadius: number,
