@@ -20,8 +20,6 @@ import { ResourceLifecycle } from './lifecycle/ResourceLifecycle'
 import { createPhotoMesh } from './objects/PhotoMesh'
 import { mat4Perspective, mat4LookAt, mat4Multiply, mat4Identity } from './math/mat4'
 
-type InteractionState = 'idle' | 'engaged' | 'photoActive' | 'photoOpen'
-
 const LONG_PRESS_MS = 500
 const DRAG_CANCEL_PX = 10
 const COLOR_DECAY = 0.88
@@ -63,7 +61,6 @@ export class GalleryEngine {
   private backend: BackendType = 'webgl2'
   private readonly IDLE_YAW_SPEED = (2 * Math.PI) / (25 * 1000)
   private currentYawVelocity = 0
-  private interactionState: InteractionState = 'idle'
   private globeScale = 1.0
   private targetGlobeScale = 1.0
   private hoveredPhotoId: string | null = null
@@ -74,7 +71,6 @@ export class GalleryEngine {
   private isPointerDown = false
   private longPressFired = false
   private isMobile = false
-  private targetPitch = 0
   private smoothedYawVelocity = 0
   private lastDragTime = 0
   private maxDpr = 2
@@ -379,7 +375,6 @@ export class GalleryEngine {
     this.isPointerDown = true
     this.pointerDownX = x
     this.pointerDownY = y
-    this.interactionState = 'engaged'
     this.targetGlobeScale = this.isMobile ? 1.06 : 1.10
 
     const picked = this.pickPhoto(x, y)
@@ -419,14 +414,12 @@ export class GalleryEngine {
 
     if (!this.isMobile && !this.longPressFired && this.selectedPhotoId !== null && !this.physics.isDragging) {
       this.longPressFired = true
-      this.interactionState = 'photoOpen'
       this.callbacks.onSelect(this.selectedPhotoId)
     }
 
     this.isPointerDown = false
     this.longPressFired = false
     this.cancelLongPress()
-    this.interactionState = 'idle'
     this.targetGlobeScale = 1.0
     this.hoveredPhotoId = null
     this.selectedPhotoId = null
@@ -551,7 +544,6 @@ export class GalleryEngine {
     this.longPressTimer = setTimeout(() => {
       if (this.isPointerDown && this.selectedPhotoId === photoId) {
         this.longPressFired = true
-        this.interactionState = 'photoOpen'
         this.callbacks.onSelect(photoId)
       }
     }, LONG_PRESS_MS)

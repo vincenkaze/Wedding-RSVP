@@ -6,15 +6,6 @@ import { createDefaultCapabilities } from '../../core/RendererCapabilities'
 
 export class WebGPURenderer implements Renderer {
   private capabilities: RendererCapabilities | null = null
-  private camera: Camera = {
-    fov: Math.PI / 3,
-    aspect: 1,
-    near: 0.1,
-    far: 100,
-    eye: [0, 0, 4],
-    target: [0, 0, 0],
-    up: [0, 1, 0],
-  }
 
   initialize(canvas: HTMLCanvasElement): RendererCapabilities {
     void canvas
@@ -38,7 +29,7 @@ export class WebGPURenderer implements Renderer {
   }
 
   setCamera(camera: Camera): void {
-    this.camera = { ...camera }
+    void camera
   }
 
   setModelRotation(rotX: number, rotY: number): void {

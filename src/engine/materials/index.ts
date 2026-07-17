@@ -1,4 +1,4 @@
-import type { TextureHandle } from './contract'
+import type { TextureHandle } from '../core/contract'
 
 export interface MaterialSpec {
   texture: TextureHandle
