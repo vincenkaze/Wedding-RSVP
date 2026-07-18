@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { couple } from '../../content/content'
-import { fireVortex } from './ParticleCanvas'
+
 
 const STORAGE_KEY = 'wedding-envelope-seen'
 const prefersReduced =
@@ -22,24 +22,6 @@ function hasVisited(): boolean {
 function markVisited() {
   try {
     sessionStorage.setItem(STORAGE_KEY, 'true')
-  } catch {
-    // ignore
-  }
-}
-
-let userInteracted = false
-if (typeof window !== 'undefined') {
-  const markInteracted = () => { userInteracted = true }
-  window.addEventListener('click', markInteracted, { once: true, passive: true })
-  window.addEventListener('touchstart', markInteracted, { once: true, passive: true })
-}
-
-function triggerHaptic() {
-  if (!userInteracted) return
-  try {
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      navigator.vibrate(10)
-    }
   } catch {
     // ignore
   }
@@ -86,13 +68,6 @@ export default function EnvelopeIntro({ onComplete, onReveal }: EnvelopeIntroPro
       } catch {
         // iOS permission denied — gallery will work without tilt
       }
-    }
-
-    triggerHaptic()
-
-    if (sealRef.current) {
-      const rect = sealRef.current.getBoundingClientRect()
-      fireVortex(rect.left + rect.width / 2, rect.top + rect.height / 2)
     }
 
     onReveal?.()
@@ -170,7 +145,6 @@ export default function EnvelopeIntro({ onComplete, onReveal }: EnvelopeIntroPro
                 animate={{ rotateX: sealed ? 0 : 180 }}
                 transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
                 style={{ transformOrigin: '120px 4px' }}
-                onAnimationComplete={triggerHaptic}
               />
               {/* Front fold lines */}
               <path

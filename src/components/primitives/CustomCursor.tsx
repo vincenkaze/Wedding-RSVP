@@ -11,6 +11,18 @@ const isMobile =
   typeof window !== 'undefined' &&
   window.matchMedia('(max-width: 639px)').matches
 
+const INTERACTIVE_SELECTOR = 'a, button, [role="button"], input, textarea, select, [role="checkbox"], [role="radio"]'
+
+function getInteractiveTarget(target: EventTarget | null): Element | null {
+  if (target instanceof Element) {
+    return target.closest(INTERACTIVE_SELECTOR)
+  }
+  if (target instanceof Node) {
+    return target.parentElement?.closest(INTERACTIVE_SELECTOR) ?? null
+  }
+  return null
+}
+
 export default function CustomCursor() {
   const dotRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef<number>(0)
@@ -43,23 +55,13 @@ export default function CustomCursor() {
     }
 
     function onEnterInteractive(e: Event) {
-      const target = e.target as HTMLElement
-      if (
-        target.closest(
-          'a, button, [role="button"], input, textarea, select, [role="checkbox"], [role="radio"]',
-        )
-      ) {
+      if (getInteractiveTarget(e.target)) {
         dotRef.current?.classList.add('cursor-hover')
       }
     }
 
     function onLeaveInteractive(e: Event) {
-      const target = e.target as HTMLElement
-      if (
-        target.closest(
-          'a, button, [role="button"], input, textarea, select, [role="checkbox"], [role="radio"]',
-        )
-      ) {
+      if (getInteractiveTarget(e.target)) {
         dotRef.current?.classList.remove('cursor-hover')
       }
     }

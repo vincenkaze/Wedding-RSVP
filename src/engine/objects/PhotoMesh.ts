@@ -68,7 +68,7 @@ export function createPhotoMesh(
       position,
       tangent,
       bitangent,
-      scale: [0.26, 0.26],
+      scale: [0.21, 0.28],
     },
     normal,
     alpha: 1,

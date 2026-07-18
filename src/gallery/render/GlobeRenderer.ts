@@ -35,9 +35,7 @@ export function createGlobeRenderer(
 } {
   const log: string[] = []
   function record(msg: string) {
-    const entry = `[Globe] ${msg}`
-    console.log(entry)
-    log.push(entry)
+    log.push(`[Globe] ${msg}`)
   }
 
   const gl = canvas.getContext('webgl2', {

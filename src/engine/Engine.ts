@@ -5,14 +5,13 @@ import type {
   PhotoManifest,
   SchedulerState,
   BackendType,
-  PreviewStartData,
 } from './core/contract'
 import type { Renderer } from './renderers/interface'
 import type { PhotoMesh } from './objects/PhotoMesh'
 import { Scheduler } from './core/Scheduler'
 import { detectBackend, createRendererForCanvas } from './core/RendererFactory'
 import { createGlobe, computeBackfaceAlpha } from './objects/Globe'
-import { createPhysics, updateSnap } from './physics/Physics'
+import { createPhysics, updateSnap, startSnap } from './physics/Physics'
 import { Interaction } from './interaction'
 import { TextureManager } from './textures/TextureManager'
 import { createDefaultCamera, computeCameraDistance, getDesiredFill } from './scene/Camera'
@@ -21,17 +20,21 @@ import { ResourceLifecycle } from './lifecycle/ResourceLifecycle'
 import { createPhotoMesh } from './objects/PhotoMesh'
 import { mat4Perspective, mat4LookAt, mat4Multiply, mat4Identity } from './math/mat4'
 
-const PREVIEW_DELAY_MS = 450
+const HOLD_DURATION_MS = 500
 const COLOR_DECAY = 0.85
 const SCALE_DECAY = 0.92
 const MAX_PITCH = 0.30
-const PITCH_SENSITIVITY = 0.003
-const PITCH_DECAY = 0.90
-const BASE_YAW_SENSITIVITY = 0.0055
+const PITCH_SENSITIVITY = 0.002
+const BASE_YAW_SENSITIVITY = 0.007
 const MIN_SPEED_MULTIPLIER = 0.9
 const MAX_SPEED_MULTIPLIER = 1.5
-const VELOCITY_SMOOTHING = 0.20
-const MAX_THROW_VELOCITY = 0.012
+const MAX_THROW_SPEED = 0.40
+const CARD_ASPECT = 0.75
+const INERTIA_TIME_CONSTANT = 0.50
+const YAW_SMOOTHING = 0.04
+const PITCH_SMOOTHING = 0.05
+const INERTIA_STOP_THRESHOLD = 0.01
+const AMBIENT_PAUSE_MS = 3000
 
 export class GalleryEngine {
   private renderer: Renderer | null = null
@@ -45,7 +48,8 @@ export class GalleryEngine {
   private globe = createGlobe()
   private physics = createPhysics()
   private camera = createDefaultCamera(1)
-  private targetPitch = 0.15
+  private targetYaw = 0
+  private targetPitch = 0
   private motionPolicy: MotionPolicy = 'full'
   private enabled = true
   private manifest: PhotoManifest | null = null
@@ -59,23 +63,25 @@ export class GalleryEngine {
   private statsThrottleMs = 1000
   private isLightboxOpen = false
   private backend: BackendType = 'webgl2'
-  private readonly IDLE_YAW_SPEED = (2 * Math.PI) / (25 * 1000)
   private currentYawVelocity = 0
+  private currentPitchVelocity = 0
   private globeScale = 1.0
-  private engagementScale = 1.0
   private pinchScale = 1.0
+  private engagementScale = 1.0
   private cardScale = 0.28
   private isMobile = false
-  private smoothedYawVelocity = 0
   private lastDragTime = 0
   private maxDpr = 2
 
+  private pointerDownX = 0
+  private pointerDownY = 0
+  private holdTimerId: ReturnType<typeof setTimeout> | null = null
   private pressedPhotoId: string | null = null
-  private previewPhotoSrc: string | null = null
-  private previewOrigin: PreviewStartData['origin'] | null = null
-  private isPreviewActive = false
-  private previewTimer: ReturnType<typeof setTimeout> | null = null
-  private userControlling = false
+  private activePhotoId: string | null = null
+  private pendingSnap = false
+  private isInertia = false
+  private snapCooldownUntil = 0
+  private activePhotoLockUntil = 0
 
   constructor(canvas: HTMLCanvasElement, callbacks: EngineCallbacks) {
     this.canvas = canvas
@@ -111,7 +117,7 @@ export class GalleryEngine {
     this.canvas!.width = rect.width * dpr
     this.canvas!.height = rect.height * dpr
     this.camera.aspect = this.canvas!.width / this.canvas!.height
-    this.cardScale = rect.width <= 480 ? 0.31 : rect.width <= 768 ? 0.29 : 0.28
+    this.cardScale = rect.width <= 480 ? 0.38 : rect.width <= 768 ? 0.36 : 0.34
     const desiredFill = getDesiredFill(rect.width)
     this.camera.eye[2] = computeCameraDistance(1.2, this.camera.fov, this.camera.aspect, desiredFill, this.cardScale)
     this.isMobile = rect.width < 768
@@ -134,7 +140,6 @@ export class GalleryEngine {
   }
 
   unmount(): void {
-    this.cancelPreviewTimer()
     this.interaction.detach()
     this.scheduler.dispose()
     if (this.renderer) {
@@ -223,13 +228,7 @@ export class GalleryEngine {
   setLightboxOpen(open: boolean): void {
     this.isLightboxOpen = open
     if (open) {
-      this.userControlling = false
-      this.pressedPhotoId = null
-      this.previewPhotoSrc = null
-      this.previewOrigin = null
-      this.isPreviewActive = false
-      this.cancelPreviewTimer()
-      this.engagementScale = 1.0
+      this.cancelHold()
       this.pinchScale = 1.0
       this.scheduler.sleep()
     } else {
@@ -241,12 +240,61 @@ export class GalleryEngine {
     this.maxDpr = dpr
   }
 
+  setActivePhoto(id: string | null): void {
+    if (this.activePhotoId !== id) {
+      this.activePhotoId = id
+      this.callbacks.onActivePhotoChange(id)
+    }
+  }
+
+  private findNearestToFocus(): string | null {
+    if (this.meshes.length === 0) return null
+
+    const rotX = this.globe.rotX
+    const rotY = this.globe.rotY
+    let maxDot = -Infinity
+    let bestId: string | null = null
+
+    for (const mesh of this.meshes) {
+      const basePos = this.globe.positions[mesh.index]
+      if (!basePos) continue
+
+      let z = -basePos[0] * Math.sin(rotY) + basePos[2] * Math.cos(rotY)
+      const y = basePos[1]
+      const rotatedZ = y * Math.sin(rotX) + z * Math.cos(rotX)
+      z = rotatedZ
+
+      const dot = -z
+      if (dot > maxDot) {
+        maxDot = dot
+        bestId = mesh.id
+      }
+    }
+
+    return bestId
+  }
+
+  private snapToPhoto(photoId: string): void {
+    const mesh = this.meshById.get(photoId)
+    if (!mesh) return
+
+    const basePos = this.globe.positions[mesh.index]
+    if (!basePos) return
+
+    const targetRotY = Math.atan2(-basePos[0], basePos[2])
+    const radiusXZ = Math.sqrt(basePos[0] * basePos[0] + basePos[2] * basePos[2])
+    const targetRotX = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, Math.atan2(basePos[1], radiusXZ)))
+
+    startSnap(this.physics, targetRotX, targetRotY)
+    this.pendingSnap = false
+  }
+
   resize(width: number, height: number): void {
     if (!this.canvas) return
     const dpr = Math.min(window.devicePixelRatio || 1, this.maxDpr)
     this.renderer?.resize(width * dpr, height * dpr)
     this.camera.aspect = (width * dpr) / (height * dpr)
-    this.cardScale = width <= 480 ? 0.31 : width <= 768 ? 0.29 : 0.28
+    this.cardScale = width <= 480 ? 0.38 : width <= 768 ? 0.36 : 0.34
     const desiredFill = getDesiredFill(width)
     this.camera.eye[2] = computeCameraDistance(1.2, this.camera.fov, this.camera.aspect, desiredFill, this.cardScale)
     this.renderer?.setCamera(this.camera)
@@ -256,22 +304,52 @@ export class GalleryEngine {
     if (!this.enabled || !this.renderer || this.isLightboxOpen) return
     if (this.motionPolicy === 'static') return
 
-    if (!this.userControlling && !this.isPreviewActive) {
-      if (!this.physics.isDragging) {
-        const blend = 1 - Math.pow(0.98, dt / 16.667)
-        this.currentYawVelocity += (this.IDLE_YAW_SPEED - this.currentYawVelocity) * blend
+    const now = performance.now()
+    const snapCooldownActive = now < this.snapCooldownUntil
+    const dtSeconds = Math.min(dt, 50) / 1000
+
+    if (this.physics.isDragging) {
+      this.isInertia = false
+      this.pendingSnap = false
+    } else if (this.isInertia) {
+      this.targetYaw += this.currentYawVelocity * dtSeconds
+      this.currentYawVelocity *= Math.exp(-dtSeconds / INERTIA_TIME_CONSTANT)
+
+      this.targetPitch += this.currentPitchVelocity * dtSeconds
+      this.currentPitchVelocity *= Math.exp(-dtSeconds / INERTIA_TIME_CONSTANT)
+      this.targetPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, this.targetPitch))
+
+      const speed = Math.sqrt(this.currentYawVelocity ** 2 + this.currentPitchVelocity ** 2)
+      if (speed < INERTIA_STOP_THRESHOLD) {
+        this.currentYawVelocity = 0
+        this.currentPitchVelocity = 0
+        this.isInertia = false
+        if (!this.pendingSnap && !snapCooldownActive) {
+          const nearest = this.findNearestToFocus()
+          if (nearest) {
+            this.pendingSnap = true
+            this.snapToPhoto(nearest)
+          }
+        }
       }
-      this.globe.rotY += this.currentYawVelocity * dt
-    }
-
-    const pitchBlend = 1 - Math.pow(PITCH_DECAY, dt / 16.667)
-    this.globe.rotX += (this.targetPitch - this.globe.rotX) * pitchBlend
-
-    if (this.physics.isSnapping) {
+    } else if (this.physics.isSnapping) {
       const result = updateSnap(this.physics, this.globe.rotX, this.globe.rotY, dt)
       this.globe.rotX = result.x
       this.globe.rotY = result.y
+      this.targetYaw = result.y
+      this.targetPitch = result.x
+      if (result.done) {
+        this.pendingSnap = false
+        this.snapCooldownUntil = performance.now() + AMBIENT_PAUSE_MS
+        this.activePhotoLockUntil = performance.now() + AMBIENT_PAUSE_MS
+      }
     }
+
+    const yawAlpha = 1 - Math.exp(-dtSeconds / YAW_SMOOTHING)
+    this.globe.rotY += (this.targetYaw - this.globe.rotY) * yawAlpha
+
+    const pitchAlpha = 1 - Math.exp(-dtSeconds / PITCH_SMOOTHING)
+    this.globe.rotX += (this.targetPitch - this.globe.rotX) * pitchAlpha
 
     this.globe.rotX = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, this.globe.rotX))
 
@@ -286,8 +364,18 @@ export class GalleryEngine {
     const scaleBlend = 1 - Math.pow(SCALE_DECAY, dt / 16.667)
     this.globeScale += (targetGlobeScale - this.globeScale) * scaleBlend
 
+    const nearestId = this.findNearestToFocus()
+    const now = performance.now()
+    if (nearestId !== this.activePhotoId && now > this.activePhotoLockUntil) {
+      this.activePhotoId = nearestId
+      this.callbacks.onActivePhotoChange(nearestId)
+    }
+
     this.renderer.setModelRotation(this.globe.rotX, this.globe.rotY)
     this.renderer.beginFrame()
+
+    const rotX = this.globe.rotX
+    const rotY = this.globe.rotY
 
     const visibleNodes = this.scene.getVisibleNodes()
     for (const node of visibleNodes) {
@@ -304,10 +392,31 @@ export class GalleryEngine {
       }
       mesh.transform.tangent = this.globe.tangents[mesh.index] ?? mesh.transform.tangent
       mesh.transform.bitangent = this.globe.bitangents[mesh.index] ?? mesh.transform.bitangent
-      mesh.alpha = computeBackfaceAlpha(mesh.normal, this.globe.rotX, this.globe.rotY)
-      mesh.transform.scale = [this.cardScale * this.globeScale, this.cardScale * this.globeScale]
+      mesh.alpha = computeBackfaceAlpha(mesh.normal, rotX, rotY)
 
-      const targetColor = (this.pressedPhotoId === mesh.id && mesh.alpha > 0.15) ? 1 : 0
+      const z = -basePos[0] * Math.sin(rotY) + basePos[2] * Math.cos(rotY)
+      const y = basePos[1]
+      const z2 = y * Math.sin(rotX) + z * Math.cos(rotX)
+      const facing = -z2
+
+      let targetScale: number
+      let targetColor: number
+      if (mesh.id === this.pressedPhotoId && mesh.alpha > 0.15) {
+        targetScale = facing > 0.3 ? 0.95 : 0.78
+        targetColor = 1
+      } else if (facing > 0.3 && mesh.alpha > 0.15) {
+        targetScale = 0.95
+        targetColor = 0.4
+      } else {
+        targetScale = 0.78
+        targetColor = 0
+      }
+
+      mesh.transform.scale = [
+        this.cardScale * this.globeScale * CARD_ASPECT * targetScale,
+        this.cardScale * this.globeScale * targetScale,
+      ]
+
       const colorBlend = 1 - Math.pow(COLOR_DECAY, dt / 16.667)
       mesh.colorAmount += (targetColor - mesh.colorAmount) * colorBlend
 
@@ -339,53 +448,48 @@ export class GalleryEngine {
   }
 
   private handleDragStart(): void {
-    if (this.isPreviewActive) {
-      this.isPreviewActive = false
-      this.callbacks.onPreviewEnd()
-    }
-    this.cancelPreviewTimer()
+    this.cancelHold()
     this.pressedPhotoId = null
-    this.previewPhotoSrc = null
-    this.previewOrigin = null
-
     this.physics.isDragging = true
-    this.physics.velocityX = 0
-    this.physics.velocityY = 0
-    this.smoothedYawVelocity = 0
+    this.currentYawVelocity = 0
+    this.currentPitchVelocity = 0
     this.lastDragTime = performance.now()
     this.scheduler.wake()
   }
 
   private handleDragMove(dx: number, dy: number): void {
     if (!this.physics.isDragging) return
+    if (this.isLightboxOpen) return
 
     const now = performance.now()
-    const dt = Math.max(1, now - this.lastDragTime)
-    const rawVelocityX = dx / dt
-    const speed = Math.abs(rawVelocityX)
+    const dtMs = Math.max(1, now - this.lastDragTime)
+    const dtSec = dtMs / 1000
+    const speed = Math.abs(dx / dtSec)
 
-    const t = Math.min(1, speed / 2)
+    const t = Math.min(1, speed / 2000)
     const multiplier = MIN_SPEED_MULTIPLIER + (MAX_SPEED_MULTIPLIER - MIN_SPEED_MULTIPLIER) * t * t
     const effectiveSensitivity = BASE_YAW_SENSITIVITY * multiplier
 
-    this.globe.rotY += dx * effectiveSensitivity
-    this.smoothedYawVelocity += (rawVelocityX * BASE_YAW_SENSITIVITY - this.smoothedYawVelocity) * VELOCITY_SMOOTHING
-
-    this.targetPitch += dy * PITCH_SENSITIVITY
+    this.targetYaw += dx * effectiveSensitivity
+    this.targetPitch -= dy * PITCH_SENSITIVITY
     this.targetPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, this.targetPitch))
 
     this.lastDragTime = now
   }
 
   private handleDragEnd(velocityX: number, velocityY: number): void {
-    void velocityX
-    void velocityY
+    if (this.isLightboxOpen) return
     this.physics.isDragging = false
-    this.userControlling = false
-    const clampedVelocity = Math.max(-MAX_THROW_VELOCITY, Math.min(MAX_THROW_VELOCITY, this.smoothedYawVelocity))
-    this.currentYawVelocity = clampedVelocity
 
-    this.scheduler.requestIdle()
+    const throwScaleYaw = BASE_YAW_SENSITIVITY * 60
+    const throwScalePitch = PITCH_SENSITIVITY * 60
+
+    this.currentYawVelocity = Math.max(-MAX_THROW_SPEED, Math.min(MAX_THROW_SPEED, velocityX * throwScaleYaw))
+    this.currentPitchVelocity = Math.max(-MAX_THROW_SPEED, Math.min(MAX_THROW_SPEED, -velocityY * throwScalePitch))
+
+    const speed = Math.sqrt(this.currentYawVelocity ** 2 + this.currentPitchVelocity ** 2)
+    this.isInertia = speed > INERTIA_STOP_THRESHOLD
+    this.scheduler.wake()
   }
 
   private handlePinch(scale: number): void {
@@ -394,114 +498,58 @@ export class GalleryEngine {
   }
 
   private handlePointerDown(x: number, y: number): void {
-    this.userControlling = true
+    if (this.isLightboxOpen) return
     this.currentYawVelocity = 0
+    this.currentPitchVelocity = 0
+    this.engagementScale = 1.03
     this.scheduler.wake()
 
-    const picked = this.pickPhoto(x, y)
-    if (picked !== null) {
-      this.pressedPhotoId = picked
-      const mesh = this.meshById.get(picked)
-      if (mesh) {
-        this.previewPhotoSrc = this.manifest?.photos[mesh.index]?.src ?? null
-        this.previewOrigin = this.projectMeshToViewport(mesh)
+    this.pointerDownX = x
+    this.pointerDownY = y
+    this.pressedPhotoId = this.pickPhoto(x, y)
+    this.cancelHold()
 
-        // @debug Temporary identity diagnostic — remove after diagnosis
-        console.log(
-          `PICK CHECK: pickedId=${picked}, meshTextureSource=${mesh.textureSource}, previewSource=${this.previewPhotoSrc}`,
-        )
+    this.holdTimerId = setTimeout(() => {
+      this.holdTimerId = null
+      if (this.isLightboxOpen) return
+      const picked = this.pickPhoto(this.pointerDownX, this.pointerDownY)
+      if (picked !== null) {
+        this.callbacks.onPhotoHold(picked)
       }
-      if (this.isMobile) {
-        this.startPreviewTimer(picked)
-      }
-    }
-
-    this.engagementScale = 1.04
+    }, HOLD_DURATION_MS)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- callback signature required by Interaction
-  private handlePointerMove(_x: number, _y: number): void {
-    // No re-picking. The pressed photo ID is retained from pointerdown.
-    // Drag detection is handled by the Interaction class.
+  private handlePointerMove(x: number, y: number): void {
+    const dx = x - this.pointerDownX
+    const dy = y - this.pointerDownY
+    if (Math.sqrt(dx * dx + dy * dy) > 8) {
+      this.cancelHold()
+    }
   }
 
   private handlePointerUp(): void {
-    if (this.isLightboxOpen) {
-      return
-    }
-
-    const wasPreview = this.isPreviewActive
-    const photoId = this.pressedPhotoId
-    const wasDragging = this.physics.isDragging
-
-    this.cancelPreviewTimer()
-    this.isPreviewActive = false
+    this.cancelHold()
     this.pressedPhotoId = null
-    this.previewPhotoSrc = null
-    this.previewOrigin = null
     this.engagementScale = 1.0
 
+    if (this.isLightboxOpen) return
+
+    const wasDragging = this.physics.isDragging
+
     if (!wasDragging) {
-      this.userControlling = false
       this.currentYawVelocity = 0
+      this.currentPitchVelocity = 0
     }
 
-    if (wasPreview) {
-      this.callbacks.onPreviewEnd()
-    } else if (photoId && !wasDragging) {
-      this.callbacks.onSelect(photoId)
-    }
-  }
-
-  private projectMeshToViewport(mesh: PhotoMesh): PreviewStartData['origin'] | null {
-    if (!this.canvas || !this.renderer) return null
-
-    const proj = new Float32Array(16)
-    mat4Perspective(proj, this.camera.fov, this.camera.aspect, this.camera.near, this.camera.far)
-    const view = new Float32Array(16)
-    mat4LookAt(view, this.camera.eye, this.camera.target, this.camera.up)
-    const pv = new Float32Array(16)
-    mat4Multiply(pv, proj, view)
-    const model = this.buildModelMatrix()
-
-    const result = this.computeCardWorldCorners(mesh, model, pv)
-    if (!result) return null
-
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
-    for (const [sx, sy] of result.viewportCorners) {
-      minX = Math.min(minX, sx); maxX = Math.max(maxX, sx)
-      minY = Math.min(minY, sy); maxY = Math.max(maxY, sy)
-    }
-
-    if (minX > maxX) return null
-
-    return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY,
+    if (wasDragging) {
+      this.scheduler.requestIdle()
     }
   }
 
-  private startPreviewTimer(photoId: string): void {
-    this.cancelPreviewTimer()
-    this.previewTimer = setTimeout(() => {
-      if (this.pressedPhotoId === photoId && !this.physics.isDragging && this.previewOrigin) {
-        this.isPreviewActive = true
-        this.engagementScale = 1.0
-        this.callbacks.onPreviewStart({
-          photoId,
-          photoSrc: this.previewPhotoSrc ?? '',
-          origin: this.previewOrigin,
-        })
-      }
-    }, PREVIEW_DELAY_MS)
-  }
-
-  private cancelPreviewTimer(): void {
-    if (this.previewTimer) {
-      clearTimeout(this.previewTimer)
-      this.previewTimer = null
+  private cancelHold(): void {
+    if (this.holdTimerId !== null) {
+      clearTimeout(this.holdTimerId)
+      this.holdTimerId = null
     }
   }
 
@@ -618,14 +666,6 @@ export class GalleryEngine {
     })
 
     const winner = candidates[0]
-
-    // @debug Temporary coordinate diagnostic — remove after diagnosis
-    console.log(
-      `POINTER VIEWPORT: (${x.toFixed(1)},${y.toFixed(1)})\n` +
-      `QUAD VIEWPORT: [${winner.viewportCorners.map(([cx, cy]) => `(${cx.toFixed(1)},${cy.toFixed(1)})`).join(',')}]\n` +
-      `INSIDE: ${this.pointInQuad(x, y, winner.viewportCorners)}\n` +
-      `HIT: id=${winner.id}`,
-    )
 
     return winner.id
   }

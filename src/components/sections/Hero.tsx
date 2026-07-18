@@ -1,8 +1,9 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { motion, type Variants } from 'framer-motion'
 import { couple, wedding, hero } from '../../content/content'
 import { ChevronDown } from 'lucide-react'
-import { fireVortex, fireMiniVortex } from '../primitives/ParticleCanvas'
+
+
 
 const prefersReducedMotion =
   typeof window !== 'undefined' &&
@@ -37,18 +38,11 @@ const nameReveal: Variants = {
 
 const STAGGER = 0.08
 
-function DateReveal({ onReveal }: { onReveal: (x: number, y: number) => void }) {
+function DateReveal() {
   const [revealed, setRevealed] = useState(false)
-  const buttonRef = useRef<HTMLButtonElement>(null)
 
   const handleReveal = () => {
     setRevealed(true)
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect()
-      onReveal(rect.left + rect.width / 2, rect.top + rect.height / 2)
-    } else {
-      onReveal(window.innerWidth / 2, window.innerHeight / 2)
-    }
   }
 
   if (prefersReducedMotion) {
@@ -66,7 +60,6 @@ function DateReveal({ onReveal }: { onReveal: (x: number, y: number) => void }) 
 
   return (
     <button
-      ref={buttonRef}
       type="button"
       onClick={handleReveal}
       aria-label={revealed ? `${wedding.displayDate}, ${wedding.location}` : 'Tap to reveal the wedding date'}
@@ -106,14 +99,7 @@ function DateReveal({ onReveal }: { onReveal: (x: number, y: number) => void }) 
 export default function Hero() {
   const [imgError, setImgError] = useState(false)
 
-  const handleBackgroundTap = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      const target = e.target as HTMLElement
-      if (target.closest('button') || target.closest('a')) return
-      fireMiniVortex(e.clientX, e.clientY)
-    },
-    [],
-  )
+  const handleBackgroundTap = useCallback(() => {}, [])
 
   return (
     <section
@@ -179,7 +165,7 @@ export default function Hero() {
           custom={STAGGER * 2}
           className="flex flex-col items-center gap-1"
         >
-          <DateReveal onReveal={(x, y) => fireVortex(x, y)} />
+          <DateReveal />
         </motion.div>
 
         {/* RSVP CTA */}

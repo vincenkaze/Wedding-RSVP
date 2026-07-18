@@ -122,7 +122,6 @@ export function createSphereRenderer(canvas: HTMLCanvasElement, imageSrcs: strin
       textures[idx].width = img.naturalWidth
       textures[idx].height = img.naturalHeight
       texturesLoaded++
-      console.log(`[SphereRenderer] Texture ${idx} loaded: ${img.naturalWidth}x${img.naturalHeight}`)
     }
     img.onerror = () => console.error(`[SphereRenderer] Failed: ${imageSrcs[idx]}`)
     img.src = imageSrcs[i]

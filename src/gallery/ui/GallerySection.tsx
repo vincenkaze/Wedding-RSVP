@@ -2,8 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import type { GalleryItem } from '../../content/content'
 import { GalleryEngine } from '../../engine/Engine'
-import type { FrameStats, PhotoManifest, PreviewStartData } from '../../engine/core/contract'
-import PreviewOverlay from './PreviewOverlay'
+import type { FrameStats, PhotoManifest } from '../../engine/core/contract'
 
 function photoId(item: GalleryItem): string {
   return item.id ?? item.src
@@ -18,27 +17,18 @@ function getMaxDpr(): number {
 interface Props {
   items: GalleryItem[]
   onPhotoClick: (index: number) => void
+  onPhotoHold: (index: number) => void
+  onActivePhotoChange?: (photoId: string | null) => void
   lightboxOpen: boolean
 }
 
-export default function GallerySection({ items, onPhotoClick, lightboxOpen }: Props) {
+export default function GallerySection({ items, onPhotoClick, onPhotoHold, onActivePhotoChange, lightboxOpen }: Props) {
   const prefersReducedMotion = useReducedMotion()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const engineRef = useRef<GalleryEngine | null>(null)
   const [stats, setStats] = useState<FrameStats | null>(null)
   const [engineFailed, setEngineFailed] = useState(false)
-  const [previewData, setPreviewData] = useState<PreviewStartData | null>(null)
-  const [isClosing, setIsClosing] = useState(false)
-
-  const handleSelect = useCallback(
-    (id: string | null) => {
-      if (id === null) return
-      const idx = items.findIndex((item) => photoId(item) === id)
-      if (idx !== -1) onPhotoClick(idx)
-    },
-    [items, onPhotoClick],
-  )
 
   const handleFrame = useCallback((frameStats: FrameStats) => {
     setStats(frameStats)
@@ -50,19 +40,20 @@ export default function GallerySection({ items, onPhotoClick, lightboxOpen }: Pr
     void err
   }, [])
 
-  const handlePreviewStart = useCallback((data: PreviewStartData) => {
-    setPreviewData(data)
-    setIsClosing(false)
-  }, [])
+  const handleActivePhotoChange = useCallback(
+    (id: string | null) => {
+      onActivePhotoChange?.(id)
+    },
+    [onActivePhotoChange],
+  )
 
-  const handlePreviewEnd = useCallback(() => {
-    setIsClosing(true)
-  }, [])
-
-  const handleCollapseComplete = useCallback(() => {
-    setPreviewData(null)
-    setIsClosing(false)
-  }, [])
+  const handlePhotoHold = useCallback(
+    (id: string) => {
+      const idx = items.findIndex((item) => (item.id ?? item.src) === id)
+      if (idx >= 0) onPhotoHold(idx)
+    },
+    [items, onPhotoHold],
+  )
 
   useEffect(() => {
     if (prefersReducedMotion) return
@@ -76,11 +67,10 @@ export default function GallerySection({ items, onPhotoClick, lightboxOpen }: Pr
     let engine: GalleryEngine
     try {
       engine = new GalleryEngine(canvas, {
-        onSelect: handleSelect,
         onHover: handleHover,
         onFrame: handleFrame,
-        onPreviewStart: handlePreviewStart,
-        onPreviewEnd: handlePreviewEnd,
+        onActivePhotoChange: handleActivePhotoChange,
+        onPhotoHold: handlePhotoHold,
         onBackendChosen: handleBackendChosen,
         onError: handleError,
       })
@@ -119,7 +109,7 @@ export default function GallerySection({ items, onPhotoClick, lightboxOpen }: Pr
       engine.unmount()
       engineRef.current = null
     }
-  }, [prefersReducedMotion, items, handleSelect, handleFrame, handleBackendChosen, handleHover, handleError, handlePreviewStart, handlePreviewEnd])
+  }, [prefersReducedMotion, items, handleFrame, handleBackendChosen, handleHover, handleError, handleActivePhotoChange, handlePhotoHold])
 
   useEffect(() => {
     engineRef.current?.setLightboxOpen(lightboxOpen)
@@ -150,28 +140,40 @@ export default function GallerySection({ items, onPhotoClick, lightboxOpen }: Pr
   if (prefersReducedMotion || engineFailed) {
     return (
       <div className="gallery-css-grid">
-        {items.map((item, i) => (
-          <button
-            key={item.src}
-            type="button"
-            className="gallery-css-item"
-            onClick={() => onPhotoClick(i)}
-            aria-label={`View photo: ${item.alt}`}
-          >
-            <picture>
-              <source srcSet={item.src} type="image/avif" />
-              <source srcSet={item.src.replace('.avif', '.webp')} type="image/webp" />
-              <img
-                src={item.src.replace('.avif', '.webp')}
-                alt={item.alt}
-                loading="lazy"
-                decoding="async"
-                width={300}
-                height={300}
-              />
-            </picture>
-          </button>
-        ))}
+        {items.map((item, i) => {
+          const basePath = item.src.replace('.avif', '')
+          const name = basePath.split('/').pop()!
+          return (
+            <button
+              key={item.src}
+              type="button"
+              className="gallery-css-item"
+              onClick={() => onPhotoClick(i)}
+              aria-label={`View photo: ${item.alt}`}
+            >
+              <picture>
+                <source
+                  srcSet={`/gallery/sizes/512/${name}.avif 512w, /gallery/sizes/1024/${name}.avif 1024w, ${item.src} 1920w`}
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  type="image/avif"
+                />
+                <source
+                  srcSet={`/gallery/sizes/512/${name}.webp 512w, /gallery/sizes/1024/${name}.webp 1024w, ${item.src.replace('.avif', '.webp')} 1920w`}
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  type="image/webp"
+                />
+                <img
+                  src={item.src.replace('.avif', '.webp')}
+                  alt={item.alt}
+                  loading="lazy"
+                  decoding="async"
+                  width={300}
+                  height={300}
+                />
+              </picture>
+            </button>
+          )
+        })}
       </div>
     )
   }
@@ -181,18 +183,13 @@ export default function GallerySection({ items, onPhotoClick, lightboxOpen }: Pr
       <canvas
         ref={canvasRef}
         className="gallery-canvas"
-        style={{ touchAction: 'none', cursor: 'grab' }}
+        style={{ cursor: 'grab' }}
       />
       {!stats && (
         <div className="gallery-loading">
           <div className="gallery-loading-spinner" />
         </div>
       )}
-      <PreviewOverlay
-        data={previewData}
-        closing={isClosing}
-        onCollapseComplete={handleCollapseComplete}
-      />
     </div>
   )
 }

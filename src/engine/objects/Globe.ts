@@ -74,7 +74,7 @@ export function createGlobe(): GlobeState {
     normals,
     tangents,
     bitangents,
-    rotX: 0.15,
+    rotX: 0.22,
     rotY: avgZ < 0 ? Math.PI : 0,
     selectedPhotoIndex: null,
     autoRotateSpeed: 0.003,

@@ -4,7 +4,6 @@ import EnvelopeIntro from './components/primitives/EnvelopeIntro'
 import MusicControl from './components/primitives/MusicControl'
 import CustomCursor from './components/primitives/CustomCursor'
 import ScrollProgress from './components/primitives/ScrollProgress'
-import ParticleCanvas from './components/primitives/ParticleCanvas'
 import Hero from './components/sections/Hero'
 import Countdown from './components/sections/Countdown'
 import Verse from './components/sections/Verse'
@@ -44,7 +43,6 @@ function WeddingSite() {
 
   return (
     <>
-      <ParticleCanvas />
       <CustomCursor />
       {!loaded && <Preloader onComplete={handlePreloaderComplete} />}
       {loaded && !envelopeDone && (

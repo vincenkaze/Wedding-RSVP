@@ -13,9 +13,9 @@ export function createDefaultCamera(aspect: number): Camera {
 }
 
 export function getDesiredFill(width: number): number {
-  if (width <= 480) return 0.85
-  if (width <= 768) return 0.78
-  return 0.68
+  if (width <= 480) return 0.92
+  if (width <= 768) return 0.86
+  return 0.78
 }
 
 export function computeCameraDistance(

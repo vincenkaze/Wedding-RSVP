@@ -56,8 +56,9 @@ out vec4 fragColor;
 uniform sampler2D uTex;
 void main() {
   vec4 color = texture(uTex, vUV);
-  vec3 gray = vec3(dot(color.rgb, vec3(0.299, 0.587, 0.114)));
-  vec3 finalColor = mix(gray, color.rgb, vColorAmount);
+  float lum = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+  vec3 warm = vec3(lum * 1.08, lum * 1.0, lum * 0.88);
+  vec3 finalColor = mix(warm, color.rgb, vColorAmount);
   vec2 uv = vUV * 2.0 - 1.0;
   float radius = 0.12;
   vec2 d = abs(uv) - (1.0 - radius);

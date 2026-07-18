@@ -1,2 +1,2 @@
-export { createPhysics, applyInertia, startSnap, updateSnap, findClosestToCenter } from './Physics'
+export { createPhysics, startSnap, updateSnap } from './Physics'
 export type { PhysicsState } from './Physics'
