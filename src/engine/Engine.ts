@@ -69,7 +69,6 @@ export class GalleryEngine {
   private pinchScale = 1.0
   private engagementScale = 1.0
   private cardScale = 0.28
-  private isMobile = false
   private lastDragTime = 0
   private maxDpr = 2
 
@@ -120,7 +119,6 @@ export class GalleryEngine {
     this.cardScale = rect.width <= 480 ? 0.38 : rect.width <= 768 ? 0.36 : 0.34
     const desiredFill = getDesiredFill(rect.width)
     this.camera.eye[2] = computeCameraDistance(1.2, this.camera.fov, this.camera.aspect, desiredFill, this.cardScale)
-    this.isMobile = rect.width < 768
 
     this.backend = await detectBackend()
 
