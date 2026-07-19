@@ -1,22 +1,17 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { gallery, sections } from '../../content/content'
-import GallerySection from '../../gallery/ui/GallerySection'
+import EditorialGallery from './EditorialGallery'
 import Lightbox from './Lightbox'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
 
 export default function Gallery() {
   const prefersReducedMotion = useReducedMotion()
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
-  const [activePhotoId, setActivePhotoId] = useState<string | null>(null)
 
-  const activeIndex = useMemo(() => {
-    if (!activePhotoId) return 0
-    const idx = gallery.findIndex((item) => (item.id ?? item.src) === activePhotoId)
-    return idx >= 0 ? idx : 0
-  }, [activePhotoId])
+  const lightboxOpen = lightboxIndex !== null
 
-  const handlePhotoClick = useCallback((index: number) => {
+  const handlePhotoActivate = useCallback((index: number) => {
     setLightboxIndex(index)
   }, [])
 
@@ -24,71 +19,85 @@ export default function Gallery() {
     setLightboxIndex(idx)
   }, [])
 
-  const handleActivePhotoChange = useCallback((id: string | null) => {
-    setActivePhotoId(id)
-  }, [])
-
-  const handlePhotoHold = useCallback((index: number) => {
-    setLightboxIndex(index)
-  }, [])
-
   return (
-    <section id="gallery" className="relative px-6 py-14 sm:py-20 md:py-24">
-      <div className="mx-auto max-w-5xl">
-        <div className="text-center mb-8 sm:mb-10">
-          <motion.p
-            initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: DURATION_CINEMATIC, ease: EASE_ENTRANCE }}
-            className="font-body text-xs font-semibold uppercase tracking-[0.24em] text-accent sm:text-sm"
-          >
-            {sections.gallery.label}
-          </motion.p>
-          <motion.h2
-            initial={prefersReducedMotion ? undefined : { opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{
-              duration: DURATION_CINEMATIC,
-              ease: EASE_ENTRANCE,
-              delay: 0.08,
-            }}
-            className="mt-4 font-display text-3xl tracking-tight text-text sm:text-4xl md:text-5xl"
-          >
-            {sections.gallery.heading}
-          </motion.h2>
-        </div>
+    <section id="gallery" className="gallery-fullscreen">
+      <div className="gallery-fullscreen-header">
+        <motion.p
+          initial={prefersReducedMotion ? undefined : { opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: DURATION_CINEMATIC, ease: EASE_ENTRANCE }}
+          className="font-body text-xs font-semibold uppercase tracking-[0.24em] text-accent sm:text-sm"
+        >
+          {sections.gallery.label}
+        </motion.p>
+        <motion.h2
+          initial={prefersReducedMotion ? undefined : { opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{
+            duration: DURATION_CINEMATIC,
+            ease: EASE_ENTRANCE,
+            delay: 0.08,
+          }}
+          className="mt-4 font-display text-3xl tracking-tight text-text sm:text-4xl md:text-5xl"
+        >
+          {sections.gallery.heading}
+        </motion.h2>
+      </div>
 
+      {prefersReducedMotion ? (
+        <div className="gallery-css-grid">
+          {gallery.map((item, i) => {
+            const basePath = item.src.replace('.avif', '')
+            const name = basePath.split('/').pop()!
+            return (
+              <button
+                key={item.src}
+                type="button"
+                className="gallery-css-item"
+                onClick={() => setLightboxIndex(i)}
+                aria-label={`View photo: ${item.alt}`}
+              >
+                <picture>
+                  <source
+                    srcSet={`/gallery/sizes/512/${name}.avif 512w, /gallery/sizes/1024/${name}.avif 1024w, ${item.src} 1920w`}
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    type="image/avif"
+                  />
+                  <source
+                    srcSet={`/gallery/sizes/512/${name}.webp 512w, /gallery/sizes/1024/${name}.webp 1024w, ${item.src.replace('.avif', '.webp')} 1920w`}
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    type="image/webp"
+                  />
+                  <img
+                    src={item.src.replace('.avif', '.webp')}
+                    alt={item.alt}
+                    loading="lazy"
+                    decoding="async"
+                    width={300}
+                    height={300}
+                  />
+                </picture>
+              </button>
+            )
+          })}
+        </div>
+      ) : (
         <motion.div
-          initial={
-            prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.96 }
-          }
-          whileInView={
-            prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }
-          }
+          initial={{ opacity: 0, scale: 0.98 }}
+          whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: DURATION_CINEMATIC, ease: EASE_ENTRANCE, delay: 0.15 }}
-          className="flex justify-center"
+          className="gallery-fullscreen-canvas"
         >
-          <GallerySection
+          <EditorialGallery
             items={gallery}
-            onPhotoClick={handlePhotoClick}
-            onPhotoHold={handlePhotoHold}
-            onActivePhotoChange={handleActivePhotoChange}
-            lightboxOpen={lightboxIndex !== null}
+            onPhotoActivate={handlePhotoActivate}
+            paused={lightboxOpen}
           />
         </motion.div>
-
-        <div
-          className="mt-3 flex justify-end text-text/40"
-          aria-live="polite"
-        >
-          <span className="font-body text-[11px] tabular-nums tracking-widest select-none">
-            {String(activeIndex + 1).padStart(2, '0')} / {String(gallery.length).padStart(2, '0')}
-          </span>
-        </div>
-      </div>
+      )}
 
       <Lightbox
         items={gallery}
