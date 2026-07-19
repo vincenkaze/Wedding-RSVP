@@ -239,11 +239,6 @@ export const gallery: GalleryItem[] = [
     caption: 'Promises made in gold',
   },
   {
-    src: '/gallery/7.avif',
-    alt: 'A beautiful moment captured together',
-    caption: 'Beautiful moments, captured forever',
-  },
-  {
     src: '/gallery/8.avif',
     alt: 'Sharing a laugh together',
     caption: 'Joy in every shared smile',

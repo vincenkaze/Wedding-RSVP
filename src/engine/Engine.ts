@@ -26,13 +26,13 @@ const SCALE_DECAY = 0.92
 const MAX_PITCH = 0.30
 const PITCH_SENSITIVITY = 0.002
 const BASE_YAW_SENSITIVITY = 0.007
-const MIN_SPEED_MULTIPLIER = 0.9
+const MIN_SPEED_MULTIPLIER = 1.0
 const MAX_SPEED_MULTIPLIER = 1.5
-const MAX_THROW_SPEED = 0.40
+const MAX_THROW_SPEED = 0.55
 const CARD_ASPECT = 0.75
-const INERTIA_TIME_CONSTANT = 0.50
-const YAW_SMOOTHING = 0.04
-const PITCH_SMOOTHING = 0.05
+const INERTIA_TIME_CONSTANT = 0.75
+const YAW_SMOOTHING = 0.065
+const PITCH_SMOOTHING = 0.08
 const INERTIA_STOP_THRESHOLD = 0.01
 const AMBIENT_PAUSE_MS = 3000
 
@@ -64,7 +64,6 @@ export class GalleryEngine {
   private isLightboxOpen = false
   private backend: BackendType = 'webgl2'
   private currentYawVelocity = 0
-  private currentPitchVelocity = 0
   private globeScale = 1.0
   private pinchScale = 1.0
   private engagementScale = 1.0
@@ -313,14 +312,8 @@ export class GalleryEngine {
       this.targetYaw += this.currentYawVelocity * dtSeconds
       this.currentYawVelocity *= Math.exp(-dtSeconds / INERTIA_TIME_CONSTANT)
 
-      this.targetPitch += this.currentPitchVelocity * dtSeconds
-      this.currentPitchVelocity *= Math.exp(-dtSeconds / INERTIA_TIME_CONSTANT)
-      this.targetPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, this.targetPitch))
-
-      const speed = Math.sqrt(this.currentYawVelocity ** 2 + this.currentPitchVelocity ** 2)
-      if (speed < INERTIA_STOP_THRESHOLD) {
+      if (Math.abs(this.currentYawVelocity) < INERTIA_STOP_THRESHOLD) {
         this.currentYawVelocity = 0
-        this.currentPitchVelocity = 0
         this.isInertia = false
         if (!this.pendingSnap && !snapCooldownActive) {
           const nearest = this.findNearestToFocus()
@@ -450,7 +443,6 @@ export class GalleryEngine {
     this.pressedPhotoId = null
     this.physics.isDragging = true
     this.currentYawVelocity = 0
-    this.currentPitchVelocity = 0
     this.lastDragTime = performance.now()
     this.scheduler.wake()
   }
@@ -469,24 +461,20 @@ export class GalleryEngine {
     const effectiveSensitivity = BASE_YAW_SENSITIVITY * multiplier
 
     this.targetYaw += dx * effectiveSensitivity
-    this.targetPitch -= dy * PITCH_SENSITIVITY
+    this.targetPitch += dy * PITCH_SENSITIVITY
     this.targetPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, this.targetPitch))
 
     this.lastDragTime = now
   }
 
   private handleDragEnd(velocityX: number, velocityY: number): void {
+    void velocityY
     if (this.isLightboxOpen) return
     this.physics.isDragging = false
 
     const throwScaleYaw = BASE_YAW_SENSITIVITY * 60
-    const throwScalePitch = PITCH_SENSITIVITY * 60
-
     this.currentYawVelocity = Math.max(-MAX_THROW_SPEED, Math.min(MAX_THROW_SPEED, velocityX * throwScaleYaw))
-    this.currentPitchVelocity = Math.max(-MAX_THROW_SPEED, Math.min(MAX_THROW_SPEED, -velocityY * throwScalePitch))
-
-    const speed = Math.sqrt(this.currentYawVelocity ** 2 + this.currentPitchVelocity ** 2)
-    this.isInertia = speed > INERTIA_STOP_THRESHOLD
+    this.isInertia = Math.abs(this.currentYawVelocity) > INERTIA_STOP_THRESHOLD
     this.scheduler.wake()
   }
 
@@ -498,7 +486,6 @@ export class GalleryEngine {
   private handlePointerDown(x: number, y: number): void {
     if (this.isLightboxOpen) return
     this.currentYawVelocity = 0
-    this.currentPitchVelocity = 0
     this.engagementScale = 1.03
     this.scheduler.wake()
 
@@ -536,7 +523,6 @@ export class GalleryEngine {
 
     if (!wasDragging) {
       this.currentYawVelocity = 0
-      this.currentPitchVelocity = 0
     }
 
     if (wasDragging) {
