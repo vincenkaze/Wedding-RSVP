@@ -54,13 +54,26 @@ export interface Venue {
   }
 }
 
+export interface DesktopPosition {
+  /** Normalised 0–100 coordinate. Maps to `%` of the container dimensions. */
+  x: number
+  y: number
+  w: number
+  h: number
+  /** Unitless multiplier applied via CSS `transform: scale()`. */
+  scale: number
+  layer: 'background' | 'middle' | 'foreground'
+}
+
 export interface GalleryItem {
-  id?: string
+  id: string
   src: string
   alt: string
-  caption?: string
-  span?: 'wide' | 'tall' | 'square'
+  span: 'wide' | 'tall' | 'square'
+  width: number
+  height: number
   priority?: boolean
+  desktop?: DesktopPosition
 }
 
 export interface RSVP {
@@ -128,6 +141,10 @@ export const sections = {
   gallery: { label: 'Moments', heading: 'Our Gallery' },
   rsvp: { label: 'Join Our Celebration', heading: 'RSVP' },
   countdown: { label: 'Countdown', heading: 'Countdown to Our Wedding' },
+  actionBar: {
+    directions: 'Get Directions',
+    rsvp: 'RSVP Now',
+  },
 } as const
 
 export interface FamilySide {
@@ -213,85 +230,140 @@ export const liveStream: LiveStream = {
 
 export const gallery: GalleryItem[] = [
   {
+    id: 'gallery-01',
     src: '/gallery/1.avif',
-    alt: 'The happy couple sharing a moment together',
-    caption: 'A moment we will always treasure',
+    alt: 'The happy couple sharing a radiant moment together',
+    width: 1200,
+    height: 1600,
+    span: 'tall',
     priority: true,
+    desktop: { x: 2, y: 2, w: 28, h: 46, scale: 1.0, layer: 'foreground' },
   },
   {
+    id: 'gallery-02',
     src: '/gallery/2.avif',
-    alt: 'The proposal at sunset',
-    caption: 'The day everything changed',
+    alt: 'The proposal at sunset on a golden evening',
+    width: 960,
+    height: 1280,
+    span: 'square',
+    desktop: { x: 33, y: 2, w: 15, h: 15, scale: 1.0, layer: 'middle' },
   },
   {
+    id: 'gallery-03',
     src: '/gallery/3.avif',
-    alt: 'Walking hand in hand through a sunlit path',
-    caption: 'Walking together into forever',
+    alt: 'Walking hand in hand through a sunlit garden path',
+    width: 1200,
+    height: 1600,
+    span: 'square',
+    desktop: { x: 51, y: 2, w: 15, h: 15, scale: 0.95, layer: 'background' },
   },
   {
+    id: 'gallery-04',
     src: '/gallery/4.avif',
-    alt: 'Laughing together during their engagement shoot',
-    caption: 'Our laughter tells our story',
+    alt: 'Laughing together during their engagement shoot in Kerala',
+    width: 1200,
+    height: 1600,
+    span: 'wide',
+    desktop: { x: 69, y: 2, w: 29, h: 15, scale: 1.0, layer: 'foreground' },
   },
   {
+    id: 'gallery-05',
     src: '/gallery/5.avif',
-    alt: 'Close-up of the wedding rings on a linen surface',
-    caption: 'Promises made in gold',
+    alt: 'Close-up of wedding rings resting on a linen surface',
+    width: 1200,
+    height: 1600,
+    span: 'tall',
+    desktop: { x: 33, y: 20, w: 15, h: 28, scale: 1.0, layer: 'foreground' },
   },
   {
+    id: 'gallery-06',
     src: '/gallery/8.avif',
-    alt: 'Sharing a laugh together',
-    caption: 'Joy in every shared smile',
+    alt: 'Sharing a joyful laugh together in the golden light',
+    width: 960,
+    height: 1280,
+    span: 'square',
+    desktop: { x: 51, y: 20, w: 15, h: 15, scale: 1.0, layer: 'middle' },
   },
   {
+    id: 'gallery-07',
     src: '/gallery/9.avif',
-    alt: 'Together in love',
-    caption: 'Together in love, always',
+    alt: 'Together in love, wrapped in each others arms',
+    width: 960,
+    height: 1280,
+    span: 'square',
+    desktop: { x: 69, y: 20, w: 14, h: 14, scale: 0.9, layer: 'background' },
   },
   {
-    src: '/gallery/10.avif',
-    alt: 'A cherished memory',
-    caption: 'A memory we hold dear',
-  },
-  {
+    id: 'gallery-09',
     src: '/gallery/11.avif',
-    alt: 'A joyful moment from our celebration',
-    caption: 'Joy in every detail',
+    alt: 'A joyful moment from the wedding celebration',
+    width: 960,
+    height: 1280,
+    span: 'tall',
+    desktop: { x: 48, y: 50, w: 15, h: 28, scale: 1.0, layer: 'foreground' },
   },
   {
+    id: 'gallery-10',
     src: '/gallery/12.avif',
-    alt: 'Together in happiness',
-    caption: 'Happiness is being together',
+    alt: 'Together in happiness, surrounded by warm light',
+    width: 960,
+    height: 1280,
+    span: 'square',
+    desktop: { x: 66, y: 50, w: 13, h: 13, scale: 1.0, layer: 'background' },
   },
   {
+    id: 'gallery-11',
     src: '/gallery/13.avif',
-    alt: 'A beautiful shared glance',
-    caption: 'Silent words, loud love',
+    alt: 'A beautiful shared glance full of affection',
+    width: 960,
+    height: 1280,
+    span: 'square',
+    desktop: { x: 82, y: 50, w: 13, h: 13, scale: 1.0, layer: 'background' },
   },
   {
+    id: 'gallery-12',
     src: '/gallery/14.avif',
-    alt: 'Celebrating with loved ones',
-    caption: 'Surrounded by love',
+    alt: 'Celebrating with loved ones at the wedding venue',
+    width: 960,
+    height: 1280,
+    span: 'wide',
+    desktop: { x: 2, y: 72, w: 31, h: 16, scale: 1.0, layer: 'foreground' },
   },
   {
+    id: 'gallery-13',
     src: '/gallery/15.avif',
-    alt: 'A moment of pure joy',
-    caption: 'Our hearts, full',
+    alt: 'A moment of pure joy and togetherness',
+    width: 960,
+    height: 1280,
+    span: 'tall',
+    desktop: { x: 35, y: 72, w: 13, h: 26, scale: 1.0, layer: 'foreground' },
   },
   {
+    id: 'gallery-14',
     src: '/gallery/16.avif',
-    alt: 'Dancing through life together',
-    caption: 'Every step, together',
+    alt: 'Dancing through life together under the evening sky',
+    width: 960,
+    height: 1280,
+    span: 'square',
+    desktop: { x: 50, y: 72, w: 14, h: 14, scale: 0.95, layer: 'middle' },
   },
   {
+    id: 'gallery-15',
     src: '/gallery/17.avif',
-    alt: 'A tender moment captured',
-    caption: 'Forever starts here',
+    alt: 'A tender moment captured in the warm sunset glow',
+    width: 960,
+    height: 1280,
+    span: 'square',
+    desktop: { x: 67, y: 72, w: 14, h: 14, scale: 1.0, layer: 'middle' },
   },
   {
+    id: 'gallery-16',
     src: '/gallery/18.avif',
-    alt: 'Love written in the stars',
-    caption: 'Written in the stars',
+    alt: 'Love written in the stars above the Kerala skyline',
+    width: 960,
+    height: 1280,
+    span: 'wide',
+    desktop: { x: 2, y: 90, w: 96, h: 10, scale: 1.0, layer: 'foreground' },
   },
 ]
 

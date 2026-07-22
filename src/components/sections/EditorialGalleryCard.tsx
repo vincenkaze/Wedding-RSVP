@@ -1,50 +1,82 @@
-import { useState } from 'react'
-import type { EditorialCard } from '../../lib/gallery-layout'
+import { useEffect, useRef, useState } from 'react'
+import type { GalleryItem } from '../../content/content'
+import { getWebp, getSrcSet, getSizes } from '../../lib/gallery-assets'
 
 interface EditorialGalleryCardProps {
-  card: EditorialCard
-  onActivate: (id: string) => void
+  item: GalleryItem
+  index: number
+  totalItems: number
+  onActivate: (index: number) => void
 }
 
-export default function EditorialGalleryCard({ card, onActivate }: EditorialGalleryCardProps) {
+const HOVER_RANGE = 8
+
+export default function EditorialGalleryCard({ item, index, totalItems, onActivate }: EditorialGalleryCardProps) {
   const [loaded, setLoaded] = useState(false)
-  const baseName = card.src.replace('.avif', '').split('/').pop() ?? ''
-  const webp = card.src.replace('.avif', '.webp')
+  const cardRef = useRef<HTMLButtonElement>(null)
+  const webp = getWebp(item.src)
+  const srcSet = getSrcSet(item.src)
+  const sizes = getSizes()
+
+  useEffect(() => {
+    const card = cardRef.current
+    if (!card) return
+
+    function handlePointerMove(e: PointerEvent) {
+      const el = card
+      if (!el) return
+      if (e.pointerType !== 'mouse' && e.pointerType !== 'pen') return
+      const rect = el.getBoundingClientRect()
+      const rx = (e.clientX - rect.left) / rect.width
+      const ry = (e.clientY - rect.top) / rect.height
+      el.style.setProperty('--hover-x', `${(rx - 0.5) * HOVER_RANGE * 2}px`)
+      el.style.setProperty('--hover-y', `${(ry - 0.5) * HOVER_RANGE * 2}px`)
+    }
+
+    function handlePointerLeave() {
+      const el = card
+      if (!el) return
+      el.style.setProperty('--hover-x', '0px')
+      el.style.setProperty('--hover-y', '0px')
+    }
+
+    card.addEventListener('pointermove', handlePointerMove)
+    card.addEventListener('pointerleave', handlePointerLeave)
+    card.addEventListener('pointercancel', handlePointerLeave)
+
+    return () => {
+      card.removeEventListener('pointermove', handlePointerMove)
+      card.removeEventListener('pointerleave', handlePointerLeave)
+      card.removeEventListener('pointercancel', handlePointerLeave)
+      card.style.setProperty('--hover-x', '0px')
+      card.style.setProperty('--hover-y', '0px')
+    }
+  }, [])
 
   return (
     <button
+      ref={cardRef}
       type="button"
-      className="editorial-card"
-      onClick={() => onActivate(card.id)}
-      aria-label={`View photo: ${card.alt}`}
-      style={{
-        left: `${card.x}px`,
-        top: `${card.y}px`,
-        width: `${card.width}px`,
-        height: `${card.height}px`,
-        ['--rot' as string]: `${card.rotation}deg`,
-        zIndex: card.depth > 0.98 ? 2 : 1,
-      }}
+      className="gallery-card"
+      data-span={item.span}
+      onClick={() => onActivate(index)}
+      aria-label={`View photo: ${item.alt}`}
+      aria-posinset={index + 1}
+      aria-setsize={totalItems}
     >
       <picture>
-        <source
-          srcSet={`/gallery/sizes/512/${baseName}.avif 512w, /gallery/sizes/1024/${baseName}.avif 1024w, ${card.src} 1920w`}
-          sizes={`${Math.round(card.width)}px`}
-          type="image/avif"
-        />
-        <source
-          srcSet={`/gallery/sizes/512/${baseName}.webp 512w, /gallery/sizes/1024/${baseName}.webp 1024w, ${webp} 1920w`}
-          sizes={`${Math.round(card.width)}px`}
-          type="image/webp"
-        />
+        <source srcSet={srcSet.avif} sizes={sizes} type="image/avif" />
+        <source srcSet={srcSet.webp} sizes={sizes} type="image/webp" />
         <img
           src={webp}
-          alt={card.alt}
-          loading="lazy"
+          alt={item.alt}
+          loading={item.priority ? 'eager' : 'lazy'}
           decoding="async"
           onLoad={() => setLoaded(true)}
-          className={`editorial-card-img${loaded ? ' is-loaded' : ''}`}
+          className={`gallery-card-img${loaded ? ' is-loaded' : ''}`}
           draggable={false}
+          width={item.width}
+          height={item.height}
         />
       </picture>
     </button>
