@@ -2,6 +2,7 @@ import { Suspense, lazy, useCallback, useRef, useState } from 'react'
 import Preloader from './components/primitives/Preloader'
 import EnvelopeIntro from './components/primitives/EnvelopeIntro'
 import StickyActionBar from './components/primitives/StickyActionBar'
+import MusicControl from './components/primitives/MusicControl'
 import CustomCursor from './components/primitives/CustomCursor'
 import ScrollProgress from './components/primitives/ScrollProgress'
 import Hero from './components/sections/Hero'
@@ -69,9 +70,8 @@ function WeddingSite() {
       <StickyActionBar
         heroRef={heroRef}
         rsvpRef={rsvpRef}
-        autoPlay={envelopeDone}
-        playTrigger={musicTriggered}
       />
+      <MusicControl autoPlay={envelopeDone} playTrigger={musicTriggered} />
       <ScrollProgress />
     </>
   )

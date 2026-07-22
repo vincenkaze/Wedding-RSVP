@@ -1,6 +1,6 @@
 # Wedding Invitation Project — Current Plan
 
-Last updated: 2026-07-17
+Last updated: 2026-07-22
 
 ---
 
@@ -12,92 +12,32 @@ Single-page React app, static deploy.
 
 ---
 
-# Active Milestone: M5B — Gallery Engine
+# Active Milestone: M9 — Pre-flight & deploy
 
-## Current Phase: Phase 4 — Premium Sphere Interaction
+## Gallery
 
-## Phase Status
+The gallery is a responsive flex-column masonry — 2 columns on mobile (≤1023px), 3 columns on desktop (≥1024px). Uses the same shortest-column algorithm at all breakpoints. No 3D engine, no camera/parallax canvas, no WebGL2 renderer.
 
-### Phase 1 — Engine Boot ✅ Complete
-- GalleryEngine boots and selects WebGL2
-- Async texture load with `await Promise.allSettled()`
-- Scene populated before first frame
-- Scheduler stays active after load
-- 17/17 draw calls confirmed
-- First frame renders without any touch/pointer input
-- Billboard shader clip-space bug fixed
-- Initial globe rotation faces front hemisphere automatically
+### What's done:
+- Masonry layout: 2-col mobile, 3-col desktop via `window.matchMedia`
+- `EditorialGalleryCard` renders each item with lazy-loaded AVIF/WebP
+- Lightbox with swipe navigation, pinch-zoom, double-tap zoom, keyboard nav
+- No per-image captions — removed from interface, data, and UI
 
-### Phase 2 — Scene Graph ✅ Complete
-- `Scene` owns nodes
-- `getVisibleNodes()` drives render traversal
-- Visibility toggle works
-- `scene.clear()` empties canvas
-- Resize preserves camera aspect
-- Non-PhotoMesh nodes can coexist
+### Not yet tested:
+- Visual review at 1024px, 1440px, 1920px
+- WhatsApp in-app browser gallery rendering
 
-### Phase 3 — Static Globe ✅ Complete
-- Fibonacci sphere with ~120 candidates
-- Max-min angular selection for 17 well-separated anchors
-- Minimum angular separation: 35.8°
-- Stable world-space sphere geometry (radius 1.2)
-- Camera-facing upright billboards via shader tangent/bitangent blend
-- Frontness calculation with smooth fade/alpha
-- Depth scale applied by `globeScale`
-- Responsive camera distance + fixed card scale (DPR capped at 2)
-- Static sphere reads as invisible 3D object on phone and desktop
-- Auto-rotation present for idle state
+## Remaining Pre-flight Items
 
-### Phase 4 — Premium Sphere Interaction 🔄 In Progress
-**Target:** Orbital gallery with fixed center frame, depth layers, snap selection, and clear interaction hints.
+1. **Gallery visual QA** — Review masonry at 1024/1440/1920px. Check spacing, image alignment, lightbox on all breakpoints.
+2. **Hero invitation line** — `DateReveal` tap-to-flip interaction conflicts with "readable at a glance" goal. Pending user approval to show date/location inline.
+3. **Rewrite all .md files** — Sync docs to current implementations (in progress).
+4. **Hero images** — Upload couple photos to `public/hero/`.
+5. **Live stream config** — Get YouTube video ID from user.
+6. **Admin auth** — Resolve JWT/random-token drift (P-013).
 
-**Completed:**
-- Interaction state machine scaffold: `idle` → `engaged` → `photoActive` → `photoOpen`
-- Globe interaction scale (`targetGlobeScale`) added — camera unchanged
-- Grayscale-to-color shader uniform (`uColorAmount`) added
-- Unified Pointer Events picking against transformed quad AABB
-- Long-press detection (~500ms) with drag cancellation (> 10px)
-- Gesture arbitration in `interaction/`: mobile horizontal = globe, vertical = scroll
-
-**Remaining (in order):**
-1. Remove `console.log` from engine code
-2. Wire `engine.setLightboxOpen(open)` from React so engine pauses/resumes with lightbox
-3. Replace pinch `updateCameraZoom()` with `targetGlobeScale` adjustment
-4. Change canvas `touchAction: 'none'` to `touchAction: pan-y` or use gesture-intent-dependent behavior
-5. Add engine→React→Lightbox adapter mapping `photoId → index`
-6. Implement fixed center frame in React overlay
-7. Define active image + selected index state
-8. Add depth-based styling (front/middle/back layers)
-9. Implement snap-to-nearest on release
-10. Add temporary interaction hint text + chevrons
-11. Add keyboard and reduced-motion behavior
-
----
-
-# Phase Gate
-
-Phase 4 is complete when:
-
-- Center frame is visually obvious (240–280px mobile, 320–380px desktop)
-- One image is selected and snapped into center after release
-- Three depth layers communicate 3D space clearly
-- Interaction hint appears briefly then fades
-- Lightbox opens from center frame and engine pauses
-- Vertical scroll works on mobile without rotating globe
-- No console errors or warnings
-- Tested at 360px, 768px, and 1440px
-
----
-
-# Reference Documents
-
-- `Gallery_design.md` — architecture and philosophy
-- `Gallery.md` — implementation spec and module status
-- `Problems-to-fix.md` — open issues
-
----
-
-# Milestone History
+## Milestone History
 
 | Milestone | Status |
 |-----------|--------|
@@ -106,9 +46,45 @@ Phase 4 is complete when:
 | M2 — Hero, Countdown, Footer | ✅ Complete |
 | M3 — Family + Events | ✅ Complete |
 | M4 — Venue + Maps | ✅ Complete |
-| M5A — Gallery Grid + Lightbox | ✅ Complete (fallback path) |
-| M5B — Gallery Engine | 🔄 Phase 4 in progress |
+| M5A — Gallery Grid + Lightbox | ✅ Complete (active gallery) |
+| M5B — Gallery Engine (3D sphere) | 🗄️ Archived — replaced by M5A masonry |
 | M6 — RSVP | ✅ Complete |
 | M7 — Admin Dashboard | ✅ Complete (local) |
-| M8 — Polish | 🔄 Partial |
-| M9 — Pre-flight & deploy | ⏳ Pending M5B Phase 4 completion |
+| M8 — Polish | ✅ Complete |
+| M9 — Pre-flight & deploy | 🔄 In progress |
+
+---
+
+# Phase Gate — M9
+
+M9 is complete when:
+
+- Gallery visually reviewed at 360px, 768px, 1024px, 1440px, 1920px
+- Hero shows date/location at a glance (DateReveal removed)
+- All .md files reflect current implementations
+- Hero images uploaded
+- Live stream configured (or gracefully disabled)
+- Admin auth aligned (JWT model)
+- iPhone Safari, Android Chrome, WhatsApp/Instagram in-app tested
+- Lighthouse mobile ≥ 90
+- Bundle size < 200KB gzipped for guest site
+- All images optimized
+- No console errors or warnings
+- No `any`, no `console.log`, no commented-out code
+- Animations respect prefers-reduced-motion
+
+---
+
+# Reference Documents
+
+- `AGENTS.md` — coding standards and file structure
+- `Problems-to-fix.md` — open issues
+
+---
+
+# Legend
+
+- ✅ Complete
+- 🗄️ Archived (replaced or superseded)
+- ⏳ Pending
+- 🔄 In progress

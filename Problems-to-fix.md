@@ -2,7 +2,7 @@
 
 Living list of design/UX/behavior issues for the wedding site.
 
-Status legend: 🔴 Open  🟡 In Progress  🟢 Resolved
+Status legend: 🔴 Open  🟡 In Progress  🟢 Resolved  🗄️ Archived
 
 ---
 
@@ -14,19 +14,19 @@ Status legend: 🔴 Open  🟡 In Progress  🟢 Resolved
 
 ## 🟢 P-002 — Gallery needs a kinetic canvas, not a static grid
 
-**Resolution:** M5A grid stays as fallback. M5B Gallery Engine is the primary experience.
+**Resolution:** M5B Gallery Engine (3D sphere) was built, tested, then archived. The masonry gallery is now the primary experience. No canvas, no WebGL.
 
 ---
 
 ## 🟢 P-003 — Gallery: true interactivity (drag, rotate, scale)
 
-**Resolution:** M5B engine implements drag, inertia, and pinch via unified Pointer Events.
+**Resolution:** The 3D sphere engine implemented drag, inertia, and pinch — but it was archived. The masonry gallery offers tap-to-open lightbox with swipe, pinch-zoom, and double-tap zoom.
 
 ---
 
 ## 🟢 P-006 — Gallery canvas sizing and photo transforms
 
-**Resolution:** Gallery rewritten as 3D sphere billboard engine in `src/engine/`.
+**Resolution:** Gallery rewritten as responsive flex-column masonry. Canvas sizing bug is moot — no canvas exists.
 
 ---
 
@@ -48,7 +48,7 @@ Status legend: 🔴 Open  🟡 In Progress  🟢 Resolved
 
 ---
 
-## 🟡 P-008 — Hero images not uploaded
+## 🔴 P-008 — Hero images not uploaded
 
 **Location:** `public/hero/`
 
@@ -82,33 +82,11 @@ Status legend: 🔴 Open  🟡 In Progress  🟢 Resolved
 
 ---
 
-## 🔴 P-012 — Gallery: Phase 4 UX gaps (interaction model)
+## 🗄️ P-012 — Gallery: Phase 4 UX gaps (interaction model)
 
-**Symptom:** 17 photos render on a 3D sphere, but the UX reads as a floating cluster:
-- No stable focal image / center frame
-- No visible interaction hint
-- No obvious control for opening a photo
-- All images compete for attention
+**Status:** Archived. The M5B 3D sphere engine was removed in favor of the masonry gallery. All Phase 4 interaction gaps are moot.
 
-**Current code issues:**
-- `console.log` statements remain in `src/engine/Engine.ts`
-- Lightbox not wired to engine pause/resume (`setLightboxOpen` never called from React)
-- Pinch zoom moves camera instead of globe scale
-- Canvas uses `touchAction: 'none'`, which can block page scroll on mobile
-- Engine emits `onSelect(photoId)` but Lightbox expects index — no adapter exists
-- Smoothing constants are frame-rate dependent
-- `meshes.find()` inside render loop is O(N²)
-- Long-press state doesn't affect visuals (no center frame yet)
-
-**Remediation direction (approved):**
-1. Fix center frame + active selection in React overlay
-2. Add depth layers (center / front orbit / back orbit)
-3. Snap-to-nearest on release
-4. Depth styling: opacity, scale, grayscale, subtle blur
-5. Temporary interaction guide + chevrons
-6. Fix lightbox-engine wiring
-7. Fix pinch/touch scroll safety
-8. Remove console.log
+**Resolution:** Masonry gallery has no interaction ambiguity — photos are simply tapped to open the lightbox.
 
 ---
 
@@ -117,3 +95,13 @@ Status legend: 🔴 Open  🟡 In Progress  🟢 Resolved
 **Symptom:** Local admin code expects random token auth. Deployed Supabase edge function expects JWT auth. Mismatch blocks `/admin` in deployed builds.
 
 **See:** `fix-db.md` and `DB.md` for diagnosis and options.
+
+---
+
+## 🔴 P-014 — Hero date not readable at a glance
+
+**Location:** `src/components/sections/Hero.tsx`
+
+**Symptom:** The date/location is hidden behind a `DateReveal` tap-to-flip interaction. First-time visitors must tap to see the date, which conflicts with the "readable at a glance" requirement.
+
+**Action:** Remove `DateReveal` component. Show date and location inline. Add an invitation line (or keep the current pre-title). Awaiting user approval of new hero copy.

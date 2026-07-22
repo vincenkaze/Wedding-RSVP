@@ -452,6 +452,15 @@ body::after {
   }
 }
 
+/* ── Photo warm treatment ── */
+.photo-warm {
+  filter: brightness(1.01) contrast(1.02) saturate(1.04) sepia(0.02);
+}
+
+.photo-warm--cool {
+  filter: brightness(1.01) contrast(1.02) saturate(1.02);
+}
+
 /* ── Shared card styles ── */
 .gallery-card {
   --hover-x: 0px;
@@ -477,7 +486,7 @@ body::after {
 @media (hover: hover) and (pointer: fine) {
   .gallery-card:hover .gallery-card-img {
     --hover-scale: 1.025;
-    filter: saturate(1.04) contrast(1.02);
+    filter: brightness(1.01) contrast(1.04) saturate(1.08) sepia(0.02);
   }
 }
 

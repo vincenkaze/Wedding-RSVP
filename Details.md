@@ -9,6 +9,7 @@ Source of truth: `src/content/content.ts`. Update there first, then sync this fi
 - **Bride:** Anjana Sivanandan
 - **Groom:** Krishnaprasad Thulasidas
 - **Display name:** Anjana & Krishnaprasad
+- **Full name:** Anjana Sivanandan & Krishnaprasad Thulasidas
 - **Monogram:** A & K
 
 ---
@@ -81,6 +82,37 @@ Source of truth: `src/content/content.ts`. Update there first, then sync this fi
 
 ---
 
+## Gallery
+
+- **Count:** 15 images
+- **Layout:** 2-column mobile / 3-column desktop flex-column masonry
+- **Captions:** Not used — removed from interface, data model, and lightbox
+- **Formats:** AVIF + WebP with srcset (512w, 1024w, full)
+- **Lightbox:** Swipe, pinch-zoom, double-tap, keyboard nav
+
+---
+
+## Favicon
+
+- SVG (primary) + PNG fallbacks (48×48, 32×32, 16×16) + ICO
+- Generated from `public/favicon.svg` via `scripts/generate-favicons.mjs`
+- `apple-touch-icon` references SVG
+- Canonical URL: `https://anjana-krishnaprasad.space`
+
+---
+
+## SEO
+
+- **Title:** "Anjana & Krishnaprasad Wedding | Cherthala, Sept 13" (58 chars)
+- **Description:** ~155 chars with full names + date + Cherthala
+- **OG image:** `public/og-image.png` (1200×630, 28 KB, HTTP 200)
+- **Canonical:** https://anjana-krishnaprasad.space
+- **sitemap.xml** and **robots.txt** in `public/`
+- **Structured data:** Schema.org Event with venue and date
+- All 16 social-sharing meta tags (OG + Twitter) present and internally consistent
+
+---
+
 ## Current Content Status
 
 | Field | Status |
@@ -90,16 +122,7 @@ Source of truth: `src/content/content.ts`. Update there first, then sync this fi
 | Events | ✅ Both events in array |
 | Venue | ✅ Akhilanjali Convention Centre |
 | Family | ✅ Parents + siblings included |
-| Gallery | ✅ 18 images in `content.ts` |
+| Gallery | ✅ 15 images in `content.ts` |
 | Live stream | ⚠️ Placeholder — no YouTube video ID configured |
 | RSVP WhatsApp number | ⚠️ Empty in `content.ts` |
 | Hero images | ❌ `public/hero/` directory missing — couple.* files not uploaded |
-
----
-
-## Obys "Moments" Reference
-
-The gallery is being adapted to match an Obys-style "Moments" 3D spherical image field aesthetic:
-- Centered muted gold/tan header
-- Floating wedding photos spread evenly across a 3D sphere
-- Clean minimalist elegant wedding aesthetic

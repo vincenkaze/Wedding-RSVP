@@ -73,7 +73,7 @@ export default function EditorialGalleryCard({ item, index, totalItems, onActiva
           loading={item.priority ? 'eager' : 'lazy'}
           decoding="async"
           onLoad={() => setLoaded(true)}
-          className={`gallery-card-img${loaded ? ' is-loaded' : ''}`}
+          className={`gallery-card-img photo-warm${loaded ? ' is-loaded' : ''}`}
           draggable={false}
           width={item.width}
           height={item.height}

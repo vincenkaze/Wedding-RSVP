@@ -122,7 +122,7 @@ const Hero = forwardRef<HTMLElement>(function Hero(_props, ref) {
               decoding="async"
               fetchPriority="high"
               onError={() => setImgError(true)}
-              className={`w-full h-full object-cover ${prefersReducedMotion ? '' : 'ken-burns'}`}
+              className={`w-full h-full object-cover photo-warm ${prefersReducedMotion ? '' : 'ken-burns'}`}
             />
           </picture>
         )}

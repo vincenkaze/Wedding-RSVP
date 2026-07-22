@@ -1,10 +1,10 @@
 # Wedding Invitation Project — Plan
 
-Mission
+## Mission
 
 Build a premium one-page wedding invitation website that feels emotional, elegant, and cinematic. Optimized for sharing via WhatsApp, Instagram, and direct link. Single-page React app, deployed as a static site, loads fast on mid-range Android over 4G.
 
-Working Rules
+## Working Rules
 
 These are the rules for this project. Follow them every milestone. If a rule needs to change, update this file — don't silently ignore it.
 
@@ -23,95 +23,31 @@ These are the rules for this project. Follow them every milestone. If a rule nee
 
 # Working Notes (per session)
 
-## M5 — Gallery Engine
+## Gallery
 
-The Gallery is now implemented as an independent rendering engine embedded inside the React application.
+The Gallery is a responsive flex-column masonry — 2 columns mobile (≤1023px), 3 columns desktop (≥1024px). Uses the same shortest-column algorithm at all breakpoints.
 
-This document is the high-level plan. For current milestone status and immediate next steps, see `Current_PLAN.md`.
+The M5B 3D sphere WebGL2 engine was fully developed and tested but ultimately archived. The masonry gallery (M5A) became the primary (and only) gallery experience due to its reliability, performance, and simpler codebase.
 
-The implementation is guided by two design documents:
-
-- `Gallery_design.md` — Vision, architecture, rendering philosophy, renderer abstraction, engine boundaries.
-- `Gallery.md` — Gallery systems, interaction, rendering behaviour, physics, materials, performance goals, implementation specification.
-
-Current implementation target:
-
-- Gallery Engine in `src/engine/`
-- Renderer abstraction (`src/engine/renderers/`)
-- Scene graph (`src/engine/scene/`)
-- Camera (`src/engine/scene/`)
-- Globe + Fibonacci anchor distribution (`src/engine/objects/`)
-- Physics (`src/engine/physics/`)
-- Interaction (`src/engine/interaction/`)
-- Texture Management (`src/engine/textures/`)
-- Lightbox integration via selection contract
-
-The previous responsive grid implementation from M5A is superseded by the Gallery Engine for the public experience. M5A remains the reduced-motion / fallback / kill-switch path.
-
-Use this section to record engineering decisions, implementation notes, blockers and lessons learned throughout development.
-
-Once a milestone is complete, move notes into Lessons Learned rather than deleting them.
+The engine code (`src/engine/`, `src/gallery/`) has been completely removed from the repository.
 
 ---
 
 # Tech Stack
 
-## Layer | Technology | Notes
----|---|---
-Runtime / Package Manager | Bun or npm | Project builds with npm; Bun is supported
-Build | Vite | zero-config React + TS
-UI Framework | React 19 + TypeScript 6 | strict mode, no any
-Styling | Tailwind CSS 4 | `@tailwindcss/vite` plugin, design tokens in `@theme`
-Animation | Framer Motion 12 | entrance, scroll-reveal, stagger
-Smooth Scroll | Lenis | tuned touchMultiplier for WhatsApp in-app
-Icons | lucide-react | tree-shaken
-Gestures | @use-gesture/react + native Pointer Events | engine uses native Pointer Events
-Admin / Backend | Supabase | Postgres + Edge Function for RSVP + admin
+| Layer | Technology | Notes |
+|---|---|---|
+| Runtime / Package Manager | npm | |
+| Build | Vite | zero-config React + TS |
+| UI Framework | React 19 + TypeScript 6 | strict mode, no any |
+| Styling | Tailwind CSS 4 | `@tailwindcss/vite` plugin, design tokens in `@theme` |
+| Animation | Framer Motion 12 | entrance, scroll-reveal, stagger |
+| Smooth Scroll | Lenis | tuned touchMultiplier for WhatsApp in-app |
+| Icons | lucide-react | tree-shaken |
+| Gestures | @use-gesture/react + native Pointer Events | lightbox uses native events |
+| Admin / Backend | Supabase | Postgres + Edge Function for RSVP + admin |
 
 No new dependencies without a written reason.
-
----
-
-# Gallery Engine Architecture
-
-The project consists of two independent systems.
-
-### React Application
-Responsibilities:
-- Layout
-- Routing
-- Content
-- Accessibility
-- Forms
-- Lightbox UI
-- Canvas mount / unmount
-
-React does NOT perform rendering or animation inside the gallery.
-
----
-
-### Gallery Engine
-
-Responsibilities:
-- Rendering
-- Scene
-- Camera
-- Globe
-- Physics
-- Interaction
-- Materials
-- Texture Management
-- Scheduler
-- Selection
-- Debug
-
-The Gallery Engine is renderer-independent.
-
-Supported rendering backends:
-- WebGL2
-- WebGPU (stub; auto-skips)
-
-The engine selects the best available renderer at mount time. The remainder of the application never knows which renderer is active.
 
 ---
 
@@ -123,7 +59,7 @@ Hero: Couple photo with warm B&W treatment. Couples names in elegant display ser
 
 Aesthetic: Kerala traditional invitation influence — Ganesha ornament, ornate dividers, serif typography. Modern, not nostalgic.
 
-Photography: Gallery photos are rendered on a 3D sphere. Depth, opacity, and scale communicate the invisible globe.
+Photography: Gallery photos in a clean masonry layout. No canvas, no 3D.
 
 Mood: Sacred, elegant, intimate. Not festive. Not a SaaS landing page.
 
@@ -133,26 +69,26 @@ Mood: Sacred, elegant, intimate. Not festive. Not a SaaS landing page.
 
 All copy is locked in `src/content/content.ts`. Update there, not in components. The values below are the final copy for this wedding.
 
-Couple
+### Couple
 - Bride: Anjana Sivanandan
 - Groom: Krishnaprasad Thulasidas
 - Display: Anjana & Krishnaprasad
 
-Wedding
+### Wedding
 - Date: Sunday, September 13, 2026
 - Time: 10:00 AM – 10:30 AM (Muhurtham)
 - Timezone: IST (UTC+5:30)
 - Location: Cherthala, Alappuzha, Kerala
 
-Venue
+### Venue
 - Name: Akhilanjali Convention Centre
 - Address: Akhilanjali Convention Centre, Varanad Rd, near Sastham kavala, Cherthala, Nedumprakkad, Kerala 688539
 
-Family
+### Family
 - Bride's parents: Mr. Sivannandan K.K, Mrs. Usha Sivanandan
 - Groom's parents: Late Mr. Thulasidas, Mrs. Ushakumari
 
-RSVP
+### RSVP
 - Deadline: August 30, 2026
 - Contact: +918XXXX8744
 
@@ -169,7 +105,7 @@ Story — YouTube live stream embed
 Events — ceremony + reception cards
 Family — bride + groom family side-by-side
 Venue — map embed, directions, calendar
-Gallery — 3D sphere of wedding photos + lightbox
+Gallery — masonry photo grid + lightbox
 RSVP — form with WhatsApp + Supabase persistence
 Footer — couple names, date, location
 
@@ -216,47 +152,35 @@ Anything over 400ms must respect prefers-reduced-motion
 - No animation longer than 1.2s
 - All animations gated by prefers-reduced-motion
 
-Image specs
+### Image specs
 
-Slot          | Size            | Format                    | Notes
-Hero          | 1600×1067       | AVIF + WebP + JPEG        | preloaded
-Gallery       | 1200×1500       | AVIF + WebP + JPEG        | lazy-loaded via TextureManager
-Favicon       | 32×32           | SVG                       | Ganesha glyph
-OG image      | 1200×630        | AVIF + JPEG               | < 300KB, social sharing
+| Slot | Size | Format | Notes |
+|---|---|---|---|
+| Hero | 1600×1067 | AVIF + WebP + JPEG | preloaded |
+| Gallery | 1200×1500 | AVIF + WebP + JPEG | lazy-loaded |
+| Favicon | 32×32 | SVG + PNG | Ganesha glyph |
+| OG image | 1200×630 | PNG | < 300KB, social sharing |
 
 ---
 
 # File Structure (current)
 
+```
 src/
   components/
     admin/           # /admin login/dashboard
-    ui/              # shadcn primitives (if added)
     sections/        # Hero, Countdown, Verse, Story, Events, Family, Venue, Gallery, Lightbox, RSVP, Footer
-    primitives/      # Section, Reveal, Preloader, EnvelopeIntro, MusicControl, CustomCursor, ScrollProgress, ParticleCanvas
-  engine/            # M5B Gallery Engine
-    core/            # Engine entry, Scheduler, contract, RendererFactory, RendererCapabilities
-    renderers/       # interface + webgl2 + webgpu stub
-    scene/           # Scene graph, Camera
-    objects/         # Globe, PhotoMesh
-    physics/         # Angular velocity, spring snap
-    interaction/     # Unified Pointer Events
-    textures/        # TextureManager
-    materials/       # Material spec
-    math/            # mat4 utilities
-    debug/           # Profiler, archived debug renderers
-  gallery/
-    ui/              # GallerySection (engine mount)
-    render/          # Legacy standalone renderers
-  hooks/             # Lenis smooth scroll
-  lib/               # ics, maps, supabase, rsvp, admin
+    primitives/      # Section, Reveal, Preloader, EnvelopeIntro, StickyActionBar, CustomCursor, ScrollProgress
+  hooks/             # Lenis smooth scroll, useMediaQuery
+  lib/               # ics, maps, supabase, rsvp, admin, gallery-assets
   content/
     content.ts       # ALL copy — single source of truth
   styles/
     tokens.css       # @theme + animation tokens
-    base.css         # Global styles, .photo-bw, reduced-motion
-  App.tsx            # Composition
+    base.css         # Global styles, gallery masonry, reduced-motion
+  App.tsx            # Composition (admin route + wedding site)
   main.tsx           # Root + providers
+```
 
 ---
 
@@ -273,7 +197,7 @@ Each milestone ships when all success criteria are met AND you've reviewed the d
 ## M1 — Content layer + tokens
 - Typed `content.ts` exports
 - Full theme palette + animation tokens
-- Reset, body, `.photo-bw` utility
+- Reset, body utility
 - App renders all sections as empty placeholders
 
 ## M2 — Hero, Countdown, Footer
@@ -290,14 +214,17 @@ Each milestone ships when all success criteria are met AND you've reviewed the d
 - Lazy map embed
 - Directions, calendar, travel info
 
-## M5A — Gallery Grid + Lightbox
-- Responsive grid, grayscale photos, lightbox
-- Selection contract: `onSelect(photoId: string)`
-- Reduced-motion fallback path
+## M5A — Gallery Masonry + Lightbox
+- Responsive flex-column masonry (2-col mobile, 3-col desktop)
+- Shortest-column algorithm for natural editorial feel
+- AVIF + WebP with srcset
+- Lightbox with swipe, pinch-zoom, double-tap, keyboard nav
+- All images carry meaningful alt text
 
-## M5B — Gallery Engine
-- See `Current_PLAN.md` for phase-by-phase status.
-- Success criteria: engine boots, WebGL2 renders, scene graph drives traversal, 17 photos sit on a stable sphere, interaction is smooth and discoverable, snaps to center, lightbox opens from center.
+## M5B — Gallery Engine (Archived)
+- Previous milestone: 3D sphere WebGL2 engine in `src/engine/`.
+- Fully developed (Phases 1-4 reached interactive state with picking, physics, auto-rotation).
+- Archived in favor of M5A masonry for reliability, performance, and simplicity.
 
 ## M6 — RSVP
 - Form fields, validation, success state
@@ -309,7 +236,7 @@ Each milestone ships when all success criteria are met AND you've reviewed the d
 
 ## M8 — Polish
 - Hover, focus, active states
-- Music control
+- Sticky action bar (music, directions, RSVP)
 - Custom cursor desktop-only
 - Reduced-motion static layout
 
@@ -319,3 +246,7 @@ Each milestone ships when all success criteria are met AND you've reviewed the d
 - Bundle size < 200KB gzipped for guest site
 - All images optimized
 - No console errors
+- Gallery visual QA at all breakpoints
+- SEO metadata audited
+- Favicon assets complete
+- All .md files synced to current state

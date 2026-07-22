@@ -1,6 +1,6 @@
-AGENTS.md
+# AGENTS.md
 
-Purpose
+## Purpose
 
 This repository contains a premium one-page wedding invitation website.
 
@@ -8,9 +8,7 @@ The objective is to create an emotional, elegant, cinematic experience rather th
 
 Every design decision should contribute to beauty, clarity, and performance.
 
-
-
-Tech Stack
+## Tech Stack
 
 Vite (build)
 
@@ -24,13 +22,11 @@ Lenis (smooth scroll)
 
 lucide-react (icons)
 
-@use-gesture/react (legacy grid only; engine uses native Pointer Events)
+@use-gesture/react (lightbox only; gallery uses native Pointer Events)
 
 No new dependencies without a written reason. If a new package is needed, add it with explicit justification.
 
-
-
-Design Principles
+## Design Principles
 
 Elegant over flashy
 
@@ -48,9 +44,7 @@ Avoid generic templates
 
 Every component should feel like it belongs on a wedding invitation, not a SaaS landing page.
 
-
-
-Coding Standards
+## Coding Standards
 
 Create reusable components, but only after the second use case appears
 
@@ -58,7 +52,7 @@ Prefer composition over duplication
 
 Keep files focused — one component per file
 
-Use semantic HTML (<section>, <article>, <time>, <address>)
+Use semantic HTML (`<section>`, `<article>`, `<time>`, `<address>`)
 
 Keep dependencies minimal
 
@@ -66,7 +60,7 @@ Remove dead code immediately
 
 Do not write speculative code — no "just in case" props, state, or abstractions
 
-TypeScript
+### TypeScript
 
 strict: true, no any
 
@@ -74,7 +68,7 @@ Prefer interface for props, type for unions
 
 Export prop types only when consumed externally
 
-State
+### State
 
 Local state for local UI (form fields, lightbox open/closed)
 
@@ -82,50 +76,48 @@ URL state for shareable things (gallery image index, RSVP prefill)
 
 No global store. If a milestone needs one, justify it first
 
-File structure
+### File structure
 
+```
 src/
   components/
     admin/         # /admin login/dashboard
     ui/           # shadcn primitives (if added)
     sections/     # Hero, Countdown, Verse, Story, Events, Family, Venue, Gallery, Lightbox, RSVP, Footer
-    primitives/   # Section, Reveal, Preloader, EnvelopeIntro, MusicControl, CustomCursor, ScrollProgress, ParticleCanvas
-  engine/         # M5B Gallery Engine (core, scene, objects, physics, interaction, textures, renderers, debug)
-  gallery/
-    ui/           # GallerySection (engine mount)
-    render/       # Legacy standalone renderers
+    primitives/   # Section, Reveal, Preloader, EnvelopeIntro, StickyActionBar, CustomCursor, ScrollProgress
+  hooks/
+    useSmoothScroll.tsx    # Lenis initialization
+    smooth-scroll-context.ts # Lenis React context
+    useMediaQuery.ts       # Responsive breakpoint hook
   lib/
     ics.ts        # calendar file generation
     maps.ts       # Google Maps URL builders
     supabase.ts   # Supabase client
     rsvp.ts       # RSVP persistence
     admin.ts      # Admin auth helpers
-  hooks/
-    useSmoothScroll.tsx    # Lenis initialization
-    smooth-scroll-context.ts # Lenis React context
+    gallery-assets.ts # Gallery image sizes/asset helpers
   content/
     content.ts    # all copy lives here, single source of truth
   styles/
     tokens.css    # @theme + design tokens
-    base.css      # reset + body + animations + reduced-motion
+    base.css      # reset + body + animations + gallery masonry + reduced-motion
   App.tsx
   main.tsx
+```
 
-
-
-Animation Guidelines
+## Animation Guidelines
 
 Animations should feel calm and premium.
 
-Motion split
+### Motion split
 
 Framer Motion for: entrance, scroll-triggered reveals, stagger, layout transitions
 
 CSS for: hover, focus, micro-interactions, loading shimmer, photo grayscale, button fills
 
-This split is non-negotiable. Animating hovers in JS causes re-render thrash
+This split is non-negotiable. Animating hovers in JS causes re-render thrash.
 
-Preferred
+### Preferred
 
 fade
 
@@ -141,7 +133,7 @@ clip-path reveal
 
 underline draw
 
-Avoid
+### Avoid
 
 bouncing
 
@@ -151,7 +143,7 @@ excessive particle effects
 
 anything that competes with the content
 
-Easing
+### Easing
 
 Default: [0.22, 1, 0.36, 1] (ease-out-quart) for entrance
 
@@ -159,7 +151,7 @@ Default: [0.4, 0, 0.2, 1] (ease-in-out) for state changes
 
 Never linear for UI motion
 
-Duration
+### Duration
 
 Micro: 150–200ms
 
@@ -169,13 +161,13 @@ Cinematic: 600–1200ms
 
 Anything over 400ms must respect prefers-reduced-motion
 
-Stagger
+### Stagger
 
 60–100ms between siblings
 
 150–250ms between sections
 
-Images
+### Images
 
 Always optimize to WebP (AVIF where supported)
 
@@ -185,11 +177,11 @@ Lazy load everything below the fold
 
 Hero image must be preloaded
 
-Use <picture> for format fallback
+Use `<picture>` for format fallback
 
 All images need alt text — non-negotiable for accessibility
 
-Performance
+### Performance
 
 Target Lighthouse score above 90 on mobile
 
@@ -205,7 +197,7 @@ Use will-change sparingly and only during animation, not statically
 
 Prefer CSS transforms over layout properties
 
-The WhatsApp Test
+## The WhatsApp Test
 
 Most guests will open this site from inside WhatsApp's in-app browser.
 
@@ -233,9 +225,7 @@ Smooth scroll libraries (Lenis needs touchMultiplier tuned)
 
 If it doesn't work in WhatsApp, it doesn't work.
 
-
-
-Accessibility
+## Accessibility
 
 Color contrast AA minimum (AAA for body text on cream)
 
@@ -251,39 +241,33 @@ The RSVP form works with keyboard only
 
 Test with a screen reader at least once per section
 
+## Content
 
+All copy lives in `src/content/content.ts` as a single typed object. This is the only file non-developers should need to edit.
 
-Content
+### couple — names, display names
 
-All copy lives in src/content/content.ts as a single typed object. This is the only file non-developers should need to edit.
+### wedding — date, time, timezone, ISO string for countdown
 
+### events — array of event objects
 
+### venue — name, address, maps query, maps link
 
-couple — names, display names
+### verse — text, reference
 
-wedding — date, time, timezone, ISO string for countdown
+### family — bride, groom, parents, siblings
 
-events — array of event objects
+### liveStream — YouTube video ID, channel info
 
-venue — name, address, maps query, maps link
+### gallery — image paths + alt text + span (no captions)
 
-verse — text, reference
+### rsvp — deadline, contact number, events, dietary options
 
-family — bride, groom, parents, siblings
-
-liveStream — YouTube video ID, channel info
-
-gallery — image paths + captions
-
-rsvp — deadline, contact number, events, dietary options
-
-sections — section headings and labels
+### sections — section headings and labels
 
 No copy in JSX. No copy in component files. Ever.
 
-
-
-Definition of Done (per milestone)
+## Definition of Done (per milestone)
 
 A milestone is not done when the code is written. It's done when:
 
@@ -303,11 +287,11 @@ Review pass completed: responsiveness, accessibility, animation smoothness, code
 
 Reviewed with the user before moving to the next milestone
 
-Before completing any task
+## Before completing any task
 
 Review:
 
-responsiveness (360px, 768px, 1440px)
+responsiveness (360px, 768px, 1440px, 1920px)
 
 accessibility
 

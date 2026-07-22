@@ -463,7 +463,7 @@ export default function Lightbox({
                     src={item.src.replace('.avif', '.webp')}
                     alt={item.alt}
                     draggable={false}
-                    className="max-h-[85vh] max-w-[95vw] rounded-lg object-contain select-none"
+                    className="max-h-[85vh] max-w-[95vw] rounded-lg object-contain select-none photo-warm"
                   />
                 </picture>
               </motion.div>

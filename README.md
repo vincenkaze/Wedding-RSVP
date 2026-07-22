@@ -1,14 +1,14 @@
 # Anjana & Krishnaprasad — Wedding Invitation
 
-A premium one-page wedding invitation website built with React, Tailwind CSS, Framer Motion, and a custom WebGL2 gallery engine.
+A premium one-page wedding invitation website built with React, Tailwind CSS, Framer Motion, and Lenis.
 
-Designed to deliver an emotional, cinematic experience optimized for sharing via WhatsApp, Instagram, and direct links.
+Designed to deliver an emotional, elegant, cinematic experience optimized for sharing via WhatsApp, Instagram, and direct links.
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Runtime | Node / npm (Bun supported) |
+| Runtime | Node / npm |
 | Build | Vite |
 | UI | React 19 + TypeScript 6 (strict) |
 | Styling | Tailwind CSS 4 |
@@ -33,28 +33,15 @@ npm run preview
 src/
 ├── components/
 │   ├── admin/           # /admin login + dashboard
-│   ├── primitives/      # Preloader, EnvelopeIntro, MusicControl, CustomCursor, ScrollProgress, ParticleCanvas, Section, Reveal
+│   ├── primitives/      # Preloader, EnvelopeIntro, StickyActionBar, CustomCursor, ScrollProgress, Section, Reveal
 │   └── sections/        # Hero, Countdown, Verse, Story, Events, Family, Venue, Gallery, Lightbox, RSVP, Footer
-├── engine/              # M5B Gallery Engine
-│   ├── core/            # Engine entry, Scheduler, contract, RendererFactory, capabilities
-│   ├── renderers/       # interface + webgl2 + webgpu stub
-│   ├── scene/           # Scene graph, Camera
-│   ├── objects/         # Globe, PhotoMesh
-│   ├── physics/         # Angular velocity, spring snap
-│   ├── interaction/     # Unified Pointer Events
-│   ├── textures/        # TextureManager
-│   ├── materials/       # Material spec
-│   ├── math/            # mat4 utilities
-│   └── debug/           # Profiler, archive
-├── gallery/
-│   └── ui/              # GallerySection (engine mount)
-├── hooks/               # Lenis smooth scroll
-├── lib/                 # ics, maps, supabase, rsvp, admin
+├── hooks/               # Lenis smooth scroll, useMediaQuery
+├── lib/                 # ics, maps, supabase, rsvp, admin, gallery-assets
 ├── content/
 │   └── content.ts       # ALL copy — single source of truth
 ├── styles/
 │   ├── tokens.css       # @theme + design tokens
-│   └── base.css         # Global styles, .photo-bw, reduced-motion
+│   └── base.css         # Global styles, gallery masonry, reduced-motion
 ├── App.tsx
 └── main.tsx
 ```
@@ -68,7 +55,7 @@ All content lives in `src/content/content.ts`. Edit this single file to change:
 - **Events** — `events[]` array (title, date, time, location)
 - **Venue** — `venue.name`, `venue.address`, `venue.mapsEmbedUrl`
 - **Family** — `family.bride`, `family.groom` (parents, siblings)
-- **Gallery** — `gallery[]` array (image paths, alt text, captions)
+- **Gallery** — `gallery[]` array (image paths, alt text, span)
 - **Live stream** — `liveStream` (YouTube video ID, channel info)
 - **RSVP** — `rsvp.deadline`, `rsvp.contactNumber`, `rsvp.events`
 
@@ -85,10 +72,18 @@ public/
 │   ├── couple.webp
 │   └── couple.jpg
 ├── gallery/
-│   ├── 1.avif / 1.webp / 1.jpg
+│   ├── sizes/
+│   │   ├── 512/   # thumbnails
+│   │   ├── 1024/  # mid-size
+│   │   └── ...
+│   ├── 1.avif / 1.webp
 │   └── ...
 ├── audio/
 │   └── ambient.mp3
+├── favicon.ico
+├── favicon.svg
+├── favicon-{16,32,48}x48.png
+├── og-image.png
 └── og-image.jpg
 ```
 
@@ -96,7 +91,7 @@ Images should be optimized to WebP with AVIF where supported.
 
 ## Adding Audio
 
-Place an ambient audio file at `public/audio/ambient.mp3`. The music control will gracefully disable itself if the file is missing.
+Place an ambient audio file at `public/audio/ambient.mp3`. The sticky action bar will gracefully disable itself if the file is missing.
 
 ## Development
 
@@ -131,9 +126,9 @@ Key in-app browser considerations:
 - Lenis handles all smooth scrolling
 - Custom cursor hidden on touch devices
 
-## Gallery Notes
+## Gallery
 
-The public gallery uses a custom 3D sphere engine (`src/engine/`) built on raw WebGL2. It renders 17 wedding photographs as camera-facing billboards arranged on a Fibonacci sphere. Interaction uses unified Pointer Events. The legacy CSS grid remains available as a reduced-motion fallback.
+The gallery uses a responsive flex-column masonry layout — 2 columns on mobile (≤1023px), 3 columns on desktop (≥1024px). Photos are placed via a shortest-column algorithm for a natural editorial feel. Tapping any image opens the lightbox with swipe, pinch-zoom, and keyboard navigation.
 
 ## Accessibility
 
