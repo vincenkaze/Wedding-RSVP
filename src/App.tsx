@@ -1,7 +1,7 @@
-import { Suspense, lazy, useCallback, useState } from 'react'
+import { Suspense, lazy, useCallback, useRef, useState } from 'react'
 import Preloader from './components/primitives/Preloader'
 import EnvelopeIntro from './components/primitives/EnvelopeIntro'
-import MusicControl from './components/primitives/MusicControl'
+import StickyActionBar from './components/primitives/StickyActionBar'
 import CustomCursor from './components/primitives/CustomCursor'
 import ScrollProgress from './components/primitives/ScrollProgress'
 import Hero from './components/sections/Hero'
@@ -28,6 +28,8 @@ function WeddingSite() {
   const [loaded, setLoaded] = useState(false)
   const [envelopeDone, setEnvelopeDone] = useState(false)
   const [musicTriggered, setMusicTriggered] = useState(false)
+  const heroRef = useRef<HTMLElement | null>(null)
+  const rsvpRef = useRef<HTMLElement | null>(null)
 
   const handlePreloaderComplete = useCallback(() => {
     setLoaded(true)
@@ -51,7 +53,7 @@ function WeddingSite() {
       <main className="min-h-dvh bg-bg">
         {envelopeDone && (
           <Suspense fallback={<div className="min-h-dvh" />}>
-            <Hero />
+            <Hero ref={heroRef} />
             <Countdown />
             <Verse />
             <Story />
@@ -59,12 +61,17 @@ function WeddingSite() {
             <Family />
             <Venue />
             <Gallery />
-            <RSVP />
+            <RSVP ref={rsvpRef} />
             <Footer />
           </Suspense>
         )}
       </main>
-      <MusicControl autoPlay={envelopeDone} playTrigger={musicTriggered} />
+      <StickyActionBar
+        heroRef={heroRef}
+        rsvpRef={rsvpRef}
+        autoPlay={envelopeDone}
+        playTrigger={musicTriggered}
+      />
       <ScrollProgress />
     </>
   )

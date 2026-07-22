@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { forwardRef, useCallback, useState } from 'react'
 import { motion, type Variants } from 'framer-motion'
 import { couple, wedding, hero } from '../../content/content'
 import { ChevronDown } from 'lucide-react'
@@ -96,13 +96,14 @@ function DateReveal() {
   )
 }
 
-export default function Hero() {
+const Hero = forwardRef<HTMLElement>(function Hero(_props, ref) {
   const [imgError, setImgError] = useState(false)
 
   const handleBackgroundTap = useCallback(() => {}, [])
 
   return (
     <section
+      ref={ref}
       id="hero"
       className="relative min-h-dvh flex flex-col items-center justify-center px-6 py-20 overflow-hidden"
       onClick={handleBackgroundTap}
@@ -195,4 +196,6 @@ export default function Hero() {
       </div>
     </section>
   )
-}
+})
+
+export default Hero

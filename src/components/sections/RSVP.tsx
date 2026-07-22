@@ -1,13 +1,15 @@
+import { forwardRef } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import RSVPForm from './RSVPForm'
 import { sections } from '../../content/content'
 import { EASE_ENTRANCE, DURATION_CINEMATIC } from '../primitives/reveal'
 
-export default function RSVPSection() {
+const RSVPSection = forwardRef<HTMLElement>(function RSVPSection(_props, ref) {
   const prefersReducedMotion = useReducedMotion()
 
   return (
     <section
+      ref={ref}
       id="rsvp"
       className="relative px-4 py-20 sm:px-6 sm:py-28 md:py-32 bg-surface/50"
     >
@@ -63,4 +65,6 @@ export default function RSVPSection() {
       </div>
     </section>
   )
-}
+})
+
+export default RSVPSection

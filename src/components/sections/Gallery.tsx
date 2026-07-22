@@ -1,12 +1,10 @@
 import { useCallback, useState } from 'react'
-import { gallery, sections, venue } from '../../content/content'
+import { gallery, sections } from '../../content/content'
 import EditorialGallery from './EditorialGallery'
 import Lightbox from './Lightbox'
-import { buildDirectionsUrl } from '../../lib/maps'
 
 export default function Gallery() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
-  const lightboxOpen = lightboxIndex !== null
 
   const handlePhotoActivate = useCallback((index: number) => {
     setLightboxIndex(index)
@@ -33,28 +31,6 @@ export default function Gallery() {
           onPhotoActivate={handlePhotoActivate}
         />
       </div>
-
-      {!lightboxOpen && (
-        <nav
-          className="gallery-action-bar"
-          aria-label="Gallery actions"
-        >
-          <a
-            href={buildDirectionsUrl(venue.mapsQuery)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="gallery-action-btn"
-          >
-            {sections.actionBar.directions}
-          </a>
-          <a
-            href="#rsvp"
-            className="gallery-action-btn"
-          >
-            {sections.actionBar.rsvp}
-          </a>
-        </nav>
-      )}
 
       <Lightbox
         items={gallery}
