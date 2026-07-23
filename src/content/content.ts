@@ -365,6 +365,14 @@ export const gallery: GalleryItem[] = [
     span: 'wide',
     desktop: { x: 2, y: 90, w: 96, h: 10, scale: 1.0, layer: 'foreground' },
   },
+  {
+    id: 'gallery-17',
+    src: '/gallery/19.avif',
+    alt: 'A wide environmental snow scene with the couple embraced on the right amid a quiet winter landscape',
+    width: 1041,
+    height: 812,
+    span: 'wide',
+  },
 ]
 
 export const rsvp: RSVP = {

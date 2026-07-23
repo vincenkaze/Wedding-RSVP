@@ -496,6 +496,10 @@ body::after {
   }
 }
 
+.gallery-masonry-column:first-child .gallery-grid-cell:nth-child(2) .gallery-card-img {
+  object-position: center 20%;
+}
+
 .gallery-card-img {
   width: 100%;
   height: 100%;
