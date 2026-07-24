@@ -624,6 +624,66 @@ body::after {
   }
 }
 
+/* ── Section progress indicator ── */
+.section-progress {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  z-index: 45;
+  pointer-events: auto;
+}
+
+@media (max-width: 639px) {
+  .section-progress {
+    right: 12px;
+    gap: 10px;
+  }
+}
+
+.section-progress-indicator {
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--color-text);
+  opacity: 0.2;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: width 400ms var(--ease-state),
+              opacity 400ms var(--ease-state),
+              background-color 400ms var(--ease-state);
+}
+
+.section-progress-indicator:hover {
+  opacity: 0.5;
+}
+
+.section-progress-indicator:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: 1px;
+}
+
+.section-progress-indicator.is-active {
+  width: 28px;
+  opacity: 1;
+  background: var(--color-accent);
+}
+
+@media (max-width: 639px) {
+  .section-progress-indicator {
+    width: 12px;
+  }
+  .section-progress-indicator.is-active {
+    width: 22px;
+  }
+}
+
 /* ── Scroll progress bar ── */
 .scroll-progress-track {
   position: fixed;
@@ -658,6 +718,10 @@ body::after {
   }
 
   .travel-stay-content {
+    transition: none;
+  }
+
+  .section-progress-indicator {
     transition: none;
   }
 

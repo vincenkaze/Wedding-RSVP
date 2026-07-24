@@ -10,7 +10,7 @@ export default function Footer() {
   }, [])
 
   return (
-    <footer className="border-t border-border bg-bg px-6 py-10 sm:py-14">
+    <footer id="footer" className="border-t border-border bg-bg px-6 py-10 sm:py-14">
       <div className="mx-auto max-w-2xl text-center">
         <button
           type="button"

@@ -5,6 +5,7 @@ import StickyActionBar from './components/primitives/StickyActionBar'
 import MusicControl from './components/primitives/MusicControl'
 import CustomCursor from './components/primitives/CustomCursor'
 import ScrollProgress from './components/primitives/ScrollProgress'
+import SectionProgress from './components/primitives/SectionProgress'
 import Hero from './components/sections/Hero'
 import Countdown from './components/sections/Countdown'
 import Verse from './components/sections/Verse'
@@ -73,6 +74,7 @@ function WeddingSite() {
       />
       <MusicControl autoPlay={envelopeDone} playTrigger={musicTriggered} />
       <ScrollProgress />
+      {envelopeDone && <SectionProgress />}
     </>
   )
 }
