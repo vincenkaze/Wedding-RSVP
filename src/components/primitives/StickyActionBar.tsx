@@ -42,20 +42,32 @@ export default function StickyActionBar({
     return () => observer.disconnect()
   }, [heroRef, isMobile])
 
-  // Track RSVP visibility — hide RSVP button when section is near
+  // Track RSVP visibility — hide RSVP button when section is near.
+  // RSVP mounts later (below-fold, after the envelope intro), so retry
+  // until the element exists instead of giving up on first run.
   useEffect(() => {
     if (!isMobile) return
-    const el = rsvpRef.current
-    if (!el) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setRsvpHidden(entry.isIntersecting)
-      },
-      { threshold: 0.15 },
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
+    let observer: IntersectionObserver | null = null
+    let attempts = 0
+    const timer = setInterval(() => {
+      const el = rsvpRef.current
+      if (el) {
+        clearInterval(timer)
+        observer = new IntersectionObserver(
+          ([entry]) => {
+            setRsvpHidden(entry.isIntersecting)
+          },
+          { threshold: 0.15 },
+        )
+        observer.observe(el)
+      } else if (++attempts > 40) {
+        clearInterval(timer)
+      }
+    }, 250)
+    return () => {
+      clearInterval(timer)
+      observer?.disconnect()
+    }
   }, [rsvpRef, isMobile])
 
   if (prefersReduced || !isMobile) return null

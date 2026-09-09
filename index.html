@@ -36,9 +36,12 @@
     <meta name="twitter:image" content="https://anjana-krishnaprasad.space/og-image.png" />
     <meta name="twitter:image:alt" content="Anjana and Krishnaprasad — You're Invited" />
 
-    <!-- Hero image preload -->
-    <link rel="preload" as="image" href="/hero/couple.avif" type="image/avif" />
-    <link rel="preload" as="image" href="/hero/couple.webp" type="image/webp" />
+    <!-- Fonts: preloaded — LCP is text rendered in these faces.
+         Hero image preloads omitted: /hero/couple.* not shipped yet (P-008);
+         preloading missing files wastes critical-path bandwidth.
+         Re-add a single AVIF preload when the hero photo lands. -->
+    <link rel="preload" as="font" href="/fonts/playfair-latin.woff2" type="font/woff2" crossorigin />
+    <link rel="preload" as="font" href="/fonts/outfit-latin.woff2" type="font/woff2" crossorigin />
 
     <!-- Structured Data -->
     <script type="application/ld+json">

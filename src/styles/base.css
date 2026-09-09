@@ -117,18 +117,19 @@
   transform: scaleX(0);
 }
 
-/* ── Letter-spacing expand ── */
-@keyframes letter-expand {
-  from {
-    letter-spacing: 0.3em;
+/* ── Hero CTA hover/active lift (CSS-only per motion split) ── */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-cta {
+    transition: transform 200ms ease, box-shadow 300ms ease;
   }
-  to {
-    letter-spacing: 0.5em;
-  }
-}
 
-.letter-expand {
-  animation: letter-expand 0.6s var(--ease-entrance) forwards;
+  .hero-cta:hover {
+    transform: scale(1.04);
+  }
+
+  .hero-cta:active {
+    transform: scale(0.97);
+  }
 }
 
 /* ── Verse ornament flourish ── */
@@ -707,10 +708,13 @@ body::after {
   .ken-burns,
   .scroll-indicator,
   .underline-draw::after,
-  .letter-expand,
   .verse-ornament,
   .preloader-card {
     animation: none !important;
+  }
+
+  .hero-cta {
+    transition: none;
   }
 
   .underline-draw::after {

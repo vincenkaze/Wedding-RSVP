@@ -119,11 +119,18 @@ export default function Story() {
                 className="group relative flex h-full w-full cursor-pointer flex-col justify-between overflow-hidden text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-default"
                 aria-label="Play ceremony live stream"
               >
-                {/* Thumbnail background */}
+                {/* Thumbnail background — hqdefault (480×360) is plenty for a
+                    ~768px card; full srcset lets high-DPR screens step up.
+                    Lazy: this card sits below the fold. */}
                 {liveStream.youtubeVideoId ? (
                   <img
-                    src={`https://img.youtube.com/vi/${liveStream.youtubeVideoId}/maxresdefault.jpg`}
+                    src={`https://img.youtube.com/vi/${liveStream.youtubeVideoId}/hqdefault.jpg`}
+                    srcSet={`https://img.youtube.com/vi/${liveStream.youtubeVideoId}/mqdefault.jpg 320w, https://img.youtube.com/vi/${liveStream.youtubeVideoId}/hqdefault.jpg 480w, https://img.youtube.com/vi/${liveStream.youtubeVideoId}/sddefault.jpg 640w, https://img.youtube.com/vi/${liveStream.youtubeVideoId}/maxresdefault.jpg 1280w`}
+                    sizes="(max-width: 640px) 100vw, 768px"
                     alt={ceremonyEvent?.title || couple.displayName}
+                    loading="lazy"
+                    decoding="async"
+                    fetchPriority="low"
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                   />
                 ) : null}

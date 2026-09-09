@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useState } from 'react'
+import { forwardRef, useState } from 'react'
 import { motion, type Variants } from 'framer-motion'
 import { couple, wedding, hero } from '../../content/content'
 import { ChevronDown } from 'lucide-react'
@@ -99,14 +99,11 @@ function DateReveal() {
 const Hero = forwardRef<HTMLElement>(function Hero(_props, ref) {
   const [imgError, setImgError] = useState(false)
 
-  const handleBackgroundTap = useCallback(() => {}, [])
-
   return (
     <section
       ref={ref}
       id="hero"
       className="relative min-h-dvh flex flex-col items-center justify-center px-6 py-20 overflow-hidden"
-      onClick={handleBackgroundTap}
     >
       {/* Ken Burns background image */}
       <div className="absolute inset-0 overflow-hidden" aria-hidden>
@@ -142,7 +139,7 @@ const Hero = forwardRef<HTMLElement>(function Hero(_props, ref) {
           animate="visible"
           variants={lineVariants}
           custom={0}
-          className={`font-body text-white/70 text-xs sm:text-sm uppercase tracking-[0.3em] ${prefersReducedMotion ? '' : 'letter-expand'}`}
+          className="font-body text-white/70 text-xs sm:text-sm uppercase tracking-[0.3em]"
         >
           {hero.preTitle}
         </motion.p>
@@ -176,11 +173,9 @@ const Hero = forwardRef<HTMLElement>(function Hero(_props, ref) {
           animate="visible"
           variants={lineVariants}
           custom={STAGGER * 3}
-          whileHover={prefersReducedMotion ? {} : { scale: 1.04 }}
-          whileTap={prefersReducedMotion ? {} : { scale: 0.97 }}
-          className="inline-block font-body text-sm sm:text-base uppercase tracking-[0.15em] font-medium
+          className="hero-cta inline-block font-body text-sm sm:text-base uppercase tracking-[0.15em] font-medium
             bg-accent text-bg px-8 py-3.5 sm:px-10 sm:py-4 rounded-full
-            transition-shadow duration-300 shadow-sm
+            shadow-sm
             hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
           {hero.ctaText}

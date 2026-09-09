@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import Preloader from './components/primitives/Preloader'
 import EnvelopeIntro from './components/primitives/EnvelopeIntro'
 import StickyActionBar from './components/primitives/StickyActionBar'
@@ -6,6 +6,7 @@ import MusicControl from './components/primitives/MusicControl'
 import CustomCursor from './components/primitives/CustomCursor'
 import ScrollProgress from './components/primitives/ScrollProgress'
 import SectionProgress from './components/primitives/SectionProgress'
+import { SmoothScrollContext } from './hooks/smooth-scroll-context'
 import Hero from './components/sections/Hero'
 import Countdown from './components/sections/Countdown'
 import Verse from './components/sections/Verse'
@@ -45,6 +46,30 @@ function WeddingSite() {
     setMusicTriggered(true)
   }, [])
 
+  const { lenis } = useContext(SmoothScrollContext)
+
+  // Always start at the top: the browser would otherwise restore a stale
+  // scroll offset (e.g. Countdown) since above-fold content now mounts
+  // immediately behind the intro overlays.
+  useEffect(() => {
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
+    window.scrollTo(0, 0)
+  }, [])
+
+  // Lock scroll until the intro completes so the user always lands on
+  // Hero and sees its entrance animation first.
+  useEffect(() => {
+    if (envelopeDone) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.scrollTo(0, 0)
+    lenis?.stop()
+    return () => {
+      document.body.style.overflow = prevOverflow
+      lenis?.start()
+    }
+  }, [envelopeDone, lenis])
+
   return (
     <>
       <CustomCursor />
@@ -53,11 +78,13 @@ function WeddingSite() {
         <EnvelopeIntro onComplete={handleEnvelopeComplete} onReveal={handleReveal} />
       )}
       <main className="min-h-dvh bg-bg">
+        {/* Above-fold content renders immediately so LCP fires fast;
+            Preloader/EnvelopeIntro sit on top as fixed overlays. */}
+        <Hero ref={heroRef} />
+        <Countdown />
+        <Verse />
         {envelopeDone && (
-          <Suspense fallback={<div className="min-h-dvh" />}>
-            <Hero ref={heroRef} />
-            <Countdown />
-            <Verse />
+          <Suspense fallback={null}>
             <Story />
             <Events />
             <Family />
