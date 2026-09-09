@@ -92,7 +92,14 @@ export interface LiveStream {
   youtubeVideoId: string
   channelName: string
   channelUrl: string
+  description: string
   liveStartIso: string
+  countdownLabel: string
+  statusStartingSoon: string
+  statusLive: string
+  tagLiveStreaming: string
+  watchOnYoutube: string
+  broadcastPrefix: string
 }
 
 export const couple: Couple = {
@@ -222,10 +229,17 @@ export const venue: Venue = {
 }
 
 export const liveStream: LiveStream = {
-  youtubeVideoId: '',
-  channelName: '',
-  channelUrl: '',
+  youtubeVideoId: '5FIVNBVQAN0',
+  channelName: 'WE CAPTURE LIVE MEDIA',
+  channelUrl: 'https://www.youtube.com/live/5FIVNBVQAN0',
+  description: 'WEDDING CEREMONY || Krishnaprasad & Anjana',
   liveStartIso: '2026-09-13T10:00:00+05:30',
+  countdownLabel: 'Ceremony begins in',
+  statusStartingSoon: 'Starting Soon',
+  statusLive: 'Live',
+  tagLiveStreaming: 'Live Streaming',
+  watchOnYoutube: 'Watch on YouTube',
+  broadcastPrefix: 'Broadcast by',
 }
 
 export const gallery: GalleryItem[] = [
