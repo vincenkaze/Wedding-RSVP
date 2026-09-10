@@ -76,7 +76,9 @@ export default function EnvelopeIntro({ onComplete, onReveal }: EnvelopeIntroPro
 
   useEffect(() => {
     if (sealed) return
-    const t = setTimeout(handleComplete, 2800)
+    // Tap → flap (1s) → card rises (by ~1.4s) → names settle (~1.8s) →
+    // camera push into names (1.55–2.6s) → cream flash (2.42–2.62s) → handoff.
+    const t = setTimeout(handleComplete, 2650)
     return () => clearTimeout(t)
   }, [sealed, handleComplete])
 
@@ -98,15 +100,37 @@ export default function EnvelopeIntro({ onComplete, onReveal }: EnvelopeIntroPro
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="fixed inset-0 z-[90] flex flex-col items-center justify-center bg-bg"
         >
-          {/* Skip intro — top right */}
-          <button
+          {/* Skip intro — top right; fades once the seal breaks */}
+          <motion.button
             type="button"
             onClick={handleComplete}
+            initial={false}
+            animate={{ opacity: sealed ? 1 : 0 }}
+            transition={{ duration: 0.3 }}
+            style={{ pointerEvents: sealed ? 'auto' : 'none' }}
             className="absolute top-6 right-6 font-body text-xs uppercase tracking-wider text-muted/50 transition-colors hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:top-8 sm:right-10"
           >
             Skip Intro
-          </button>
+          </motion.button>
 
+          {/* Camera-push layer — rushes into the couple's names, then fades
+              late so low-end GPUs never rasterize a giant scaled layer */}
+          <motion.div
+            initial={false}
+            animate={
+              sealed ? { scale: 1, opacity: 1 } : { scale: 7, opacity: [1, 1, 0] }
+            }
+            transition={
+              sealed
+                ? { duration: 0 }
+                : {
+                    scale: { delay: 1.55, duration: 1.05, ease: [0.42, 0, 1, 1] },
+                    opacity: { delay: 1.55, duration: 1.05, times: [0, 0.72, 1] },
+                  }
+            }
+            style={{ transformOrigin: '50% 40%' }}
+            className="flex flex-col items-center"
+          >
           {/* Floating envelope container */}
           <motion.div
             animate={{ y: [0, -6, 0] }}
@@ -222,6 +246,18 @@ export default function EnvelopeIntro({ onComplete, onReveal }: EnvelopeIntroPro
               </motion.p>
             )}
           </AnimatePresence>
+          </motion.div>
+
+          {/* Warm cream flash — punch-through finish that dissolves into Hero */}
+          <motion.div
+            aria-hidden
+            initial={false}
+            animate={{ opacity: sealed ? 0 : 1 }}
+            transition={
+              sealed ? { duration: 0 } : { delay: 2.42, duration: 0.2 }
+            }
+            className="pointer-events-none absolute inset-0 bg-bg"
+          />
         </motion.div>
       )}
     </AnimatePresence>

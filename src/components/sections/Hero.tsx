@@ -38,6 +38,11 @@ const nameReveal: Variants = {
 
 const STAGGER = 0.08
 
+interface HeroProps {
+  /** When false the entrance holds at hidden; flips true on intro handoff. */
+  startAnimations: boolean
+}
+
 function DateReveal() {
   const [revealed, setRevealed] = useState(false)
 
@@ -96,8 +101,13 @@ function DateReveal() {
   )
 }
 
-const Hero = forwardRef<HTMLElement>(function Hero(_props, ref) {
+const Hero = forwardRef<HTMLElement, HeroProps>(function Hero(props, ref) {
   const [imgError, setImgError] = useState(false)
+  // Entrance runs only when the parent signals (after the envelope
+  // punch-through) so guests actually see the reveal animation.
+  // Reduced-motion renders the final state immediately, as before.
+  const animateState =
+    prefersReducedMotion || props.startAnimations ? 'visible' : 'hidden'
 
   return (
     <section
@@ -136,7 +146,7 @@ const Hero = forwardRef<HTMLElement>(function Hero(_props, ref) {
         {/* Pre-title */}
         <motion.p
           initial={prefersReducedMotion ? undefined : 'hidden'}
-          animate="visible"
+          animate={animateState}
           variants={lineVariants}
           custom={0}
           className="font-body text-white/70 text-xs sm:text-sm uppercase tracking-[0.3em]"
@@ -147,7 +157,7 @@ const Hero = forwardRef<HTMLElement>(function Hero(_props, ref) {
         {/* Names */}
         <motion.h1
           initial={prefersReducedMotion ? undefined : 'hidden'}
-          animate="visible"
+          animate={animateState}
           variants={nameReveal}
           custom={STAGGER}
           className="font-display text-white text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.1] tracking-tight"
@@ -158,7 +168,7 @@ const Hero = forwardRef<HTMLElement>(function Hero(_props, ref) {
         {/* Date — mirrored, tap to reveal */}
         <motion.div
           initial={prefersReducedMotion ? undefined : 'hidden'}
-          animate="visible"
+          animate={animateState}
           variants={lineVariants}
           custom={STAGGER * 2}
           className="flex flex-col items-center gap-1"
@@ -170,7 +180,7 @@ const Hero = forwardRef<HTMLElement>(function Hero(_props, ref) {
         <motion.a
           href="#rsvp"
           initial={prefersReducedMotion ? undefined : 'hidden'}
-          animate="visible"
+          animate={animateState}
           variants={lineVariants}
           custom={STAGGER * 3}
           className="hero-cta inline-block font-body text-sm sm:text-base uppercase tracking-[0.15em] font-medium

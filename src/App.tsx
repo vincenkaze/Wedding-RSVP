@@ -79,8 +79,9 @@ function WeddingSite() {
       )}
       <main className="min-h-dvh bg-bg">
         {/* Above-fold content renders immediately so LCP fires fast;
-            Preloader/EnvelopeIntro sit on top as fixed overlays. */}
-        <Hero ref={heroRef} />
+            Preloader/EnvelopeIntro sit on top as fixed overlays.
+            Hero's entrance holds until the envelope punch-through hands off. */}
+        <Hero ref={heroRef} startAnimations={envelopeDone} />
         <Countdown />
         <Verse />
         {envelopeDone && (
