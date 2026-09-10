@@ -101,8 +101,10 @@ export default function Story() {
           }}
           className="relative overflow-hidden rounded-2xl bg-surface ring-1 ring-black/5 shadow-md"
         >
-          {/* 16:9 media frame */}
-          <div className="relative aspect-video w-full bg-black">
+          {/* Media frame — 4:3 on phones so the overlay stack (top bar +
+              play button + "ceremony begins in" + timer) fits without
+              clipping; 16:9 from sm up where there is room. */}
+          <div className="relative aspect-[4/3] w-full bg-black sm:aspect-video">
             {isPlaying && embedUrl ? (
               <iframe
                 src={embedUrl}
