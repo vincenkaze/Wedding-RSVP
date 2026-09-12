@@ -234,9 +234,9 @@ export const gallery: GalleryItem[] = [
   {
     id: 'gallery-01',
     src: '/gallery/1.avif',
-    alt: 'Anjana and Krishnaprasad smiling together in a garden, Anjana holding a bouquet of white roses',
-    width: 984,
-    height: 1599,
+    alt: 'Beaming at the camera together in the garden, bouquet of white roses in hand',
+    width: 848,
+    height: 1476,
     span: 'tall',
     priority: true,
   },
@@ -294,14 +294,6 @@ export const gallery: GalleryItem[] = [
     alt: 'Laughing forehead to forehead, wrapped in each other’s arms',
     width: 765,
     height: 1147,
-    span: 'square',
-  },
-  {
-    id: 'gallery-09',
-    src: '/gallery/9.avif',
-    alt: 'Beaming at the camera together in the garden, bouquet of white roses in hand',
-    width: 848,
-    height: 1476,
     span: 'square',
   },
 ]
