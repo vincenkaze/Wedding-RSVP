@@ -54,17 +54,6 @@ export interface Venue {
   }
 }
 
-export interface DesktopPosition {
-  /** Normalised 0–100 coordinate. Maps to `%` of the container dimensions. */
-  x: number
-  y: number
-  w: number
-  h: number
-  /** Unitless multiplier applied via CSS `transform: scale()`. */
-  scale: number
-  layer: 'background' | 'middle' | 'foreground'
-}
-
 export interface GalleryItem {
   id: string
   src: string
@@ -73,7 +62,6 @@ export interface GalleryItem {
   width: number
   height: number
   priority?: boolean
-  desktop?: DesktopPosition
 }
 
 export interface RSVP {
@@ -246,146 +234,67 @@ export const gallery: GalleryItem[] = [
   {
     id: 'gallery-01',
     src: '/gallery/1.avif',
-    alt: 'The happy couple sharing a radiant moment together',
-    width: 1200,
-    height: 1600,
+    alt: 'Anjana and Krishnaprasad smiling together in a garden, Anjana holding a bouquet of white roses',
+    width: 984,
+    height: 1599,
     span: 'tall',
     priority: true,
-    desktop: { x: 2, y: 2, w: 28, h: 46, scale: 1.0, layer: 'foreground' },
   },
   {
     id: 'gallery-02',
     src: '/gallery/2.avif',
-    alt: 'The proposal at sunset on a golden evening',
-    width: 960,
-    height: 1280,
+    alt: 'Krishnaprasad and Anjana sharing a tender nose-touch with eyes closed',
+    width: 1066,
+    height: 1600,
     span: 'square',
-    desktop: { x: 33, y: 2, w: 15, h: 15, scale: 1.0, layer: 'middle' },
   },
   {
     id: 'gallery-03',
     src: '/gallery/3.avif',
-    alt: 'Walking hand in hand through a sunlit garden path',
-    width: 1200,
+    alt: 'The couple holding hands and smiling at the camera among the tea bushes',
+    width: 1066,
     height: 1600,
-    span: 'square',
-    desktop: { x: 51, y: 2, w: 15, h: 15, scale: 0.95, layer: 'background' },
+    span: 'tall',
   },
   {
     id: 'gallery-04',
     src: '/gallery/4.avif',
-    alt: 'Laughing together during their engagement shoot in Kerala',
-    width: 1200,
+    alt: 'Anjana resting her head on Krishnaprasad’s shoulder beneath a tree in the tea garden',
+    width: 1066,
     height: 1600,
-    span: 'wide',
-    desktop: { x: 69, y: 2, w: 29, h: 15, scale: 1.0, layer: 'foreground' },
+    span: 'square',
   },
   {
     id: 'gallery-05',
     src: '/gallery/5.avif',
-    alt: 'Close-up of wedding rings resting on a linen surface',
-    width: 1200,
+    alt: 'Gazing into each other’s eyes hand in hand in the tea garden, Anjana in a teal saree',
+    width: 1066,
     height: 1600,
-    span: 'tall',
-    desktop: { x: 33, y: 20, w: 15, h: 28, scale: 1.0, layer: 'foreground' },
+    span: 'wide',
   },
   {
     id: 'gallery-06',
-    src: '/gallery/8.avif',
-    alt: 'Sharing a joyful laugh together in the golden light',
-    width: 960,
-    height: 1280,
-    span: 'square',
-    desktop: { x: 51, y: 20, w: 15, h: 15, scale: 1.0, layer: 'middle' },
+    src: '/gallery/6.avif',
+    alt: 'Playfully reaching for each other’s hands in a forest clearing',
+    width: 792,
+    height: 1188,
+    span: 'wide',
   },
   {
     id: 'gallery-07',
-    src: '/gallery/9.avif',
-    alt: 'Together in love, wrapped in each others arms',
-    width: 960,
-    height: 1280,
+    src: '/gallery/7.avif',
+    alt: 'A close joyful moment together with the bouquet of white roses and wildflowers',
+    width: 1066,
+    height: 1600,
     span: 'square',
-    desktop: { x: 69, y: 20, w: 14, h: 14, scale: 0.9, layer: 'background' },
   },
   {
-    id: 'gallery-09',
-    src: '/gallery/11.avif',
-    alt: 'A joyful moment from the wedding celebration',
-    width: 960,
-    height: 1280,
-    span: 'tall',
-    desktop: { x: 48, y: 50, w: 15, h: 28, scale: 1.0, layer: 'foreground' },
-  },
-  {
-    id: 'gallery-10',
-    src: '/gallery/12.avif',
-    alt: 'Together in happiness, surrounded by warm light',
-    width: 960,
-    height: 1280,
+    id: 'gallery-08',
+    src: '/gallery/8.avif',
+    alt: 'Laughing forehead to forehead, wrapped in each other’s arms',
+    width: 765,
+    height: 1147,
     span: 'square',
-    desktop: { x: 66, y: 50, w: 13, h: 13, scale: 1.0, layer: 'background' },
-  },
-  {
-    id: 'gallery-11',
-    src: '/gallery/13.avif',
-    alt: 'A beautiful shared glance full of affection',
-    width: 960,
-    height: 1280,
-    span: 'square',
-    desktop: { x: 82, y: 50, w: 13, h: 13, scale: 1.0, layer: 'background' },
-  },
-  {
-    id: 'gallery-12',
-    src: '/gallery/14.avif',
-    alt: 'Celebrating with loved ones at the wedding venue',
-    width: 960,
-    height: 1280,
-    span: 'wide',
-    desktop: { x: 2, y: 72, w: 31, h: 16, scale: 1.0, layer: 'foreground' },
-  },
-  {
-    id: 'gallery-13',
-    src: '/gallery/15.avif',
-    alt: 'A moment of pure joy and togetherness',
-    width: 960,
-    height: 1280,
-    span: 'tall',
-    desktop: { x: 35, y: 72, w: 13, h: 26, scale: 1.0, layer: 'foreground' },
-  },
-  {
-    id: 'gallery-14',
-    src: '/gallery/16.avif',
-    alt: 'Dancing through life together under the evening sky',
-    width: 960,
-    height: 1280,
-    span: 'square',
-    desktop: { x: 50, y: 72, w: 14, h: 14, scale: 0.95, layer: 'middle' },
-  },
-  {
-    id: 'gallery-15',
-    src: '/gallery/17.avif',
-    alt: 'A tender moment captured in the warm sunset glow',
-    width: 960,
-    height: 1280,
-    span: 'square',
-    desktop: { x: 67, y: 72, w: 14, h: 14, scale: 1.0, layer: 'middle' },
-  },
-  {
-    id: 'gallery-16',
-    src: '/gallery/18.avif',
-    alt: 'Love written in the stars above the Kerala skyline',
-    width: 960,
-    height: 1280,
-    span: 'wide',
-    desktop: { x: 2, y: 90, w: 96, h: 10, scale: 1.0, layer: 'foreground' },
-  },
-  {
-    id: 'gallery-17',
-    src: '/gallery/19.avif',
-    alt: 'A wide environmental snow scene with the couple embraced on the right amid a quiet winter landscape',
-    width: 1041,
-    height: 812,
-    span: 'wide',
   },
 ]
 

@@ -315,6 +315,23 @@ body::after {
   }
 }
 
+/* ── Mobile stacked gallery: paired 2-col blocks broken up by
+    full-bleed wide rows (rendered by EditorialGallery below 1024px) ── */
+.gallery-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.gallery-grid--nested {
+  padding: 0;
+  max-width: none;
+  margin: 0;
+}
+
 .gallery-masonry-column {
   display: flex;
   min-width: 0;
