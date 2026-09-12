@@ -296,6 +296,14 @@ export const gallery: GalleryItem[] = [
     height: 1147,
     span: 'square',
   },
+  {
+    id: 'gallery-09',
+    src: '/gallery/9.avif',
+    alt: 'Beaming at the camera together in the garden, bouquet of white roses in hand',
+    width: 848,
+    height: 1476,
+    span: 'square',
+  },
 ]
 
 export const rsvp: RSVP = {
